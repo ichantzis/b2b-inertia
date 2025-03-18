@@ -1,5 +1,15 @@
 <template>
     <div class="artwork-details">
+        <!-- Add close button -->
+        <Button
+            icon="pi pi-times"
+            class="close-button"
+            severity="secondary"
+            rounded
+            text
+            aria-label="Close"
+            @click="handleClose"
+        />
         <div v-if="error" class="error-message">
             {{ error }}
         </div>
@@ -54,9 +64,14 @@
 
 <script setup>
 import { defineProps, ref, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import Galleria from 'primevue/galleria';
 import Tag from 'primevue/tag';
+import HeaderLayout from '@/layouts/HeaderLayout.vue';
+
+defineOptions({ layout: HeaderLayout });
 
 const props = defineProps({
     artwork: {
@@ -131,19 +146,26 @@ const images = computed(() => {
 
     return allImages;
 });
+
+const handleClose = () => {
+    if (window.history.length > 2) {
+        router.visit(window.history.back());
+    } else {
+        router.visit(route('welcome'));
+    }
+};
 </script>
 
 <style scoped>
 .artwork-details {
-    /* max-width: 1600px; */
+    position: relative; /* Add this to position the close button */
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1rem;
 }
 
 .artwork-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    /* gap: 2rem; */
     background: white;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -166,7 +188,6 @@ const images = computed(() => {
 
 .artwork-info {
     padding: 5rem;
-    /* border-left: 1px solid #eee; */
 }
 
 .artwork-title {
@@ -240,6 +261,11 @@ const images = computed(() => {
 
     .artwork-title {
         font-size: 1.5rem;
+    }
+
+    .close-button {
+        top: 0.5rem;
+        right: 0.5rem;
     }
 }
 
@@ -320,5 +346,16 @@ const images = computed(() => {
 
 :deep(.p-tag:hover) {
     background: #e5e7eb;
+}
+
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
+}
+
+:deep(.close-button .p-button-icon) {
+    font-size: 1.5rem;
 }
 </style>

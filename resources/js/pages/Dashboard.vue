@@ -1,7 +1,7 @@
 <script setup>
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import HeaderLayout from '@/layouts/HeaderLayout.vue';
 
-defineOptions({ layout: AuthenticatedLayout });
+defineOptions({ layout: HeaderLayout });
 </script>
 
 <template>

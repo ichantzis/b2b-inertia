@@ -1,5 +1,5 @@
 <script setup>
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import DeleteUserForm from './partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './partials/UpdateProfileInformationForm.vue';
@@ -13,7 +13,7 @@ defineProps({
     },
 });
 
-defineOptions({ layout: AuthenticatedLayout });
+defineOptions({ layout: HeaderLayout });
 </script>
 
 <template>

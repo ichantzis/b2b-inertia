@@ -1,5 +1,5 @@
 <template>
-    <AuthenticatedLayout>
+    <HeaderLayout>
         <div class="layout-wrapper">
             <!-- Update transition element -->
             <Transition name="slide">
@@ -30,13 +30,14 @@
                  @click="toggleFilters">
             </div>
         </div>
-    </AuthenticatedLayout>
+    </HeaderLayout>>
 </template>
 
 <script setup>
 import { ref, provide, computed } from 'vue';
-import AuthenticatedLayout from '@/layouts/AuthenticatedLayout.vue';
+import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import FilterSidebar from '@/components/FilterSidebar.vue';
+import { Head } from '@inertiajs/vue3';
 
 const showFilters = ref(false);
 

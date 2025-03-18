@@ -209,7 +209,7 @@ watch(() => props.filters, () => {
 }
 
 .content-wrapper {
-    max-width: 1600px;
+    /* max-width: 1600px; */
     margin: 0 auto;
     background: white;
     border-radius: 8px;
