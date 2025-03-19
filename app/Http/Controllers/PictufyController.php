@@ -18,7 +18,11 @@ class PictufyController extends Controller
 
     public function collections()
     {
-        return response()->json($this->pictufy->getCollections());
+        $lists = $this->pictufy->getLists();
+
+        return Inertia::render('Collections', [
+            'lists' => $lists['items'] ?? [],
+        ]);
     }
 
     public function artworks(Request $request)
@@ -128,7 +132,7 @@ class PictufyController extends Controller
         $lists = $this->pictufy->getLists();
         $currentList = collect($lists['items'])->firstWhere('list_id', $listId);
         Log::info("Current list: " . json_encode($currentList));
-        $listName = $currentList['name'] ?? 'Artworks';
+        $listName = html_entity_decode($currentList['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
 
         if ($filters) {
             $segments = explode('/', $filters);

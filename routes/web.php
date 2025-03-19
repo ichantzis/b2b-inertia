@@ -22,6 +22,7 @@ Route::get('/artworks/data', [PictufyController::class, 'fetchData']);
 Route::get('/artwork/{id}', [PictufyController::class, 'artworkDetails'])->name('artwork.details');
 
 // Update collection route to use list_id
+Route::get('/collections', [PictufyController::class, 'collections'])->name('collections');
 Route::get('/collection/{list_id}/{filters?}', [PictufyController::class, 'filteredArtworks'])
     ->where('filters', '.*')
     ->name('collection.filtered');

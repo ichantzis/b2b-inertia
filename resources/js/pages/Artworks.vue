@@ -222,7 +222,7 @@ watch(() => props.filters, () => {
     font-weight: 600;
     color: #1a1a1a;
     margin-bottom: 2rem;
-    text-align: left;
+    text-align: center;
 }
 
 /* Adjust grid layout */
