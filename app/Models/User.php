@@ -21,6 +21,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'phone',
+        'address',
+        'city',
+        'country',
+        'postal_code',
     ];
 
     /**
@@ -33,6 +39,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -44,5 +55,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }
