@@ -20,9 +20,7 @@ class PictufyController extends Controller
     {
         $lists = $this->pictufy->getLists();
 
-        return Inertia::render('Collections', [
-            'lists' => $lists['items'] ?? [],
-        ]);
+        return Inertia::render('Collections');
     }
 
     public function artworks(Request $request)

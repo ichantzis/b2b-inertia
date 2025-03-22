@@ -13,7 +13,6 @@
                     'p-panelmenu-item-link flex items-center cursor-pointer no-underline px-4 py-2',
                     { 'font-bold! text-muted-color': item.active }
                 ]"
-                custom
             >
                 <i
                     v-if="item.icon"

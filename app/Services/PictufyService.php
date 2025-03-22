@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class PictufyService
 {
@@ -81,7 +82,25 @@ class PictufyService
 
     public function getLists($params = [])
     {
-        return $this->request('lists', $params);
+        // Cache key for the lists
+        $cacheKey = 'pictufy_lists';
+        
+        // Cache duration in minutes (e.g., 60 minutes = 1 hour)
+        $cacheDuration = 60;
+
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($params) {
+            return $this->request('lists', $params);
+        });
+    }
+
+    /**
+     * Force refresh the lists cache
+     */
+    public function refreshListsCache()
+    {
+        $cacheKey = 'pictufy_lists';
+        Cache::forget($cacheKey);
+        return $this->getLists();
     }
 
     public function getArtworks($params = [])

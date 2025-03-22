@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\PictufyService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,11 +36,22 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
+        $pictufyService = app(PictufyService::class);
+        $listsData = $pictufyService->getLists();
+        
+        return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user(),
             ],
-        ];
+            'lists' => collect($listsData['items'] ?? [])->map(function ($list) {
+                return [
+                    'name' => html_entity_decode($list['name']),
+                    'list_id' => $list['list_id'],
+                    'cover' => $list['cover'],
+                    'route' => route('collection.filtered', ['list_id' => $list['list_id']]),
+                    'icon' => 'pi pi-fw pi-images',
+                ];
+            })->values()->all(),
+        ]);
     }
 }
