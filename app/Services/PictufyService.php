@@ -52,31 +52,67 @@ class PictufyService
         return null;
     }
 
-    // Add this new method to get categories
     public function getCategories()
     {
-        return $this->request('categories');
+        // Cache key for categories
+        $cacheKey = 'pictufy_categories';
+        
+        // Cache duration in minutes (e.g., 60 minutes = 1 hour)
+        $cacheDuration = 60;
+
+        if (Cache::has($cacheKey)) {
+            $cachedData = Cache::get($cacheKey);
+            Log::info('Retrieved categories from cache:', [
+                'key' => $cacheKey,
+                'sections' => array_keys($cachedData['items'] ?? [])
+            ]);
+            return $cachedData;
+        }
+
+        return Cache::remember($cacheKey, $cacheDuration, function () {
+            return $this->request('categories');;
+        });
     }
 
-    // Modify the getCategoryIdBySlug method
+    /**
+     * Force refresh the categories cache
+     */
+    public function refreshCategoriesCache()
+    {
+        $cacheKey = 'pictufy_categories';
+        Cache::forget($cacheKey);
+        return $this->getCategories();
+    }
+
     public function getCategoryIdBySlug($categorySlug)
     {
         Log::info("Finding category ID for $categorySlug");
         $categories = $this->getCategories();
 
-        // Remove 'cat_' prefix from the slug for comparison
-        $categoryNameToFind = str_replace('cat_', '', $categorySlug);
+        // Extract section and category name from the slug
+        // Example: 'cat_photography_abstract' -> ['photography', 'abstract']
+        preg_match('/cat_(\w+)_(.+)/', $categorySlug, $matches);
+        
+        if (count($matches) !== 3) {
+            Log::warning("Invalid category slug format: $categorySlug");
+            return null;
+        }
 
-        // Check both photography and illustration categories
-        foreach (['photography', 'illustration'] as $section) {
+        $section = $matches[1];
+        $categoryNameToFind = $matches[2];
+
+        // Check only in the specified section
+        if (isset($categories['items'][$section])) {
             foreach ($categories['items'][$section] as $category) {
                 $categorySlugFromName = strtolower(str_replace(' ', '-', $category['category_name']));
                 if ($categorySlugFromName === $categoryNameToFind) {
+                    Log::info("Found category ID {$category['category_id']} for $categorySlug");
                     return $category['category_id'];
                 }
             }
         }
 
+        Log::warning("Category not found for slug: $categorySlug");
         return null;
     }
 
@@ -87,6 +123,14 @@ class PictufyService
         
         // Cache duration in minutes (e.g., 60 minutes = 1 hour)
         $cacheDuration = 60;
+
+        if (Cache::has($cacheKey)) {
+            $cachedData = Cache::get($cacheKey);
+            Log::info('Retrieved from cache:', [
+                'key' => $cacheKey,
+                'data' => $cachedData
+            ]);
+        }
 
         return Cache::remember($cacheKey, $cacheDuration, function () use ($params) {
             return $this->request('lists', $params);

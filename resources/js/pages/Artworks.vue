@@ -39,12 +39,25 @@
                         <div v-else class="grid grid-cols-12 gap-4 md:gap-12"> <!-- Reduced gap on mobile -->
                             <div v-for="(artwork, index) in slotProps.items" :key="index"
                                 class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
-                                <div class="rounded flex flex-col p-2 md:p-12"> <!-- Reduced padding on mobile -->
+                                <div class="rounded flex flex-col p-2 md:p-12 artwork-container"> <!-- Reduced padding on mobile -->
                                     <Link :href="`/artwork/${artwork.id}`" class="artwork-link">
-                                    <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
-                                        :alt="artwork.title?.en || 'Untitled'"
-                                        class="rounded w-full h-auto object-contain max-h-[300px]" />
-                                    <div v-else class="no-image">No Image Available</div>
+                                        <div class="relative">
+                                            <img v-if="artwork.urls?.img_thumb" 
+                                                :src="artwork.urls.img_thumb"
+                                                :alt="artwork.title?.en || 'Untitled'"
+                                                class="rounded w-full h-auto object-contain max-h-[300px]" 
+                                            />
+                                            <div v-else class="no-image">No Image Available</div>
+                                            
+                                            <!-- Hover Overlay -->
+                                            <div class="artwork-overlay">
+                                                <div class="overlay-content">
+                                                    <span class="artwork-title">{{ artwork.title.en }}</span>
+                                                    <Divider layout="vertical" />
+                                                    <span class="artwork-id">ID: {{ artwork.id }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </Link>
                                 </div>
                             </div>
@@ -71,7 +84,7 @@ import DataView from "primevue/dataview";
 import Button from "primevue/button";
 import { Link } from "@inertiajs/vue3";
 import FilteredLayout from '@/layouts/FilteredLayout.vue';
-import { ProgressSpinner } from "primevue";
+import { ProgressSpinner, Divider } from "primevue";
 import ScrollTop from 'primevue/scrolltop';
 // import FilterSidebar from '@/components/FilterSidebar.vue';
 
@@ -320,6 +333,52 @@ img {
     max-width: 100%;
     height: auto;
     margin: 0 auto;
+}
+
+.artwork-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.artwork-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.75rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    opacity: 0;
+}
+
+.artwork-container:hover .artwork-overlay {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.overlay-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #333;
+}
+
+.artwork-id, .artwork-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.artwork-title {
+    flex: 1;
+}
+
+/* Ensure the button doesn't trigger the Link navigation */
+.p-button {
+    z-index: 2;
 }
 
 /* Responsive adjustments */

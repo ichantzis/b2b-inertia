@@ -9,14 +9,14 @@
                     <div class="category-grid">
                         <span v-for="category in section" :key="category.category_id" class="filter-item">
                             <Checkbox 
-                                :value="buildCategoryUrl(category)"
+                                :value="buildCategoryUrl(category, key)"
                                 v-model="activeCategory"
-                                @change="() => handleCategoryChange(category)"
+                                @change="() => handleCategoryChange(category, key)"
                                 :pt="{ root: { class: 'mr-2' } }"
                                 size="small"
-                                :inputId="`category-${category.category_id}`"
+                                :inputId="`category-${key}-${category.category_id}`"
                             />
-                            <label :for="`category-${category.category_id}`" class="filter-label text-sm">
+                            <label :for="`category-${key}-${category.category_id}`" class="filter-label text-sm">
                                 {{ category.category_name }}
                             </label>
                         </span>
@@ -27,7 +27,7 @@
 
         <!-- Formats Section -->
         <div class="filter-section">
-            <h3 class="filter-title">Format</h3>
+            <h3 class="filter-title">Geometry</h3>
             <div class="filter-items">
                 <span v-for="format in formats" :key="format.value" class="filter-item">
                     <Checkbox :value="format.value" v-model="activeFormat"
@@ -121,6 +121,7 @@ const fetchCategories = async () => {
     try {
         const response = await axios.get('/api/categories');
         categories.value = response.data.items;
+        console.log('Categories:', categories.value);        
     } catch (error) {
         console.error('Error fetching categories:', error);
     }
@@ -132,8 +133,9 @@ const isActiveCategory = (categoryId) => {
 
 const isActiveFilter = (filterValue) => props.activeFilters.includes(filterValue);
 
-const buildCategoryUrl = (category) => {
-    const categorySlug = `cat_${category.category_name.toLowerCase().replace(/ /g, '-')}`;
+// Modify buildCategoryUrl to include section
+const buildCategoryUrl = (category, section) => {
+    const categorySlug = `cat_${section}_${category.category_name.toLowerCase().replace(/ /g, '-')}`;
     return categorySlug;
 };
 
@@ -172,8 +174,9 @@ const clearFilters = () => {
     router.visit(`/collection/${props.listId}`);
 };
 
-const handleCategoryChange = (category) => {
-    const categorySlug = buildCategoryUrl(category);
+// Update the handler to include section
+const handleCategoryChange = (category, section) => {
+    const categorySlug = buildCategoryUrl(category, section);
     const otherFilters = props.activeFilters.filter(f => !f.startsWith('cat_'));
 
     if (getActiveCategory() === categorySlug) {

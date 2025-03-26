@@ -18,8 +18,7 @@ class PictufyController extends Controller
 
     public function collections()
     {
-        $lists = $this->pictufy->getLists();
-
+        // $lists = $this->pictufy->getLists();
         return Inertia::render('Collections');
     }
 

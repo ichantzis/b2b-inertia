@@ -149,6 +149,8 @@ const openMenu = () => {
                             <div class="flex items-center">
                                 <Button id="user-menu-btn" severity="secondary" icon="pi pi-user" pt:root:class="p-0"
                                     pt:icon:class="text-xl" text aria-label="User menu" @click="toggleUserMenu" />
+                                <Button id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart" pt:root:class="p-0"
+                                    pt:icon:class="text-xl" text aria-label="Cart menu" />
                                 <Popover ref="op" target="#user-menu-btn" :showCloseIcon="false">
                                     <div class="p-2 w-48">
                                         <LinksPanelMenu :model="userMenuItems" class="border-none" />
