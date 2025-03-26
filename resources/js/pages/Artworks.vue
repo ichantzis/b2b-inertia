@@ -1,4 +1,5 @@
 <template>
+    <InertiaHead :title="props.listName" />
     <div class="layout-container">
         <main class="main-content">
 

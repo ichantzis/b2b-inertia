@@ -30,6 +30,7 @@ const decodeHTMLEntities = (text) => {
 </script>
 
 <template>
+    <InertiaHead title="Collections" />
     <div class="layout-container">
         <div class="main-content">
             <div class="content-wrapper">

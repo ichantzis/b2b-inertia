@@ -1,4 +1,6 @@
 <template>
+    <InertiaHead :title="artwork.title.en" />
+
   <div
     class="artwork-details"
     @keydown.left.prevent="prevImage"
