@@ -157,7 +157,7 @@ const loadMoreArtworks = async () => {
 
     loading.value = true;
     try {
-        const response = await axios.get('/artworks/data', {
+        const response = await axios.get('/fetch-artworks', {
             params: {
                 page: nextPage.value,
                 per_page: 30,

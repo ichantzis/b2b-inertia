@@ -18,13 +18,16 @@ Route::get('/', function () {
 
 // Replace collections route with lists
 Route::get('/lists', [PictufyController::class, 'lists']);
-Route::get('/artworks', [PictufyController::class, 'artworks'])->name('artworks');
-Route::get('/artworks/data', [PictufyController::class, 'fetchData']);
+// Route::get('/artworks', [PictufyController::class, 'artworks'])->name('artworks');
+Route::get('/artworks/{filters?}', [PictufyController::class, 'filteredArtworks'])
+    ->where('filters', '.*')
+    ->name('artworks');
+Route::get('/fetch-artworks', [PictufyController::class, 'fetchData'])->name('artworks.fetch');
 Route::get('/artwork/{id}', [PictufyController::class, 'artworkDetails'])->name('artwork.details');
 
 // Update collection route to use list_id
 Route::get('/collections', [PictufyController::class, 'collections'])->name('collections');
-Route::get('/collection/{list_id}/{filters?}', [PictufyController::class, 'filteredArtworks'])
+Route::get('/collection/{list_id}/{filters?}', [PictufyController::class, 'filteredCollection'])
     ->where('filters', '.*')
     ->name('collection.filtered');
 

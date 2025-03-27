@@ -1,5 +1,21 @@
 <template>
     <aside class="filter-sidebar">
+        <!-- Sort Order Section -->
+        <div class="filter-section">
+            <h3 class="filter-title">Sort Order</h3>
+            <div class="filter-items">
+                <Select
+                    v-model="activeSort"
+                    :options="sortOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Select Sort Order"
+                    class="w-full"
+                    @change="handleSortChange"
+                />
+            </div>
+        </div>
+        
         <!-- Categories Section -->
         <div class="filter-section">
             <h3 class="filter-title">Categories</h3>
@@ -59,9 +75,11 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import Checkbox from 'primevue/checkbox';
+import Select from 'primevue/select';
+
 
 const props = defineProps({
     listId: String,
@@ -93,6 +111,14 @@ const colors = [
     { label: 'Low Key', value: 'lowkey', hex: '#000000' }
 ];
 
+const sortOptions = [
+    { label: 'Recommended', value: 'recommended' },
+    { label: 'Recently Added', value: 'recently_added' },
+    { label: 'Best Selling', value: 'best_selling' },
+    { label: 'Trending', value: 'trending' },
+    { label: 'Oldest First', value: 'oldest_first' }
+];
+
 const activeCategory = computed({
     get: () => {
         const category = props.activeFilters.find(f => f.startsWith('cat_'));
@@ -113,6 +139,14 @@ const activeColor = computed({
     get: () => {
         const color = props.activeFilters.find(f => colors.map(c => c.value).includes(f));
         return color ? [color] : [];
+    },
+    set: () => { } // Handled by change event
+});
+
+const activeSort = computed({
+    get: () => {
+        const sort = props.activeFilters.find(f => sortOptions.map(o => o.value).includes(f));
+        return sort || 'recommended';
     },
     set: () => { } // Handled by change event
 });
@@ -165,13 +199,24 @@ const getActiveColor = () => {
     return props.activeFilters.find(f => colors.map(c => c.value).includes(f)) || '';
 };
 
+const getBaseUrl = () => {
+    const currentPath = usePage().url;
+        
+    if (currentPath.startsWith('/collection/') && props.listId) {
+        return `/collection/${props.listId}`;
+    }
+    return '/artworks';
+};
+
 const updateUrl = (filters) => {
     const cleanFilters = filters.filter(f => f).join('/');
-    router.visit(`/collection/${props.listId}//${cleanFilters}`);
+    const baseUrl = getBaseUrl();
+    router.visit(`${baseUrl}/${cleanFilters}`);
 };
 
 const clearFilters = () => {
-    router.visit(`/collection/${props.listId}`);
+    const baseUrl = getBaseUrl();
+    router.visit(baseUrl);
 };
 
 // Update the handler to include section
@@ -203,6 +248,16 @@ const handleColorChange = (color) => {
         updateUrl(otherFilters);
     } else {
         updateUrl([color, ...otherFilters]);
+    }
+};
+
+const handleSortChange = (event) => {
+    const otherFilters = props.activeFilters.filter(f => !sortOptions.map(o => o.value).includes(f));
+    
+    if (event.value === 'recommended') {
+        updateUrl(otherFilters);
+    } else {
+        updateUrl([event.value, ...otherFilters]);
     }
 };
 
@@ -314,5 +369,15 @@ onMounted(fetchCategories);
 .color-swatch.selected {
     padding: 2px;
     border: 2px solid #000;
+}
+
+/* Add these styles */
+:deep(.p-dropdown) {
+    width: 100%;
+    margin: 0.5rem;
+}
+
+:deep(.p-dropdown-label) {
+    font-size: 0.9rem;
 }
 </style>
