@@ -29,12 +29,22 @@ const userName = computed(() => {
 const mainMenuItems = computed(() => {
     const items = [];
 
+    items.push({
+        label: 'Home',
+        route: route('welcome'),
+        icon: 'pi pi-fw pi-home',
+        active: currentRoute.value == '/',
+        command: () => {
+            mobileMenuOpen.value = false;
+        }
+    });
+
     // Only add Dashboard if user is admin
     if (page.props.auth?.user?.role === 'admin') {
         items.push({
             label: 'Dashboard',
             route: route('dashboard'),
-            icon: 'pi pi-fw pi-home',
+            icon: 'pi pi-fw pi-sliders-h',
             active: currentRoute.value == 'dashboard',
             command: () => {
                 mobileMenuOpen.value = false;

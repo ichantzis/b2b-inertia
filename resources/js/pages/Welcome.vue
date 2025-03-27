@@ -80,16 +80,20 @@ const page = usePage();
 
 <style scoped>
 .hero-section {
-    height: calc(100vh - 64px);
     background-image: url('/public/images/hero-bg.jpg.png');
-    background-size: cover;
-    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center top;
+    background-color: transparent;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
     text-align: center;
 }
+
 
 .hero-content {
     max-width: 800px;

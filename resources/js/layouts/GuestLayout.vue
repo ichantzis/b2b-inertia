@@ -6,7 +6,7 @@ import ApplicationLogo from '@/components/ApplicationLogo.vue';
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
         <div>
             <InertiaLink href="/">
-                <ApplicationLogo class="w-15 h-15 fill-current text-surface-900 dark:text-surface-0" />
+                <ApplicationLogo class="fill-current text-surface-900 dark:text-surface-0" />
             </InertiaLink>
         </div>
 

@@ -35,62 +35,27 @@ onMounted(() => {
     <GuestLayout>
         <InertiaHead title="Log in" />
 
-        <template
-            v-if="status"
-            #message
-        >
-            <Message
-                severity="success"
-                :closable="false"
-                class="shadow-sm"
-            >
+        <template v-if="status" #message>
+            <Message severity="success" :closable="false" class="shadow-sm">
                 {{ status }}
             </Message>
         </template>
 
-        <form
-            class="space-y-6"
-            @submit.prevent="submit"
-        >
+        <form class="space-y-6" @submit.prevent="submit">
             <div class="flex flex-col gap-2">
                 <label for="email">Email</label>
-                <InputText
-                    id="email"
-                    ref="email-input"
-                    v-model="form.email"
-                    type="email"
-                    required
-                    fluid
-                    :invalid="Boolean(form.errors.email)"
-                    autocomplete="username"
-                />
-                <Message
-                    v-if="form.errors?.email"
-                    severity="error"
-                    variant="simple"
-                    size="small"
-                >
+                <InputText id="email" ref="email-input" v-model="form.email" type="email" required fluid
+                    :invalid="Boolean(form.errors.email)" autocomplete="username" />
+                <Message v-if="form.errors?.email" severity="error" variant="simple" size="small">
                     {{ form.errors?.email }}
                 </Message>
             </div>
 
             <div class="flex flex-col gap-2">
                 <label for="password">Password</label>
-                <InputText
-                    id="password"
-                    v-model="form.password"
-                    type="password"
-                    required
-                    fluid
-                    :invalid="Boolean(form.errors.password)"
-                    autocomplete="current-password"
-                />
-                <Message
-                    v-if="form.errors?.password"
-                    severity="error"
-                    variant="simple"
-                    size="small"
-                >
+                <InputText id="password" v-model="form.password" type="password" required fluid
+                    :invalid="Boolean(form.errors.password)" autocomplete="current-password" />
+                <Message v-if="form.errors?.password" severity="error" variant="simple" size="small">
                     {{ form.errors?.password }}
                 </Message>
             </div>
@@ -98,30 +63,24 @@ onMounted(() => {
             <div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <Checkbox
-                            id="remember"
-                            v-model="form.remember"
-                            class="mr-2"
-                            :binary="true"
-                        ></Checkbox>
+                        <Checkbox id="remember" v-model="form.remember" class="mr-2" :binary="true"></Checkbox>
                         <label for="remember">Remember me</label>
                     </div>
                 </div>
             </div>
 
             <div class="flex justify-end items-center pt-2">
-                <InertiaLink
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="mr-4 underline text-muted-color hover:text-color"
-                >
+                <InertiaLink v-if="canResetPassword" :href="route('password.request')"
+                    class="mr-4 underline text-muted-color hover:text-color">
                     Forgot your password?
                 </InertiaLink>
-                <Button
-                    :loading="form.processing"
-                    type="submit"
-                    label="Log In"
-                />
+                <Button :loading="form.processing" type="submit" label="Log In" />
+            </div>
+            <div class="flex justify-end items-center pt-2">
+                <InertiaLink :href="route('register')" class="underline text-muted-color hover:text-color">
+                    Or create an account
+                </InertiaLink>
+
             </div>
         </form>
     </GuestLayout>
