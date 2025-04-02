@@ -52,33 +52,19 @@
             <span class="detail-value">{{ artwork.year }}</span>
           </div>
         </div>
-
-        <Divider />
-
-        <div class="tags-wrapper">
-          <Button variant="outlined" class="!border-2">
-            <img src="/images/frames/floating-frame.svg" alt="Floating Frame"
-              class="canvas-icon" />
-          </Button>
-          <Button variant="outlined" class="!border-2">
-            <img src="/images/frames/framed-print-1.svg" alt="Floating Poster"
-              class="canvas-icon" />
-          </Button>
-        </div>
-        <div class="tags-wrapper">
-          <Button variant="outlined" class="!border-2">
-            <img src="/images/frames/floatblack-frame.png" alt="Black Frame"
-              class="frame-icon" />
-          </Button>
-          <Button variant="outlined" class="!border-2">
-            <img src="/images/frames/floatwhite-frame.png" alt="White Frame"
-              class="frame-icon" />
-          </Button>
-        </div>
-
         <div class="tags-wrapper">
           <Tag v-for="(tag, index) in parsedKeywords" :key="index" :value="tag" severity="secondary" rounded />
         </div>
+
+        <Divider />
+
+        <!-- Form select -->
+        <ArtworkCustomizer 
+          :width="artwork.width" 
+          :height="artwork.height"
+          @add-to-cart="handleAddToCart" 
+        />
+
       </div>
     </div>
 
@@ -101,6 +87,7 @@ import Tag from 'primevue/tag';
 import Divider from 'primevue/divider';
 import Dialog from 'primevue/dialog';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
+import ArtworkCustomizer from '@/components/ArtworkCustomizer.vue';
 
 defineOptions({ layout: HeaderLayout })
 
@@ -109,6 +96,8 @@ const props = defineProps({
 });
 
 const artwork = computed(() => props.artwork?.[0]);
+console.log(artwork.value);
+
 
 const parsedKeywords = computed(() => {
   const raw = artwork.value?.keywords?.en || '';
@@ -208,6 +197,11 @@ function scrollThumbnails(direction) {
       behavior: 'smooth'
     });
   }
+}
+
+function handleAddToCart(item) {
+  // Handle cart functionality here
+  console.log('Adding to cart:', item);
 }
 </script>
 
@@ -396,7 +390,7 @@ function scrollThumbnails(direction) {
   margin-bottom: 0.5rem;
 }
 
-.artwork-artist {
+.artwork-artist{
   font-size: 1.25rem;
   color: #666;
   font-weight: 500;
@@ -431,7 +425,7 @@ function scrollThumbnails(direction) {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-block: 1rem;
 }
 
 .thumbnail-nav {
@@ -443,17 +437,5 @@ function scrollThumbnails(direction) {
 .thumb-nav-button {
   font-size: 1.25rem;
   color: #444;
-}
-
-.canvas-icon {
-  display: block;
-  width: 80px;
-  height: 60px;
-}
-
-.frame-icon {
-  display: block;
-  width: 50px;
-  height: 50px;
 }
 </style>
