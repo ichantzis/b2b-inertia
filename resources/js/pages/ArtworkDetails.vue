@@ -1,50 +1,25 @@
 <template>
-    <InertiaHead :title="artwork.title.en" />
+  <InertiaHead :title="artwork.title.en" />
 
-  <div
-    class="artwork-details"
-    @keydown.left.prevent="prevImage"
-    @keydown.right.prevent="nextImage"
-    tabindex="0"
-    @touchstart="handleTouchStart"
-    @touchend="handleTouchEnd"
-  >
-    <Button
-      icon="pi pi-arrow-left"
-      class="back-button"
-      rounded
-      text
-      aria-label="Back"
-      @click="goBack"
-    />
+  <div class="artwork-details" @keydown.left.prevent="prevImage" @keydown.right.prevent="nextImage" tabindex="0"
+    @touchstart="handleTouchStart" @touchend="handleTouchEnd">
+    <Button icon="pi pi-arrow-left" class="back-button" rounded text aria-label="Back" @click="goBack" />
 
     <div v-if="artwork" class="artwork-container">
       <div class="artwork-image">
         <div class="custom-gallery">
           <div class="gallery-main-wrapper">
-            <img
-              :src="galleryImages[currentIndex]?.itemImageSrc"
-              class="galleria-main-image clickable"
-              @click="openPreview(currentIndex)"
-              :alt="galleryImages[currentIndex]?.alt"
-            />
+            <img :src="galleryImages[currentIndex]?.itemImageSrc" class="galleria-main-image clickable"
+              @click="openPreview(currentIndex)" :alt="galleryImages[currentIndex]?.alt" />
             <Button icon="pi pi-chevron-left" class="gallery-nav-button left" @click.stop="prevImage" />
             <Button icon="pi pi-chevron-right" class="gallery-nav-button right" @click.stop="nextImage" />
           </div>
           <div class="thumbnail-nav">
             <Button icon="pi pi-chevron-left" text class="thumb-nav-button" @click="scrollThumbnails('left')" />
             <div ref="thumbnailRow" class="thumbnail-row">
-              <div
-                v-for="(img, idx) in galleryImages"
-                :key="idx"
-                class="thumbnail-wrapper"
-              >
-                <img
-                  :src="img.thumbnailImageSrc"
-                  class="galleria-thumbnail"
-                  @click="selectThumbnail(idx)"
-                  :alt="img.alt"
-                />
+              <div v-for="(img, idx) in galleryImages" :key="idx" class="thumbnail-wrapper">
+                <img :src="img.thumbnailImageSrc" class="galleria-thumbnail" @click="selectThumbnail(idx)"
+                  :alt="img.alt" />
                 <div v-if="currentIndex !== idx" class="thumbnail-overlay" />
               </div>
             </div>
@@ -81,24 +56,34 @@
         <Divider />
 
         <div class="tags-wrapper">
-          <Tag
-            v-for="(tag, index) in parsedKeywords"
-            :key="index"
-            :value="tag"
-            severity="secondary"
-            rounded
-          />
+          <Button variant="outlined" class="!border-2">
+            <img src="/images/frames/floating-frame.svg" alt="Floating Frame"
+              class="canvas-icon" />
+          </Button>
+          <Button variant="outlined" class="!border-2">
+            <img src="/images/frames/framed-print-1.svg" alt="Floating Poster"
+              class="canvas-icon" />
+          </Button>
+        </div>
+        <div class="tags-wrapper">
+          <Button variant="outlined" class="!border-2">
+            <img src="/images/frames/floatblack-frame.png" alt="Black Frame"
+              class="frame-icon" />
+          </Button>
+          <Button variant="outlined" class="!border-2">
+            <img src="/images/frames/floatwhite-frame.png" alt="White Frame"
+              class="frame-icon" />
+          </Button>
+        </div>
+
+        <div class="tags-wrapper">
+          <Tag v-for="(tag, index) in parsedKeywords" :key="index" :value="tag" severity="secondary" rounded />
         </div>
       </div>
     </div>
 
-    <Dialog
-      v-model:visible="previewVisible"
-      modal
-      class="preview-dialog"
-      :dismissableMask="true"
-      :pt="{ content: { onKeydown: handleDialogKey, onTouchstart: handleTouchStart, onTouchend: handleTouchEnd } }"
-    >
+    <Dialog v-model:visible="previewVisible" modal class="preview-dialog" :dismissableMask="true"
+      :pt="{ content: { onKeydown: handleDialogKey, onTouchstart: handleTouchStart, onTouchend: handleTouchEnd } }">
       <div class="dialog-gallery">
         <Button icon="pi pi-chevron-left" @click="prevImage" />
         <img :src="galleryImages[currentIndex]?.itemImageSrc" class="preview-image" />
@@ -117,7 +102,7 @@ import Divider from 'primevue/divider';
 import Dialog from 'primevue/dialog';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 
-defineOptions({ layout: HeaderLayout})
+defineOptions({ layout: HeaderLayout })
 
 const props = defineProps({
   artwork: Object
@@ -164,10 +149,10 @@ const thumbnailRow = ref(null);
 
 function goBack() {
   if (window.history.length > 2) {
-        router.visit(window.history.back());
-    } else {
-        router.visit(route('welcome'));
-    }
+    router.visit(window.history.back());
+  } else {
+    router.visit(route('welcome'));
+  }
 }
 
 function openPreview(index) {
@@ -259,6 +244,7 @@ function scrollThumbnails(direction) {
 }
 
 @media (min-width: 768px) {
+
   .artwork-image,
   .artwork-info {
     width: 50%;
@@ -268,28 +254,33 @@ function scrollThumbnails(direction) {
 .gallery-main-wrapper {
   position: relative;
   width: 100%;
-  height: 500px; /* Fixed height */
+  height: 500px;
+  /* Fixed height */
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f9f9f9;
   border-radius: 8px;
-  overflow: hidden; /* Prevent image overflow */
+  overflow: hidden;
+  /* Prevent image overflow */
 }
 
 @media (max-width: 768px) {
   .gallery-main-wrapper {
-    height: 350px; /* Smaller height on mobile */
+    height: 350px;
+    /* Smaller height on mobile */
   }
 }
 
 .galleria-main-image {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Maintain aspect ratio */
+  object-fit: contain;
+  /* Maintain aspect ratio */
   cursor: zoom-in;
   border-radius: 8px;
-  padding: 1rem; /* Add some padding inside container */
+  padding: 1rem;
+  /* Add some padding inside container */
 }
 
 .gallery-nav-button {
@@ -375,6 +366,7 @@ function scrollThumbnails(direction) {
   .dialog-gallery {
     padding: 1rem;
   }
+
   .dialog-nav-button {
     font-size: 1.5rem;
     padding: 0.5rem;
@@ -386,7 +378,7 @@ function scrollThumbnails(direction) {
   justify-content: center;
   align-items: center;
   background: black;
-  width: 100%!important;
+  width: 100% !important;
 }
 
 .back-button {
@@ -451,5 +443,17 @@ function scrollThumbnails(direction) {
 .thumb-nav-button {
   font-size: 1.25rem;
   color: #444;
+}
+
+.canvas-icon {
+  display: block;
+  width: 80px;
+  height: 60px;
+}
+
+.frame-icon {
+  display: block;
+  width: 50px;
+  height: 50px;
 }
 </style>
