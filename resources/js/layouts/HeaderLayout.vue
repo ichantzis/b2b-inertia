@@ -131,12 +131,37 @@ const mobileMenuOpen = ref(false);
 const openMenu = () => {
     mobileMenuOpen.value = true;
 };
+
+// Add these new refs for scroll handling
+const isHeaderVisible = ref(true);
+const lastScrollPosition = ref(0);
+
+// Add scroll handler
+const handleScroll = () => {
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+    isHeaderVisible.value = 
+        currentScroll < lastScrollPosition.value || // Scrolling up
+        currentScroll < 50; // Near top
+    lastScrollPosition.value = currentScroll;
+};
+
+// Add lifecycle hooks
+onMounted(() => {
+    window.addEventListener('scroll', handleScroll);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <template>
     <div>
         <div class="min-h-screen">
-            <nav class="dynamic-bg shadow-sm">
+            <nav :class="[
+                'dynamic-bg shadow-sm fixed w-full transition-transform duration-300 z-50',
+                { '-translate-y-full': !isHeaderVisible }
+            ]">
                 <Container class="relative max-w-none">
                     <!-- Logo - Absolute Center -->
                     <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
@@ -170,19 +195,22 @@ const openMenu = () => {
                         </template>
                     </LinksMenuBar>
                 </Container>
-
-                <!-- Drawer Menu (now used for all screen sizes) -->
-                <Drawer v-model:visible="mobileMenuOpen" position="left">
-                    <template #header>
-                        <h3 class="font-bold text-xl">Menu</h3>
-                    </template>
-                    <div class="space-y-5">
-                        <div class="flex flex-col gap-2">
-                            <LinksPanelMenu :model="mainMenuItems" class="w-full" />
-                        </div>
-                    </div>
-                </Drawer>
             </nav>
+
+            <!-- Add padding to prevent content from going under fixed header -->
+            <div class="h-[120px]"></div>
+
+            <!-- Drawer Menu (now used for all screen sizes) -->
+            <Drawer v-model:visible="mobileMenuOpen" position="left">
+                <template #header>
+                    <h3 class="font-bold text-xl">Menu</h3>
+                </template>
+                <div class="space-y-5">
+                    <div class="flex flex-col gap-2">
+                        <LinksPanelMenu :model="mainMenuItems" class="w-full" />
+                    </div>
+                </div>
+            </Drawer>
 
             <!-- Page Content -->
             <Toast position="top-center" />
@@ -201,5 +229,12 @@ const openMenu = () => {
 
 :deep(.p-popover .p-panelmenu) {
     border: none;
+}
+
+/* Add these new styles */
+nav {
+    top: 0;
+    transform-origin: top;
+    backface-visibility: hidden;
 }
 </style>
