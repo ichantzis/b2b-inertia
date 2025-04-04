@@ -1,12 +1,16 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { useToast } from 'primevue/usetoast';
+import { add } from 'lodash';
 
 const props = defineProps({
     artwork: Object
 });
 
 const artwork = computed(() => props.artwork);
+
+const toast = useToast();
 
 const isSquare = computed(() => props.artwork?.width === props.artwork?.height);
 
@@ -118,20 +122,24 @@ const formattedTotalPrice = computed(() => {
 
 const addToCartForm = useForm({
     artwork_id: props.artwork?.id || null, // Initialize with artwork ID if available
+    title: props.artwork?.title?.en || null,
     type: selectedType.value,
     frame: selectedType.value === 'canvas' ? selectedCanvas.value : selectedPoster.value,
     size: isSquare.value ? selectedSquareSize.value : selectedSize.value,
     quantity: quantity.value,
+    img_thumb: props.artwork?.urls.img_thumb || null,
     price: currentPrice.value,
     total: totalPrice.value
 });
 
 const addToCart = () => {
     addToCartForm.artwork_id = props.artwork.id; // Ensure it's set before posting
+    addToCartForm.title = props.artwork.title?.en || 'Artwork'; // Fallback title
     addToCartForm.type = selectedType.value;
     addToCartForm.frame = selectedType.value === 'canvas' ? selectedCanvas.value : selectedPoster.value;
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
+    addToCartForm.img_thumb = props.artwork.urls.img_thumb;
     addToCartForm.price = currentPrice.value;
     addToCartForm.total = totalPrice.value;
 
@@ -143,11 +151,17 @@ const addToCart = () => {
         onSuccess: () => {
             console.log('Item added to cart');
             // Optional: Show success message (e.g., using PrimeVue Toast)
-            // this.$toast.add({ severity: 'success', summary: 'Added', detail: 'Item added to cart', life: 3000 });
+            toast.add({ severity: 'success', summary: 'Added to cart', detail: `${quantity.value} x ${props.artwork.title?.en || 'Artwork'} added.`, life: 3000 });
         },
         onError: (errors) => {
             console.error('Failed to add item:', errors);
             // Optional: Show error message
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Could not add item to cart. Please try again.',
+                life: 5000
+            });
         }
     });
 }

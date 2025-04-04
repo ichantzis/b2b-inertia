@@ -6,9 +6,12 @@ import LinksMenu from '@/components/primevue/LinksMenu.vue';
 import LinksMenuBar from '@/components/primevue/LinksMenuBar.vue';
 import LinksPanelMenu from '@/components/primevue/LinksPanelMenu.vue';
 import Popover from 'primevue/popover';
+import { useToast } from 'primevue/usetoast';
 import { Menu } from 'primevue';
 
 const page = usePage();
+
+const toast = useToast();
 
 const currentRoute = computed(() => {
     // Access page.url to trigger re-computation on navigation.
@@ -19,8 +22,29 @@ const currentRoute = computed(() => {
 });
 
 const cartCount = computed(() => page.props.cartCount || 0);
+const cartItemsPreview = computed(() => {
+    return (page.props.cartItemsPreview.map(item => ({
+        ...item,
+        formattedPrice: item.artwork_data?.price // format price
+            ? Number(item.artwork_data.price).toFixed(2)
+            : '0.00'
+    })) || []);
+}); // Get items
+const isCartEmpty = computed(() => cartItemsPreview.value.length === 0);
+
+const cartSubtotal = computed(() => {
+    const total = cartItemsPreview.value.reduce((sum, item) => {
+        const price = Number(item.artwork_data?.price || 0);
+        const quantity = Number(item.quantity || 0);
+        return sum + (price * quantity);
+    }, 0);
+    return total.toFixed(2);
+});
+
 
 const op = ref();
+const cartOp = ref(); // Cart popover ref
+const cartOpTimer = ref(null); // Timer for hover delay
 
 // Add computed property for user name with null checks
 const userName = computed(() => {
@@ -147,6 +171,54 @@ const handleScroll = () => {
     lastScrollPosition.value = currentScroll;
 };
 
+// --- Cart Popover Hover Logic ---
+const showCartPopover = (event) => {
+    clearTimeout(cartOpTimer.value); // Clear any pending hide timer
+    if (!cartOp.value.isUnstyled) { // Check internal state if needed, or just toggle
+        cartOp.value.show(event, event.currentTarget);
+    } else {
+        cartOp.value.show(event);
+    }
+
+};
+
+const hideCartPopover = () => {
+    // Add a small delay before hiding to allow moving mouse into popover
+    cartOpTimer.value = setTimeout(() => {
+        cartOp.value?.hide(); // Use optional chaining
+    }, 150); // Adjust delay (ms) as needed
+};
+
+const clearCartHideTimer = () => {
+    clearTimeout(cartOpTimer.value);
+};
+
+const handleDeleteItem = (itemId) => {
+    router.delete(route('cart.destroy', itemId), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            // Optional: show success toast
+            toast.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'Item removed from cart',
+                life: 3000
+            });
+        },
+        onError: (errors) => {
+            console.error('Failed to delete item:', errors);
+            // Optional: Show error message
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Could not delete item from cart. Please try again.',
+                life: 5000
+            });
+        }
+    });
+};
+
 // Add lifecycle hooks
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);
@@ -186,7 +258,9 @@ onUnmounted(() => {
                             <div class="flex items-center">
                                 <Button id="user-menu-btn" severity="secondary" icon="pi pi-user" pt:root:class="p-0"
                                     pt:icon:class="text-xl" text aria-label="User menu" @click="toggleUserMenu" />
-                                <Link :href="route('cart.index')" class="ml-4">
+                                <Link :href="route('cart.index')" class="ml-4" @mouseenter="showCartPopover"
+                                    @mouseleave="hideCartPopover" aria-haspopup="true"
+                                    aria-controls="cart-popover-content">
                                 <OverlayBadge v-if="cartCount > 0" :value="String(cartCount)">
                                     <Button id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
                                         pt:root:class="p-0" pt:icon:class="text-xl" text aria-label="Cart menu" />
@@ -197,6 +271,47 @@ onUnmounted(() => {
                                 <Popover ref="op" target="#user-menu-btn" :showCloseIcon="false">
                                     <div class="p-2 w-48">
                                         <LinksPanelMenu :model="userMenuItems" class="border-none" />
+                                    </div>
+                                </Popover>
+                                <Popover ref="cartOp" id="cart-popover-content" target="#cart-menu-btn"
+                                    @mouseenter="clearCartHideTimer" @mouseleave="hideCartPopover">
+                                    <div class="p-4 w-[300px] max-h-[400px] overflow-y-auto">
+                                        <h4 class="font-semibold mb-3">Shopping Cart</h4>
+                                        <div v-if="isCartEmpty" class="text-center text-muted-color">
+                                            Your cart is empty.
+                                        </div>
+                                        <div v-else class="flex flex-col gap-3">
+                                            <div v-for="item in cartItemsPreview" :key="item.id"
+                                                class="flex items-center gap-2 border-b pb-2 dynamic-border last:border-b-0">
+                                                <img v-if="item.artwork_data?.img_thumb"
+                                                    :src="item.artwork_data.img_thumb" :alt="item.artwork_data.title"
+                                                    class="w-12 h-12 object-cover rounded flex-shrink-0" />
+                                                <div v-else
+                                                    class="w-12 h-12 bg-surface-100 rounded flex items-center justify-center text-muted-color text-xs flex-shrink-0">
+                                                    No Img</div>
+                                                <div class="flex-grow min-w-0">
+                                                    <p class="font-medium text-sm truncate">{{ item.artwork_data?.title
+                                                        || 'Untitled' }}</p>
+                                                    <p class="text-sm text-muted-color">Type: {{ item.type }}</p>
+                                                    <p class="text-sm text-muted-color">Frame: {{ item.frame }}</p>
+                                                    <p class="text-sm text-muted-color">Size: {{ item.size }}</p>
+                                                    <p class="text-sm text-muted-color">{{ item.quantity }} x €{{
+                                                        item.formattedPrice }}</p>
+                                                </div>
+                                                <Button icon="pi pi-times-circle" text rounded
+                                                    aria-label="Delete item" @click="handleDeleteItem(item.id)" />
+                                            </div>
+                                            <div v-if="!isCartEmpty" class="mt-3 pt-2 dynamic-border">
+                                                <p class="text-sm font-semibold flex justify-between">
+                                                    <span>Subtotal:</span>
+                                                    <span>€{{ cartSubtotal }}</span>
+                                                </p>
+                                            </div>
+                                            <Link :href="route('cart.index')" class="block mt-2">
+                                            <Button label="View Full Cart" severity="primary" size="small"
+                                                class="w-full" />
+                                            </Link>
+                                        </div>
                                     </div>
                                 </Popover>
                             </div>

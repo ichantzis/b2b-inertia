@@ -115,8 +115,10 @@ class CartController extends Controller
 
         $validatedData = $request->validate([
             'artwork_id' => 'required|string',
+            'title' => 'nullable|string',
             'quantity' => 'required|integer|min:1',
-            'type' => 'required|string', 
+            'img_thumb' => 'nullable|string',
+            'type' => 'required|string',
             'frame' => 'required|string',
             'size' => 'required|string',
             'price' => 'required|numeric|min:0',
@@ -125,19 +127,22 @@ class CartController extends Controller
         $cart = $this->getCurrentCart();
         $artworkId = $validatedData['artwork_id'];
         $quantity = $validatedData['quantity'];
-        $type = $validatedData['type']; 
+        $type = $validatedData['type'];
         $frame = $validatedData['frame'];
         $size = $validatedData['size'];
+        $img_thumb = $validatedData['img_thumb'] ?? null; // Optional
         $price = $validatedData['price'];
 
         $artworkDataForJson = [
             'price' => $price,
+            'img_thumb' => $img_thumb,
+            'title' => $validatedData['title'] ?? null,
             // Add title/image here if needed
         ];
 
         $cartItem = $cart->items()
             ->where('artwork_id', $artworkId)
-            ->where('type', $type)   
+            ->where('type', $type)
             ->where('frame', $frame)
             ->where('size', $size)
             ->first();
@@ -149,7 +154,7 @@ class CartController extends Controller
         } else {
             $newItem = $cart->items()->create([
                 'artwork_id' => $artworkId,
-                'type' => $type, 
+                'type' => $type,
                 'frame' => $frame,
                 'size' => $size,
                 'quantity' => $quantity,
@@ -159,7 +164,7 @@ class CartController extends Controller
         }
 
         $cart->touch();
-        $this->shareCartCount();
+        $this->shareCartData();
 
         return back()->with('success', 'Item added to cart.');
     }
@@ -182,7 +187,7 @@ class CartController extends Controller
         $cartItem->quantity = $request->input('quantity');
         $cartItem->save();
         $cartItem->cart->touch(); // Update cart's timestamp
-        $this->shareCartCount();
+        $this->shareCartData();
 
         return back()->with('success', 'Cart updated.');
     }
@@ -201,7 +206,7 @@ class CartController extends Controller
         $cart = $cartItem->cart;
         $cartItem->delete();
         $cart->touch();
-        $this->shareCartCount();
+        $this->shareCartData();
 
         return back()->with('success', 'Item removed from cart.');
     }
@@ -222,14 +227,13 @@ class CartController extends Controller
     }
 
     /**
-     * Share cart item count globally via Inertia share.
+     * Share cart item count and limited items globally via Inertia share.
      */
-    protected function shareCartCount(): void
+    protected function shareCartData(): void
     {
-        $cart = $this->getCurrentCart(false);
-        $count = $cart ? $cart->items->sum('quantity') : 0;
-
-        Inertia::share('cartCount', $count);
+        $cartData = self::getSharedCartData(); // Call the static method
+        Inertia::share('cartCount', $cartData['cartCount']);
+        Inertia::share('cartItemsPreview', $cartData['cartItemsPreview']); // Share items
     }
 
     /**
@@ -240,9 +244,28 @@ class CartController extends Controller
         // Use static method or a service to avoid instantiation issues in middleware
         $controller = app(CartController::class); // Resolve controller via container
         $cart = $controller->getCurrentCart(false);
+        $itemsPreview = [];
+
+        if ($cart) {
+            // Eager load items and limit the result for the preview
+            $itemsPreview = $cart->items()
+                ->latest() // Optional: show most recently added
+                ->take(5)  // Limit to 5 items for preview
+                ->get()
+                ->map(fn($item) => [ // Select only needed data
+                    'id' => $item->id,
+                    'artwork_id' => $item->artwork_id,
+                    'quantity' => $item->quantity,
+                    'type' => $item->type,
+                    'frame' => $item->frame,
+                    'size' => $item->size,
+                    'artwork_data' => $item->artwork_data,
+                ])->all();
+        }
+
         return [
             'cartCount' => $cart ? $cart->items->sum('quantity') : 0,
-            // Add other cart summary data if needed globally
+            'cartItemsPreview' => $itemsPreview,
         ];
     }
 }

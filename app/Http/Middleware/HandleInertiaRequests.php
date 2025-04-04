@@ -56,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                 ];
             })->values()->all(),
             'cartCount' => $cartData['cartCount'],
+            'cartItemsPreview' => $cartData['cartItemsPreview'],
         ]);
     }
 }
