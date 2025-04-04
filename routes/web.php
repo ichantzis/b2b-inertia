@@ -3,6 +3,8 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PictufyController;
+use App\Http\Controllers\CartController;
+use App\Http\Middleware\EnsureUserIsAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -41,5 +43,25 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Cart Routes
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
+Route::put('/cart/{cartItem}', [CartController::class, 'update'])->name('cart.update'); // Use PUT for updates
+Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy'); // Use DELETE for removals
+
+// Checkout Route (Example) - Protect with authentication middleware
+Route::get('/checkout', function () {
+    // Checkout logic/page here
+    // Ensure cart items are present before proceeding
+    $cart = app(CartController::class)->getCurrentCart(false);
+    if (!$cart || $cart->items->isEmpty()) {
+        return redirect()->route('cart.index')->withErrors(['cart' => 'Your cart is empty.']);
+    }
+    return Inertia::render('Checkout/Index', [ /* checkout data */]);
+})->middleware(['auth', 'verified'])->name('checkout.index'); // Laravel's default auth middleware
+
+// You might need a POST route for processing the checkout form
+// Route::post('/checkout', [CheckoutController::class, 'store'])->middleware(['auth', 'verified'])->name('checkout.store');
 
 require __DIR__ . '/auth.php';

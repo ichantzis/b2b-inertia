@@ -60,9 +60,7 @@
 
         <!-- Form select -->
         <ArtworkCustomizer 
-          :width="artwork.width" 
-          :height="artwork.height"
-          @add-to-cart="handleAddToCart" 
+        :artwork="artwork"
         />
 
       </div>

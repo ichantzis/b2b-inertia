@@ -18,6 +18,8 @@ const currentRoute = computed(() => {
     return route().current();
 });
 
+const cartCount = computed(() => page.props.cartCount || 0);
+
 const op = ref();
 
 // Add computed property for user name with null checks
@@ -139,7 +141,7 @@ const lastScrollPosition = ref(0);
 // Add scroll handler
 const handleScroll = () => {
     const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-    isHeaderVisible.value = 
+    isHeaderVisible.value =
         currentScroll < lastScrollPosition.value || // Scrolling up
         currentScroll < 50; // Near top
     lastScrollPosition.value = currentScroll;
@@ -184,8 +186,14 @@ onUnmounted(() => {
                             <div class="flex items-center">
                                 <Button id="user-menu-btn" severity="secondary" icon="pi pi-user" pt:root:class="p-0"
                                     pt:icon:class="text-xl" text aria-label="User menu" @click="toggleUserMenu" />
-                                <Button id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart" pt:root:class="p-0"
-                                    pt:icon:class="text-xl" text aria-label="Cart menu" />
+                                <Link :href="route('cart.index')" class="ml-4">
+                                <OverlayBadge v-if="cartCount > 0" :value="String(cartCount)">
+                                    <Button id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
+                                        pt:root:class="p-0" pt:icon:class="text-xl" text aria-label="Cart menu" />
+                                </OverlayBadge>
+                                <Button v-else id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
+                                    pt:root:class="p-0" pt:icon:class="text-xl" text aria-label="Cart menu" />
+                                </Link>
                                 <Popover ref="op" target="#user-menu-btn" :showCloseIcon="false">
                                     <div class="p-2 w-48">
                                         <LinksPanelMenu :model="userMenuItems" class="border-none" />

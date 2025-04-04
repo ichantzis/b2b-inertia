@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\CartController;
 use App\Services\PictufyService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -38,6 +39,8 @@ class HandleInertiaRequests extends Middleware
     {
         $pictufyService = app(PictufyService::class);
         $listsData = $pictufyService->getLists();
+         // Get shared cart data using the static method or service resolution
+        $cartData = CartController::getSharedCartData(); //
         
         return array_merge(parent::share($request), [
             'auth' => [
@@ -52,6 +55,7 @@ class HandleInertiaRequests extends Middleware
                     'icon' => 'pi pi-fw pi-images',
                 ];
             })->values()->all(),
+            'cartCount' => $cartData['cartCount'],
         ]);
     }
 }

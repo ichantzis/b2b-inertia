@@ -1,22 +1,24 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
-    width: Number,
-    height: Number
+    artwork: Object
 });
 
-const isSquare = computed(() => props.width === props.height);
+const artwork = computed(() => props.artwork);
 
-const selectedStyle = ref('floating');
+const isSquare = computed(() => props.artwork?.width === props.artwork?.height);
+
+const selectedType = ref('canvas');
 const selectedCanvas = ref('black');
 const selectedPoster = ref('black');
 const selectedSize = ref('50x70');
 const selectedSquareSize = ref('50x50');
 
 const prices = {
-    canvas: {
-        regular: {
+    frame: {
+        canvas: {
             '40x60': 144,
             '50x70': 180,
             '60x90': 264,
@@ -67,18 +69,18 @@ const showSize = (size) => {
     if (isSquare.value && !isSquareSize) return false;
     if (!isSquare.value && isSquareSize) return false;
 
-    if (selectedStyle.value === 'floating') {
+    if (selectedType.value === 'canvas') {
         return selectedCanvas.value === 'noframe'
-            ? prices.canvas.noframe[size] > 0
-            : prices.canvas.regular[size] > 0;
+            ? prices.frame.noframe[size] > 0
+            : prices.frame.canvas[size] > 0;
     } else {
-        return prices.canvas.poster[size] > 0;
+        return prices.frame.poster[size] > 0;
     }
 };
 
 // Add computed properties for visibility only
-const showCanvasFrames = computed(() => selectedStyle.value === 'floating');
-const showPosterFrames = computed(() => selectedStyle.value === 'framed');
+const showCanvasFrames = computed(() => selectedType.value === 'canvas');
+const showPosterFrames = computed(() => selectedType.value === 'poster');
 
 const getButtonProps = (currentValue, selectedValue) => ({
     variant: currentValue === selectedValue ? 'outlined' : 'text',
@@ -93,12 +95,12 @@ const quantity = ref(1);
 // Add price computation
 const currentPrice = computed(() => {
     const size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
-    if (selectedStyle.value === 'floating') {
+    if (selectedType.value === 'canvas') {
         return selectedCanvas.value === 'noframe'
-            ? prices.canvas.noframe[size]
-            : prices.canvas.regular[size];
+            ? prices.frame.noframe[size]
+            : prices.frame.canvas[size];
     }
-    return prices.canvas.poster[size];
+    return prices.frame.poster[size];
 });
 
 const totalPrice = computed(() => {
@@ -114,22 +116,44 @@ const formattedTotalPrice = computed(() => {
     }).format(totalPrice.value);
 });
 
-// Define emits
-const emit = defineEmits(['addToCart']);
+const addToCartForm = useForm({
+    artwork_id: props.artwork?.id || null, // Initialize with artwork ID if available
+    type: selectedType.value,
+    frame: selectedType.value === 'canvas' ? selectedCanvas.value : selectedPoster.value,
+    size: isSquare.value ? selectedSquareSize.value : selectedSize.value,
+    quantity: quantity.value,
+    price: currentPrice.value,
+    total: totalPrice.value
+});
 
-function addToCart() {
-    emit('addToCart', {
-        style: selectedStyle.value,
-        frame: selectedStyle.value === 'floating' ? selectedCanvas.value : selectedPoster.value,
-        size: isSquare.value ? selectedSquareSize.value : selectedSize.value,
-        quantity: quantity.value,
-        price: currentPrice.value,
-        total: totalPrice.value
+const addToCart = () => {
+    addToCartForm.artwork_id = props.artwork.id; // Ensure it's set before posting
+    addToCartForm.type = selectedType.value;
+    addToCartForm.frame = selectedType.value === 'canvas' ? selectedCanvas.value : selectedPoster.value;
+    addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
+    addToCartForm.quantity = quantity.value;
+    addToCartForm.price = currentPrice.value;
+    addToCartForm.total = totalPrice.value;
+
+    console.log("Sending form data:", addToCartForm.data());
+
+    // Pass the data payload directly to the post method
+    addToCartForm.post(route('cart.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            console.log('Item added to cart');
+            // Optional: Show success message (e.g., using PrimeVue Toast)
+            // this.$toast.add({ severity: 'success', summary: 'Added', detail: 'Item added to cart', life: 3000 });
+        },
+        onError: (errors) => {
+            console.error('Failed to add item:', errors);
+            // Optional: Show error message
+        }
     });
 }
 
 // Add watchers after the refs
-watch([selectedStyle, selectedCanvas], () => {
+watch([selectedType, selectedCanvas], () => {
     const size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     if (!showSize(size)) {
         // Reset to default size if current size is not available
@@ -149,11 +173,11 @@ watch([selectedStyle, selectedCanvas], () => {
             <span class="detail-label">Frame</span>
         </div>
 
-        <div class="style-wrapper">
-            <Button v-bind="getButtonProps('floating', selectedStyle)" @click="selectedStyle = 'floating'">
+        <div class="type-wrapper">
+            <Button v-bind="getButtonProps('canvas', selectedType)" @click="selectedType = 'canvas'">
                 <img src="/images/frames/floating-frame.svg" alt="Floating Canvas" class="canvas-icon" />
             </Button>
-            <Button v-bind="getButtonProps('framed', selectedStyle)" @click="selectedStyle = 'framed'">
+            <Button v-bind="getButtonProps('poster', selectedType)" @click="selectedType = 'poster'">
                 <img src="/images/frames/framed-print-1.svg" alt="Floating Poster" class="canvas-icon" />
             </Button>
         </div>
@@ -233,7 +257,7 @@ watch([selectedStyle, selectedCanvas], () => {
                             :inputStyle="{ width: '3rem', textAlign: 'center' }" />
                     </div>
                     <Button label="ADD TO CART" icon="pi pi-shopping-cart" severity="primary" raised @click="addToCart"
-                        class="add-to-cart-btn" />
+                        :disabled="addToCartForm.processing" class="add-to-cart-btn" />
                 </div>
             </div>
         </div>
