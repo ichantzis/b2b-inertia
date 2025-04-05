@@ -2,61 +2,52 @@
 
 namespace App\Http\Middleware;
 
-use App\Http\Controllers\CartController;
-use App\Services\PictufyService;
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Make sure Request is imported
 use Inertia\Middleware;
+use App\Services\PictufyService;
+use App\Http\Controllers\CartController;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
-     */
-    protected $rootView = 'app';
+    // ... other methods ...
 
-    /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
-     */
-    public function version(Request $request): ?string
-    {
-        return parent::version($request);
-    }
-
-    /**
-     * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
         $pictufyService = app(PictufyService::class);
         $listsData = $pictufyService->getLists();
-         // Get shared cart data using the static method or service resolution
-        $cartData = CartController::getSharedCartData(); //
-        
-        return array_merge(parent::share($request), [
+        $cartData = CartController::getSharedCartData();
+
+        // Explicitly get the flash message
+        $loginSuccessMessage = $request->session()->get('login_success_message');
+
+        // Merge parent share, then our custom data, then explicitly add flash if needed
+        $sharedData = array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user(),
             ],
             'lists' => collect($listsData['items'] ?? [])->map(function ($list) {
-                return [
-                    'name' => html_entity_decode($list['name']),
-                    'list_id' => $list['list_id'],
-                    'cover' => $list['cover'],
-                    'route' => route('collection.filtered', ['list_id' => $list['list_id']]),
-                    'icon' => 'pi pi-fw pi-images',
-                ];
-            })->values()->all(),
+                 // ... list mapping ...
+                 return [
+                     'name' => html_entity_decode($list['name']),
+                     'list_id' => $list['list_id'],
+                     'cover' => $list['cover'],
+                     'route' => route('collection.filtered', ['list_id' => $list['list_id']]),
+                     'icon' => 'pi pi-fw pi-images',
+                 ];
+             })->values()->all(),
             'cartCount' => $cartData['cartCount'],
             'cartItemsPreview' => $cartData['cartItemsPreview'],
         ]);
+
+        // If the login message exists and isn't already in the 'flash' prop from parent::share
+        if ($loginSuccessMessage && !isset($sharedData['flash']['login_success_message'])) {
+             // Ensure 'flash' key exists before assigning to it
+             if (!isset($sharedData['flash'])) {
+                 $sharedData['flash'] = [];
+             }
+             $sharedData['flash']['login_success_message'] = $loginSuccessMessage;
+        }
+
+        return $sharedData;
     }
 }

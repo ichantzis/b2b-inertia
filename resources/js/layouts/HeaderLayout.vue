@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, useTemplateRef, onMounted, onUnmounted, watchEffect } from 'vue';
+import { ref, computed, useTemplateRef, onMounted, onUnmounted, watch, nextTick, watchEffect } from 'vue';
 import { usePage, useForm, Link, router } from '@inertiajs/vue3';
 import ApplicationLogo from '@/components/ApplicationLogo.vue';
 import LinksMenu from '@/components/primevue/LinksMenu.vue';
@@ -219,6 +219,31 @@ const handleDeleteItem = (itemId) => {
     });
 };
 
+watch(() => page.props.flash?.login_success_message, (newMessage) => {
+  if (newMessage) {
+    // Wait for the next DOM update cycle before showing the toast
+    nextTick(() => {
+        try {
+          toast.add({
+              severity: 'success',
+              summary: 'Logged In',
+              detail: newMessage,
+              life: 3000 // Keep it slightly longer for testing if needed
+          });
+        } catch (error) {
+          console.error('Error calling toast.add() inside nextTick:', error);
+        }
+    });
+
+    // Clear the flash message from Inertia's props immediately after detecting it
+    // so the watcher doesn't re-trigger unnecessarily if other props change.
+    // Do this *outside* nextTick.
+    if (page.props.flash) {
+        page.props.flash.login_success_message = null;
+    }
+  }
+}, { immediate: true }); // immediate: true is still correct here
+
 // Add lifecycle hooks
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);
@@ -298,8 +323,8 @@ onUnmounted(() => {
                                                     <p class="text-sm text-muted-color">{{ item.quantity }} x €{{
                                                         item.formattedPrice }}</p>
                                                 </div>
-                                                <Button icon="pi pi-times-circle" text rounded
-                                                    aria-label="Delete item" @click="handleDeleteItem(item.id)" />
+                                                <Button icon="pi pi-times-circle" text rounded aria-label="Delete item"
+                                                    @click="handleDeleteItem(item.id)" />
                                             </div>
                                             <div v-if="!isCartEmpty" class="mt-3 pt-2 dynamic-border">
                                                 <p class="text-sm font-semibold flex justify-between">

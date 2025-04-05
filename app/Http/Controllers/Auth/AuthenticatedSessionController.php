@@ -33,7 +33,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('welcome', absolute: false));
+        // Get the authenticated user's name
+        $userName = $request->user()->name;
+
+        return redirect()->intended(route('welcome', absolute: false))
+            ->with('login_success_message', "Welcome back, {$userName}!");
     }
 
     /**
