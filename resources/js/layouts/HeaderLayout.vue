@@ -45,6 +45,7 @@ const cartSubtotal = computed(() => {
 const op = ref();
 const cartOp = ref(); // Cart popover ref
 const cartOpTimer = ref(null); // Timer for hover delay
+const userOpTimer = ref(null); // Timer for user menu hover delay
 
 // Add computed property for user name with null checks
 const userName = computed(() => {
@@ -139,15 +140,33 @@ const userMenuItems = [
     },
 ];
 const visible = ref(false);
-const toggleUserMenu = (event) => {
-    const isAuthenticated = page.props.auth?.user;
 
+// Add these near other menu functions
+const showUserPopover = (event) => {
+    const isAuthenticated = page.props.auth?.user;
+    if (isAuthenticated) {
+        clearTimeout(userOpTimer.value);
+        op.value?.show(event);
+    }
+};
+
+const handleUserClick = () => {
+    const isAuthenticated = page.props.auth?.user;
     if (!isAuthenticated) {
         router.visit(route('login'));
-        return;
     }
-    op.value.toggle(event);
 };
+
+const hideUserPopover = () => {
+    userOpTimer.value = setTimeout(() => {
+        op.value?.hide();
+    }, 150);
+};
+
+const clearUserHideTimer = () => {
+    clearTimeout(userOpTimer.value);
+};
+
 
 // Mobile menu (Drawer)
 const homeMobileMenuItems = computed(() => mainMenuItems.value);
@@ -281,8 +300,16 @@ onUnmounted(() => {
                         <!-- Right Side - User Menu -->
                         <template #end>
                             <div class="flex items-center">
-                                <Button id="user-menu-btn" severity="secondary" icon="pi pi-user" pt:root:class="p-0"
-                                    pt:icon:class="text-xl" text aria-label="User menu" @click="toggleUserMenu" />
+                                <Button id="user-menu-btn" 
+                                    severity="secondary" 
+                                    icon="pi pi-user" 
+                                    pt:root:class="p-0"
+                                    pt:icon:class="text-xl" 
+                                    text 
+                                    aria-label="User menu" 
+                                    @mouseenter="showUserPopover"
+                                    @mouseleave="hideUserPopover"
+                                    @click="handleUserClick" />
                                 <Link :href="route('cart.index')" class="ml-4" @mouseenter="showCartPopover"
                                     @mouseleave="hideCartPopover" aria-haspopup="true"
                                     aria-controls="cart-popover-content">
@@ -293,7 +320,11 @@ onUnmounted(() => {
                                 <Button v-else id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
                                     pt:root:class="p-0" pt:icon:class="text-xl" text aria-label="Cart menu" />
                                 </Link>
-                                <Popover ref="op" target="#user-menu-btn" :showCloseIcon="false">
+                                <Popover ref="op" 
+                                    target="#user-menu-btn" 
+                                    :showCloseIcon="false"
+                                    @mouseenter="clearUserHideTimer" 
+                                    @mouseleave="hideUserPopover">
                                     <div class="p-2 w-48">
                                         <LinksPanelMenu :model="userMenuItems" class="border-none" />
                                     </div>
