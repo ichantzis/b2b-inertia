@@ -200,10 +200,13 @@ const getActiveColor = () => {
 };
 
 const getBaseUrl = () => {
-    const currentPath = usePage().url;
+    const currentPath = usePage().url;    
         
     if (currentPath.startsWith('/collection/') && props.listId) {
         return `/collection/${props.listId}`;
+    }
+    if (currentPath.startsWith('/lists/') && props.listId) {
+        return `/lists/${props.listId}`;
     }
     return '/artworks';
 };

@@ -1,10 +1,10 @@
 <template>
-    <InertiaHead :title="props.listName" />
+    <InertiaHead :title="props.collectionName" />
     <div class="layout-container">
         <main class="main-content">
 
             <div class="content-wrapper">
-                <h1 class="title">{{ listName }}</h1>
+                <h1 class="title">{{ collectionName }}</h1>
                 <div class="flex justify-center items-center mb-4">
                     <Button icon="pi pi-filter" @click="layout?.toggleFilters()"
                         :label="layout?.isFiltersVisible?.value ? 'Hide Filters' : 'Filters'" severity="info"
@@ -107,12 +107,11 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
-    // Change collection to listId
-    listId: {
+    collectionId: {
         type: String,
         default: null
     },
-    listName: {
+    collectionName: {
         type: String,
         default: 'Artworks'
     },
@@ -134,10 +133,10 @@ const nextPage = ref(props.nextPage);
 // Get reference to the parent layout
 const layout = inject('layout');
 
-// Update buildUrl to use listId
+// Update buildUrl to use collectionId
 const buildUrl = (page) => {
-    let url = props.listId
-        ? `/collection/${props.listId}`
+    let url = props.collectionId
+        ? `/collection/${props.collectionId}`
         : '/artworks/data';
 
     // Add filters to URL if they exist
@@ -151,7 +150,7 @@ const buildUrl = (page) => {
     return url;
 };
 
-// Update loadMoreArtworks to use listId
+// Update loadMoreArtworks to use collectionId
 const loadMoreArtworks = async () => {
     if (!nextPage.value || loading.value) return;
 
@@ -161,7 +160,7 @@ const loadMoreArtworks = async () => {
             params: {
                 page: nextPage.value,
                 per_page: 30,
-                collection: props.listId, // Changed from collection to listId
+                collection: props.collectionId, // Changed from collection to collectionId
                 filters: props.filters
             }
         });

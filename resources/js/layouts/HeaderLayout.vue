@@ -83,12 +83,23 @@ const mainMenuItems = computed(() => {
     items.push({
         label: 'Collections',
         icon: 'pi pi-fw pi-th-large',
+        route: route('collections'),
+                command: () => {
+                    mobileMenuOpen.value = false;
+                },
+        expanded: true, // Add this to show submenu by default
+    });
+
+    // Add collections with submenu
+    items.push({
+        label: 'Lists',
+        icon: 'pi pi-fw pi-th-large',
         expanded: true, // Add this to show submenu by default
         items: [
             {
-                label: 'All Collections',
+                label: 'All Lists',
                 // icon: 'pi pi-fw pi-images',
-                route: route('collections'),
+                route: route('lists'),
                 command: () => {
                     mobileMenuOpen.value = false;
                 }
@@ -96,7 +107,7 @@ const mainMenuItems = computed(() => {
             ...(page.props.lists || []).map(list => ({
                 label: list.name,
                 icon: list.cover,
-                route: route('collection.filtered', { list_id: list.list_id }),
+                route: route('list.filtered', { list_id: list.list_id }),
                 command: () => {
                     mobileMenuOpen.value = false;
                 }

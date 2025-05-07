@@ -119,20 +119,20 @@ class PictufyController extends Controller
         }
     }
 
-    public function filteredCollection($listId = null, $filters = null)
+    public function filteredCollection($collectionId = null, $filters = null)
     {
         $params = [
-            'list_id' => $listId,
+            'collection_id' => $collectionId,
             'per_page' => 30,
             'page' => 1,
             'order' => 'recommended'
         ];
 
         // Get list details to access the name
-        $lists = $this->pictufy->getLists();
-        $currentList = collect($lists['items'])->firstWhere('list_id', $listId);
-        Log::info("Current list: " . json_encode($currentList));
-        $listName = html_entity_decode($currentList['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
+        $collections = $this->pictufy->getCollections();
+        $currentCollection = collect($collections['items'])->firstWhere('collection_id', $collectionId);
+        Log::info("Current collection: " . json_encode($currentCollection));
+        $collectionName = html_entity_decode($currentCollection['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
 
         if ($filters) {
             $segments = explode('/', $filters);
@@ -171,8 +171,8 @@ class PictufyController extends Controller
 
         return Inertia::render('Artworks', [
             'artworks' => $artworks['items'] ?? [],
-            'listId' => $listId,
-            'listName' => $listName,
+            'collectionId' => $collectionId,
+            'collectionName' => $collectionName,
             'filters' => $filters ? explode('/', $filters) : [],
             'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
         ]);
@@ -230,7 +230,68 @@ class PictufyController extends Controller
 
     public function lists()
     {
-        return response()->json($this->pictufy->getLists());
+        // return response()->json($this->pictufy->getLists());
+        return Inertia::render('Lists');
+    }
+
+    public function filteredList($listId = null, $filters = null)
+    {
+        $params = [
+            'list_id' => $listId,
+            'per_page' => 30,
+            'page' => 1,
+            'order' => 'recommended'
+        ];
+
+        // Get list details to access the name
+        $lists = $this->pictufy->getLists();
+        $currentCollection = collect($lists['items'])->firstWhere('list_id', $listId);
+        Log::info("Current list: " . json_encode($currentCollection));
+        $collectionName = html_entity_decode($currentCollection['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
+        Log::info("Collection name: " . $collectionName);
+
+        if ($filters) {
+            $segments = explode('/', $filters);
+
+            foreach ($segments as $segment) {
+                // Handle order filter
+                if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
+                    $params['order'] = $segment;
+                    continue;
+                }
+
+                // Handle category
+                if (str_starts_with($segment, 'cat_')) {
+                    $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
+                    if ($categoryId) {
+                        $params['category'] = $categoryId;
+                    }
+                    continue;
+                }
+
+                // Handle format/geometry filter
+                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
+                    $params['geometry'] = $segment;
+                    continue;
+                }
+
+                // Handle color filter
+                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
+                    $params['color'] = $segment;
+                    continue;
+                }
+            }
+        }
+
+        $artworks = $this->pictufy->getArtworks($params);
+
+        return Inertia::render('Artworks', [
+            'artworks' => $artworks['items'] ?? [],
+            'collectionId' => $listId,
+            'collectionName' => $collectionName,
+            'filters' => $filters ? explode('/', $filters) : [],
+            'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
+        ]);
     }
 
     public function getCategories()

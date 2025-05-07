@@ -13,7 +13,7 @@
                         rounded
                     />
                     <FilterSidebar 
-                        :list-id="$page.props.listId"
+                        :list-id="$page.props.collectionId"
                         :active-filters="$page.props.filters"
                         class="floating-sidebar"
                     />
@@ -156,5 +156,6 @@ provide('layout', {
     .slide-leave-to {
         transform: translateX(-100%);
     }
+
 }
 </style>
