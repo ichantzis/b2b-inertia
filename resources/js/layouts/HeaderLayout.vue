@@ -83,7 +83,7 @@ const mainMenuItems = computed(() => {
     items.push({
         label: 'Collections',
         icon: 'pi pi-fw pi-th-large',
-        route: route('collections'),
+        route: route('collections.index'),
                 command: () => {
                     mobileMenuOpen.value = false;
                 },

@@ -31,7 +31,7 @@ class HandleInertiaRequests extends Middleware
                      'name' => html_entity_decode($list['name']),
                      'list_id' => $list['list_id'],
                      'cover' => $list['cover'],
-                     'route' => route('collection.filtered', ['list_id' => $list['list_id']]),
+                     'route' => route('list.filtered', ['list_id' => $list['list_id']]),
                      'icon' => 'pi pi-fw pi-images',
                  ];
              })->values()->all(),

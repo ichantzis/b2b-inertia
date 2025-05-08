@@ -19,179 +19,165 @@ class PictufyService
 
     private function request($endpoint, $params = [])
     {
-        Log::info("Requesting $endpoint with params: " . json_encode($params));
-        return Http::withHeaders([
+        // Log::info("Requesting $endpoint with params: " . json_encode($params)); // Can be verbose
+        $response = Http::withHeaders([
             'X-AUTH-KEY' => $this->apiKey,
             'Content-Type' => 'application/x-www-form-urlencoded',
         ])->withOptions([
-            'verify' => false,
-        ])->asForm()  // This ensures data is sent as form-urlencoded
-            ->post("$this->apiUrl/$endpoint", $params)
-            ->json();
+            'verify' => false, // Consider true in production with valid SSL
+        ])->asForm()
+            ->post("$this->apiUrl/$endpoint", $params);
+
+        if ($response->failed()) {
+            Log::error("API request to $endpoint failed.", [
+                'status' => $response->status(),
+                'response' => $response->body()
+            ]);
+            return ['items' => [], 'status' => ['code' => $response->status(), 'returned_items' => 0]]; // Ensure consistent error structure
+        }
+        return $response->json();
     }
 
     public function getCollections($params = [])
     {
-        return $this->request('collections', $params);
-    }
+        // API docs params: collection_category, order, with_ids, skip_categories
+        $cacheKey = 'pictufy_collections_' . md5(json_encode($params));
+        $cacheDuration = 60; // Cache for 60 minutes
 
-    public function getCollectionIdByName($collectionName)
-    {
-        $collections = $this->getCollections();
-
-        foreach ($collections['items'] as $category) {
-            foreach ($category['collections'] as $collection) {
-                // Extract the last part of the URL which is the collection slug
-                $urlSlug = basename($collection['url']);
-                if ($urlSlug === $collectionName) {
-                    return $collection['id'];
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public function getCategories()
-    {
-        // Cache key for categories
-        $cacheKey = 'pictufy_categories';
-        
-        // Cache duration in minutes (e.g., 60 minutes = 1 hour)
-        $cacheDuration = 60;
-
-        if (Cache::has($cacheKey)) {
-            $cachedData = Cache::get($cacheKey);
-            Log::info('Retrieved categories from cache:', [
-                'key' => $cacheKey,
-                'sections' => array_keys($cachedData['items'] ?? [])
-            ]);
-            return $cachedData;
-        }
-
-        return Cache::remember($cacheKey, $cacheDuration, function () {
-            return $this->request('categories');;
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($params) {
+            Log::info("Fetching collections from API with params: " . json_encode($params));
+            return $this->request('collections', $params);
         });
     }
 
-    /**
-     * Force refresh the categories cache
-     */
-    public function refreshCategoriesCache()
+    // Updated to use slug and search in the 'url' field
+    public function getCollectionIdBySlug($collectionSlug, $params = [])
     {
-        $cacheKey = 'pictufy_categories';
-        Cache::forget($cacheKey);
-        return $this->getCategories();
+        // Fetch all collections (flat list is easier for slug matching)
+        // The 'url' field contains the full URL, so we extract the slug (basename)
+        $collectionsResponse = $this->getCollections(array_merge($params, ['skip_categories' => 1]));
+        Log::info("Finding collection ID for slug: $collectionSlug");
+        Log::debug("Collections response: " . json_encode($collectionsResponse));
+
+        if (isset($collectionsResponse['items'])) {
+            foreach ($collectionsResponse['items'][0]['collections'] as $collection) {
+                if (isset($collection['url'])) {
+                    $urlPath = parse_url($collection['url'], PHP_URL_PATH);
+                    $slugFromApi = basename($urlPath);
+                    if ($slugFromApi === $collectionSlug) {
+                        return $collection ?? null;
+                    }
+                }
+            }
+        }
+        // If collections are categorized (skip_categories = 0) and you didn't fetch flat
+        // you would need to iterate through categories then their collections.
+        Log::warning("Collection ID not found for slug: $collectionSlug");
+        return null;
     }
 
-    public function getCategoryIdBySlug($categorySlug)
-    {
-        Log::info("Finding category ID for $categorySlug");
-        $categories = $this->getCategories();
 
-        // Extract section and category name from the slug
-        // Example: 'cat_photography_abstract' -> ['photography', 'abstract']
-        preg_match('/cat_(\w+)_(.+)/', $categorySlug, $matches);
+    public function getCategories()
+    {
+        $cacheKey = 'pictufy_categories';
+        $cacheDuration = 1440; // Cache for 24 hours
+
+        return Cache::remember($cacheKey, $cacheDuration, function () {
+            Log::info('Fetching categories from API');
+            return $this->request('categories');
+        });
+    }
+
+    public function getCategoryIdBySlug($categorySlug) // from 'cat_section_categoryname'
+    {
+        Log::info("Finding category ID for slug: $categorySlug");
+        $categoriesData = $this->getCategories();
+
+        preg_match('/cat_([^_]+)_(.+)/', $categorySlug, $matches);
         
         if (count($matches) !== 3) {
             Log::warning("Invalid category slug format: $categorySlug");
             return null;
         }
 
-        $section = $matches[1];
-        $categoryNameToFind = $matches[2];
+        $sectionKey = $matches[1]; // e.g., 'photography'
+        $categoryNameSlug = str_replace('-', ' ', $matches[2]); // e.g., 'abstract' from 'abstract'
 
-        // Check only in the specified section
-        if (isset($categories['items'][$section])) {
-            foreach ($categories['items'][$section] as $category) {
-                $categorySlugFromName = strtolower(str_replace(' ', '-', $category['category_name']));
-                if ($categorySlugFromName === $categoryNameToFind) {
+        if (isset($categoriesData['items'][$sectionKey])) {
+            foreach ($categoriesData['items'][$sectionKey] as $category) {
+                // Compare by creating a slug from the API's category_name or directly if API provides slug
+                $apiCategoryNameSlug = strtolower(str_replace(' ', '-', $category['category_name']));
+                if ($apiCategoryNameSlug === str_replace(' ', '-', $categoryNameSlug)) { // Normalize comparison
                     Log::info("Found category ID {$category['category_id']} for $categorySlug");
                     return $category['category_id'];
                 }
             }
         }
 
-        Log::warning("Category not found for slug: $categorySlug");
+        Log::warning("Category not found for slug: $categorySlug (Section: $sectionKey, Name Slug: $categoryNameSlug)");
         return null;
     }
 
-    public function getLists($params = [])
+    public function getLists($params = []) // For /lists endpoint if needed
     {
-        // Cache key for the lists
-        $cacheKey = 'pictufy_lists';
-        
-        // Cache duration in minutes (e.g., 60 minutes = 1 hour)
+        $cacheKey = 'pictufy_lists_' . md5(json_encode($params));
         $cacheDuration = 60;
 
-        if (Cache::has($cacheKey)) {
-            $cachedData = Cache::get($cacheKey);
-            Log::info('Retrieved from cache:', [
-                'key' => $cacheKey,
-                'data' => $cachedData
-            ]);
-        }
-
         return Cache::remember($cacheKey, $cacheDuration, function () use ($params) {
+            Log::info('Fetching lists from API');
             return $this->request('lists', $params);
         });
     }
-
-    /**
-     * Force refresh the lists cache
-     */
-    public function refreshListsCache()
-    {
-        $cacheKey = 'pictufy_lists';
-        Cache::forget($cacheKey);
-        return $this->getLists();
-    }
-
+    
     public function getArtworks($params = [])
     {
-        $requestParams = [];
+        // Default params if not set
+        $requestParams = [
+            'page' => $params['page'] ?? 1,
+            'per_page' => $params['per_page'] ?? 30,
+            'order' => $params['order'] ?? 'recommended',
+        ];
 
-        if (isset($params['list_id'])) {
-            $requestParams['list_id'] = $params['list_id'];
-        }
-
-        // Handle single category
-        if (isset($params['category']) && !empty($params['category'])) {
-            $requestParams['category'] = $params['category'];
-            // $categoryId = $this->getCategoryIdBySlug($params['category']);
-            // Log::info("Category ID for {$params['category']} is $categoryId");
-            // if ($categoryId) {
-            //     $requestParams['category'] = $categoryId;
-            // }
-        }
-
-        // Handle filters
-        if (isset($params['order'])) {
-            $requestParams['order'] = $params['order'];
-        }
-        if (isset($params['geometry'])) {
-            $requestParams['geometry'] = $params['geometry'];
-        }
-        if (isset($params['color'])) {
-            $requestParams['color'] = $params['color'];
-        }
-        if (isset($params['nudity'])) {
-            $requestParams['nudity'] = $params['nudity'];
-        }
-
-        // Handle pagination
-        if (isset($params['page'])) {
-            $requestParams['page'] = $params['page'];
-        }
-        if (isset($params['per_page'])) {
-            $requestParams['per_page'] = $params['per_page'];
-        }
+        // Specific filters from API docs
+        if (isset($params['collection_id'])) $requestParams['collection_id'] = $params['collection_id'];
+        if (isset($params['list_id'])) $requestParams['list_id'] = $params['list_id']; // If you use lists
+        if (isset($params['category'])) $requestParams['category'] = $params['category']; // This is category_id
+        if (isset($params['geometry'])) $requestParams['geometry'] = $params['geometry'];
+        if (isset($params['color'])) $requestParams['color'] = $params['color'];
+        if (isset($params['nudity'])) $requestParams['nudity'] = $params['nudity'];
+        if (isset($params['artwork_type'])) $requestParams['artwork_type'] = $params['artwork_type'];
+        if (isset($params['artist_id'])) $requestParams['artist_id'] = $params['artist_id'];
+        // Add other params as needed: from_timestamp, grade, aspect_ratio, resolution, people, buildings, animals, search etc.
         
+        Log::debug("Service fetching artworks with params: " . json_encode($requestParams));
         return $this->request('artworks', $requestParams);
     }
 
     public function getArtworkDetails($artworkId)
     {
+        // API params: artwork_id, translate, languages
         return $this->request('artwork', ['artwork_id' => $artworkId]);
+    }
+    
+    public function refreshListsCache()
+    {
+        $cacheKey = 'pictufy_lists'; // Example for one list type
+        Cache::forget($cacheKey);
+        // Potentially forget other related caches like specific list params
+        return $this->getLists();
+    }
+
+    public function refreshCategoriesCache()
+    {
+        $cacheKey = 'pictufy_categories';
+        Cache::forget($cacheKey);
+        return $this->getCategories();
+    }
+    
+    public function refreshCollectionsCache($params = []) // For specific collection cache if params are used
+    {
+        $cacheKey = 'pictufy_collections_' . md5(json_encode($params));
+        Cache::forget($cacheKey);
+        return $this->getCollections($params);
     }
 }

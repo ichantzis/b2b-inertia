@@ -26,9 +26,9 @@ defineProps({
 const features = [
     {
         image: '/images/mocks/MOCK-UP-SET-P-8144.jpg',
-        title: 'Collections',
+        title: 'Lists',
         description: 'Explore our curated art collections',
-        route: 'collections'
+        route: 'lists'
     },
     {
         image: '/images/mocks/MOCK-UP-C-2553043.jpg',
@@ -55,7 +55,7 @@ const page = usePage();
                 Unique artwork curated for B2B partners
             </p>
             <div class="hero-actions">
-                <Link :href="route('collections')">
+                <Link :href="route('collections.index')">
                 <Button label="Explore Collections" icon="pi pi-images" class="p-button-lg" />
                 </Link>
             </div>

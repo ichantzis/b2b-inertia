@@ -93,7 +93,7 @@ const props = defineProps({
   artwork: Object
 });
 
-const artwork = computed(() => props.artwork?.[0]);
+const artwork = computed(() => props.artwork);
 console.log(artwork.value);
 
 

@@ -32,11 +32,10 @@ Route::get('/fetch-artworks', [PictufyController::class, 'fetchData'])->name('ar
 Route::get('/artwork/{id}', [PictufyController::class, 'artworkDetails'])->name('artwork.details');
 
 // Update collection route to use list_id
-Route::get('/collections', [PictufyController::class, 'collections'])->name('collections');
-Route::get('/collections/{category_collection_slug}', [PictufyController::class, 'categoryCollections'])->name('category.collections');
-Route::get('/collection/{collection_slug}/{filters?}', [PictufyController::class, 'filteredCollection'])
+Route::get('/collections', [PictufyController::class, 'indexCollections'])->name('collections.index'); // Page to display all collections
+Route::get('/collection/{collection_slug}/{filters?}', [PictufyController::class, 'showCollectionBySlug'])
     ->where('filters', '.*')
-    ->name('collection.filtered');
+    ->name('collection.show'); // Page to display artworks of a specific collection by slug
 
 // Add categories endpoint
 Route::get('/api/categories', [PictufyController::class, 'getCategories']);

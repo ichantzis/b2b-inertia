@@ -16,216 +16,243 @@ class PictufyController extends Controller
         $this->pictufy = $pictufy;
     }
 
-    public function collections()
+    public function indexCollections()
     {
-        // $lists = $this->pictufy->getLists();
-        return Inertia::render('Collections');
+        // Fetch collections from the API.
+        // The API docs show collections can be nested under categories,
+        // or flat if skip_categories=1. Decide on the structure you want.
+        // For a page similar to pictufy.com/collections, you might want categories.
+        $apiCollectionsResponse = $this->pictufy->getCollections(['skip_categories' => 0]); // 0 to get categories, 1 for flat list
+        
+        $collectionsData = [];
+        if (isset($apiCollectionsResponse['items'])) {
+            // If skip_categories = 0, items are categories containing collections
+            if (isset($apiCollectionsResponse['items'][0]['collections'])) { // Check if categorized
+                 $collectionsData = array_map(function ($category) {
+                    return [
+                        'category_id' => $category['category_id'] ?? null,
+                        'category_name' => html_entity_decode($category['category_name'] ?? 'Unknown Category', ENT_QUOTES | ENT_HTML5),
+                        'collections' => array_map(function ($collection) {
+                            // Extract slug from URL
+                            $urlPath = parse_url($collection['url'], PHP_URL_PATH);
+                            $slug = basename($urlPath);
+                            return [
+                                'id' => $collection['id'],
+                                'name' => html_entity_decode($collection['name'], ENT_QUOTES | ENT_HTML5),
+                                'slug' => $slug,
+                                'thumb' => $collection['thumb'] ?? null,
+                                'artworks_count' => $collection['artworks'] ?? 0,
+                                'description' => html_entity_decode($collection['description'] ?? '', ENT_QUOTES | ENT_HTML5),
+                            ];
+                        }, $category['collections'])
+                    ];
+                }, $apiCollectionsResponse['items']);
+            } else { // Flat list of collections (if skip_categories = 1)
+                $collectionsData = array_map(function ($collection) {
+                     $urlPath = parse_url($collection['url'], PHP_URL_PATH);
+                     $slug = basename($urlPath);
+                     return [
+                         'id' => $collection['id'],
+                         'name' => html_entity_decode($collection['name'], ENT_QUOTES | ENT_HTML5),
+                         'slug' => $slug,
+                         'thumb' => $collection['thumb'] ?? null,
+                         'artworks_count' => $collection['artworks'] ?? 0,
+                         'description' => html_entity_decode($collection['description'] ?? '', ENT_QUOTES | ENT_HTML5),
+                     ];
+                }, $apiCollectionsResponse['items']);
+            }
+        }
+
+
+        return Inertia::render('Collections', [
+            // Pass either categorized_collections or flat_collections to Vue
+            // depending on how you want to structure it.
+            // For pictufy.com/collections look, categorized is better.
+            'categorized_collections' => $collectionsData, // if skip_categories = 0
+            // 'collections' => $collectionsData // if skip_categories = 1
+        ]);
     }
 
-    public function artworks(Request $request)
+    public function showCollectionBySlug(Request $request, $collection_slug, $filters = null)
     {
-        $page = $request->input('page', 1); // Default page 1
-        $perPage = $request->input('per_page', 30); // Default 30 artworks per request
-        $order = $request->input('order', 'recommended'); // Default order by best selling
+        // 1. Get collection_id from collection_slug
+        $collection = $this->pictufy->getCollectionIdBySlug($collection_slug); // You'll need to create/update this in PictufyService
+        $collection_id = $collection['id'] ?? null; // Assuming the API returns an array with 'id' key
+        $collectionName = html_entity_decode($collection['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
+        $collectionCover = $collection['cover'] ?? null; // Assuming the API returns a 'cover' key
+        $collectionDescription = html_entity_decode($collection['description'] ?? '', ENT_QUOTES | ENT_HTML5);
 
-        $response = $this->pictufy->getArtworks([
+
+        if (!$collection_id) {
+            abort(404, 'Collection not found.');
+        }
+        
+        // 2. Fetch artworks using collection_id
+        $page = (int) $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 30); // Default 30 artworks
+        $order = $request->input('order', 'recommended'); // Default order
+
+        $params = [
+            'collection_id' => $collection_id,
             'page' => $page,
             'per_page' => $perPage,
-            'order' => $order
-        ]);
+            'order' => $order,
+        ];
 
-        return Inertia::render('Artworks', [
-            'artworks' => $response['items'] ?? [],
-            'nextPage' => count($response['items'] ?? []) > 0 ? $page + 1 : null, // If no more items, stop loading
+        if ($filters) {
+            $segments = explode('/', $filters);
+            foreach ($segments as $segment) {
+                // (Your existing filter logic: order, category, geometry, color)
+                 if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
+                    $params['order'] = $segment;
+                    continue;
+                }
+                if (str_starts_with($segment, 'cat_')) {
+                    $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
+                    if ($categoryId) $params['category'] = $categoryId;
+                    continue;
+                }
+                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
+                    $params['geometry'] = $segment;
+                    continue;
+                }
+                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
+                    $params['color'] = $segment;
+                    continue;
+                }
+            }
+        }
+
+        Log::info("Fetching artworks for collection slug '$collection_slug' (ID: $collection_id) with params: " . json_encode($params));
+        $artworksResponse = $this->pictufy->getArtworks($params);
+
+        return Inertia::render('Artworks', [ // Or a dedicated 'CollectionShow' view if the layout is very different
+            'artworks' => $artworksResponse['items'] ?? [],
+            'collectionId' => $collection_id, // Pass the actual ID
+            'collectionName' => $collectionName, // Pass the fetched collection name
+            'collectionCover' => $collectionCover, // Pass the fetched collection cover
+            'collectionDescription' => $collectionDescription, // Pass the fetched collection description
+            'collectionSlug' => $collection_slug,
+            'filters' => $filters ? explode('/', $filters) : [],
+            'nextPage' => isset($artworksResponse['items']) && count($artworksResponse['items']) >= $perPage ? $page + 1 : null,
         ]);
     }
 
-    public function fetchData(Request $request)
+    // This function is for the general /artworks page (not specific to a collection)
+    public function filteredArtworks(Request $request, $filters = null)
     {
-        Log::info("Fetching more artworks with request: " . json_encode($request->all()));
         $page = (int) $request->input('page', 1);
         $perPage = (int) $request->input('per_page', 30);
-        $listId = $request->input('collection', '');
-        $filters = $request->input('filters', []);
         $order = $request->input('order', 'recommended');
 
         $params = [
-            'list_id' => $listId,
             'page' => $page,
             'per_page' => $perPage,
             'order' => $order
         ];
 
-        if (!empty($filters)) {
-            foreach ($filters as $filter) {
-                // Handle category (only first one found)
-                if (str_starts_with($filter, 'cat_')) {
-                    $categoryId = $this->pictufy->getCategoryIdBySlug($filter);
-                    if ($categoryId) {
-                        $params['category'] = $categoryId;
-                    }
+        if ($filters) {
+            $segments = explode('/', $filters);
+            foreach ($segments as $segment) {
+                // (Your existing filter logic for general artworks)
+                if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
+                    $params['order'] = $segment;
                     continue;
                 }
-
-                // Handle order filter
-                if (in_array($filter, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
-                    $params['order'] = $filter;
+                if (str_starts_with($segment, 'cat_')) {
+                    $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
+                    if ($categoryId) $params['category'] = $categoryId;
                     continue;
                 }
-
-                // Handle geometry filter
-                if (in_array($filter, ['horizontal', 'vertical', 'square', 'panorama'])) {
-                    $params['geometry'] = $filter;
+                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
+                    $params['geometry'] = $segment;
                     continue;
                 }
-
-                // Handle color filter
-                if (in_array($filter, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
-                    $params['color'] = $filter;
+                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
+                    $params['color'] = $segment;
                     continue;
-                }
-
-                // Handle nudity filter
-                if ($filter === 'hide-nudes') {
-                    $params['nudity'] = 'hide';
-                } elseif ($filter === 'only-nudes') {
-                    $params['nudity'] = 'yes';
                 }
             }
         }
-
+        
         Log::info("Fetching artworks with params: " . json_encode($params));
+        $artworksResponse = $this->pictufy->getArtworks($params);
+
+        return Inertia::render('Artworks', [
+            'artworks' => $artworksResponse['items'] ?? [],
+            'filters' => $filters ? explode('/', $filters) : [],
+            'collectionName' => 'Artworks', // General title
+            'nextPage' => isset($artworksResponse['items']) && count($artworksResponse['items']) >= $perPage ? $page + 1 : null,
+        ]);
+    }
+    
+    public function fetchData(Request $request) // For infinite scroll / loading more artworks
+    {
+        Log::info("Fetching more artworks with request: " . json_encode($request->all()));
+        $page = (int) $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 30);
+        $collectionId = $request->input('collection_id', ''); // Expect collection_id now
+        $filters = $request->input('filters', []); // These are route segment filters
+        $order = $request->input('order', 'recommended'); // Order from query param
+
+        $params = [
+            'page' => $page,
+            'per_page' => $perPage,
+            'order' => $order
+        ];
+
+        if (!empty($collectionId)) {
+            $params['collection_id'] = $collectionId;
+        }
+
+        // Apply filters from route segments if provided
+        if (!empty($filters) && is_array($filters)) { // filters from loadMore might be an array
+            foreach ($filters as $filter_segment) {
+                 if (str_starts_with($filter_segment, 'cat_')) {
+                    $categoryId = $this->pictufy->getCategoryIdBySlug($filter_segment);
+                    if ($categoryId) $params['category'] = $categoryId;
+                    continue;
+                }
+                if (in_array($filter_segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
+                    $params['geometry'] = $filter_segment;
+                    continue;
+                }
+                // Add other filter logic if needed from segments
+            }
+        }
+
+
+        Log::info("Fetching artworks (fetchData) with params: " . json_encode($params));
         $response = $this->pictufy->getArtworks($params);
 
         return response()->json([
             'artworks' => $response['items'] ?? [],
-            'nextPage' => isset($response['items']) && count($response['items']) > 0 ? $page + 1 : null,
+            'nextPage' => isset($response['items']) && count($response['items']) >= $perPage ? $page + 1 : null,
         ]);
     }
+
 
     public function artworkDetails($id)
     {
         try {
             $artwork = $this->pictufy->getArtworkDetails($id);
             return Inertia::render('ArtworkDetails', [
-                'artwork' => $artwork['items'] ?? null,
+                'artwork' => $artwork['items'][0] ?? null, // API returns 'items' as an array
                 'error' => null
             ]);
         } catch (\Exception $e) {
+            Log::error("Error fetching artwork details for ID $id: " . $e->getMessage());
             return Inertia::render('ArtworkDetails', [
                 'artwork' => null,
-                'error' => 'Artwork not found'
+                'error' => 'Artwork not found or error fetching details.'
             ]);
         }
     }
 
-    public function filteredCollection($collectionId = null, $filters = null)
+    public function getCategories()
     {
-        $params = [
-            'collection_id' => $collectionId,
-            'per_page' => 30,
-            'page' => 1,
-            'order' => 'recommended'
-        ];
-
-        // Get list details to access the name
-        $collections = $this->pictufy->getCollections();
-        $currentCollection = collect($collections['items'])->firstWhere('collection_id', $collectionId);
-        Log::info("Current collection: " . json_encode($currentCollection));
-        $collectionName = html_entity_decode($currentCollection['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
-
-        if ($filters) {
-            $segments = explode('/', $filters);
-
-            foreach ($segments as $segment) {
-                // Handle order filter
-                if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
-                    $params['order'] = $segment;
-                    continue;
-                }
-
-                // Handle category
-                if (str_starts_with($segment, 'cat_')) {
-                    $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
-                    if ($categoryId) {
-                        $params['category'] = $categoryId;
-                    }
-                    continue;
-                }
-
-                // Handle format/geometry filter
-                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
-                    $params['geometry'] = $segment;
-                    continue;
-                }
-
-                // Handle color filter
-                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
-                    $params['color'] = $segment;
-                    continue;
-                }
-            }
-        }
-
-        $artworks = $this->pictufy->getArtworks($params);
-
-        return Inertia::render('Artworks', [
-            'artworks' => $artworks['items'] ?? [],
-            'collectionId' => $collectionId,
-            'collectionName' => $collectionName,
-            'filters' => $filters ? explode('/', $filters) : [],
-            'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
-        ]);
-    }
-
-    public function filteredArtworks($filters = null)
-    {
-        $params = [
-            'per_page' => 30,
-            'page' => 1,
-            'order' => 'recommended'
-        ];
-
-        if ($filters) {
-            $segments = explode('/', $filters);
-
-            foreach ($segments as $segment) {
-                 // Handle order filter
-                 if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
-                    $params['order'] = $segment;
-                    continue;
-                }
-
-                // Handle category
-                if (str_starts_with($segment, 'cat_')) {
-                    $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
-                    if ($categoryId) {
-                        $params['category'] = $categoryId;
-                    }
-                    continue;
-                }
-
-                // Handle format/geometry filter
-                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
-                    $params['geometry'] = $segment;
-                    continue;
-                }
-
-                // Handle color filter
-                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
-                    $params['color'] = $segment;
-                    continue;
-                }
-            }
-        }
-
-        $artworks = $this->pictufy->getArtworks($params);
-
-        return Inertia::render('Artworks', [
-            'artworks' => $artworks['items'] ?? [],
-            'filters' => $filters ? explode('/', $filters) : [],
-            'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
-        ]);
+        $categories = $this->pictufy->getCategories();
+        return response()->json($categories);
     }
 
     public function lists()
@@ -292,11 +319,5 @@ class PictufyController extends Controller
             'filters' => $filters ? explode('/', $filters) : [],
             'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
         ]);
-    }
-
-    public function getCategories()
-    {
-        $categories = $this->pictufy->getCategories();
-        return response()->json($categories);
     }
 }

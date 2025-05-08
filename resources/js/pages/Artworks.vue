@@ -2,10 +2,20 @@
     <InertiaHead :title="props.collectionName" />
     <div class="layout-container">
         <main class="main-content">
-
             <div class="content-wrapper">
-                <h1 class="title">{{ collectionName }}</h1>
-                <div class="flex justify-center items-center mb-4">
+                <div v-if="props.collectionId" class="collection-header mb-8">
+                    <div v-if="props.collectionCover" class="collection-cover-image-wrapper mb-4">
+                        <img :src="props.collectionCover" :alt="`Cover image for ${props.collectionName}`"
+                            class="collection-cover-image" />
+                    </div>
+                    <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName
+                        }}</h1>
+                    <p v-if="props.collectionDescription"
+                        class="collection-description text-center text-gray-600 text-sm md:text-base max-w-3xl mx-auto">
+                        {{ props.collectionDescription }}
+                    </p>
+                </div>
+                <div class="flex justify-center items-center mb-6">
                     <Button icon="pi pi-filter" @click="layout?.toggleFilters()"
                         :label="layout?.isFiltersVisible?.value ? 'Hide Filters' : 'Filters'" severity="info"
                         size="large" class="filter-button" variant="outlined" raised />
@@ -17,48 +27,36 @@
                     </div>
                     <div v-else>
                         <h2 class="text-xl font-semibold mb-2">No artworks found</h2>
-                        <p class="text-gray-600">We didn't find any artworks, try another search term or remove filters
+                        <p class="text-gray-600">We didn't find any artworks, try another search term or remove filters.
                         </p>
                     </div>
                 </div>
 
                 <DataView v-else :value="artworks" layout="grid">
-                    <!-- Add header template for the filter button -->
-                    <template #header>
-                        <!-- <div class="flex justify-center items-center mb-4">
-                            <Button icon="pi pi-filter" @click="layout?.toggleFilters()"
-                                :label="layout?.isFiltersVisible?.value ? 'Hide Filters' : 'Filters'" severity="info"
-                                size="large" class="filter-button" variant="outlined" raised />
-                        </div> -->
-                    </template>
-
                     <template #grid="slotProps">
-                        <!-- Add progress overlay -->
-                        <div v-if="artworksLoading" class="my-2 flex items-center justify-center">
+                        <div v-if="artworksLoading && !slotProps.items.length"
+                            class="my-2 flex items-center justify-center col-span-full">
                             <ProgressSpinner strokeWidth="3" animationDuration=".8s" class="loading-spinner" />
                         </div>
-                        <div v-else class="grid grid-cols-12 gap-4 md:gap-12"> <!-- Reduced gap on mobile -->
-                            <div v-for="(artwork, index) in slotProps.items" :key="index"
+                        <div v-else class="grid grid-cols-12 gap-4 md:gap-8">
+                            <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
                                 class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
-                                <div class="rounded flex flex-col p-2 md:p-12 artwork-container"> <!-- Reduced padding on mobile -->
+                                <div class="rounded flex flex-col artwork-container">
                                     <Link :href="`/artwork/${artwork.id}`" class="artwork-link">
-                                        <div class="relative">
-                                            <img v-if="artwork.urls?.img_thumb" 
-                                                :src="artwork.urls.img_thumb"
-                                                :alt="artwork.title?.en || 'Untitled'"
-                                                class="rounded w-full h-auto object-contain max-h-[300px]" 
-                                            />
-                                            <div v-else class="no-image">No Image Available</div>
-                                            
-                                            <!-- Hover Overlay -->
-                                            <div class="artwork-overlay">
-                                                <div class="overlay-content">
-                                                    <span class="artwork-title">{{ artwork.title.en }}</span>
-                                                    <Divider layout="vertical" />
-                                                    <span class="artwork-id">ID: {{ artwork.id }}</span>
-                                                </div>
+                                    <div class="relative">
+                                        <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
+                                            :alt="artwork.title?.en || 'Untitled'"
+                                            class="rounded w-full h-auto object-contain max-h-[300px]" />
+                                        <div v-else class="no-image">No Image Available</div>
+
+                                        <div class="artwork-overlay">
+                                            <div class="overlay-content">
+                                                <span class="artwork-title">{{ artwork.title?.en || 'Untitled' }}</span>
+                                                <Divider layout="vertical" />
+                                                <span class="artwork-id">ID: {{ artwork.id }}</span>
                                             </div>
                                         </div>
+                                    </div>
                                     </Link>
                                 </div>
                             </div>
@@ -66,8 +64,7 @@
                     </template>
                 </DataView>
 
-                <!-- Replace the existing loading indicator -->
-                <div v-if="loading && !artworksLoading" class="loading-container">
+                <div v-if="loading && nextPage" class="loading-container">
                     <ProgressSpinner strokeWidth="3" animationDuration=".8s" class="loading-spinner" />
                     <p class="loading-text">Loading more artworks...</p>
                 </div>
@@ -79,24 +76,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, defineProps, watch, inject } from "vue";
+import { ref, onMounted, onUnmounted, defineProps, watch, inject, computed } from "vue"; // Added computed
 import axios from "axios";
 import DataView from "primevue/dataview";
 import Button from "primevue/button";
-import { Link } from "@inertiajs/vue3";
+import { Link, Head as InertiaHead } from "@inertiajs/vue3"; // Added Head
 import FilteredLayout from '@/layouts/FilteredLayout.vue';
-import { ProgressSpinner, Divider } from "primevue";
+// import { ProgressSpinner, Divider } from "primevue"; // Already imported in your version
+import ProgressSpinner from 'primevue/progressspinner';
+import Divider from 'primevue/divider';
 import ScrollTop from 'primevue/scrolltop';
-// import FilterSidebar from '@/components/FilterSidebar.vue';
 
 import { router } from '@inertiajs/vue3'
 
-// Add loading state for the entire page until the first set of artworks are loaded
-router.on('start', (event) => {
+router.on('start', () => { // Removed event parameter as it's not used
     artworksLoading.value = true;
 })
 
-router.on('success', (event) => {
+router.on('finish', () => { // Changed from 'success' to 'finish' to cover all navigation ends
     artworksLoading.value = false;
 })
 
@@ -107,69 +104,82 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
-    collectionId: {
+    collectionId: { // This is the actual ID, not the slug
         type: String,
         default: null
+    },
+    collectionSlug: { // Keep this if you build filter URLs using the slug
+        type: String,
+        default: null,
     },
     collectionName: {
         type: String,
         default: 'Artworks'
     },
-    filters: {
+    collectionCover: {
+        type: String,
+        default: null
+    },
+    collectionDescription: {
+        type: String,
+        default: null
+    },
+    filters: { // These are the filter segments from the URL path
         type: Array,
         default: () => []
     },
     nextPage: {
         type: Number,
         default: null,
+    },
+    initialOrder: { // To set the initial state of an order dropdown if you have one
+        type: String,
+        default: 'recommended',
     }
 });
 
-const artworks = ref(Array.isArray(props.artworks) ? [...props.artworks] : []);
-const loading = ref(false);
-const artworksLoading = ref(false);
-const nextPage = ref(props.nextPage);
+const artworksData = ref(Array.isArray(props.artworks) ? [...props.artworks] : []); // Renamed to avoid conflict
+const loading = ref(false); // For loading more, not initial load
+const artworksLoading = ref(false); // For initial page load or filter changes
+const currentPage = ref(props.nextPage ? props.nextPage - 1 : 1); // Keep track of current page, assuming nextPage is the one to fetch
 
 // Get reference to the parent layout
 const layout = inject('layout');
 
-// Update buildUrl to use collectionId
-const buildUrl = (page) => {
-    let url = props.collectionId
-        ? `/collection/${props.collectionId}`
-        : '/artworks/data';
 
-    // Add filters to URL if they exist
-    if (props.filters.length > 0) {
-        url += '/' + props.filters.join('/');
-    }
+// Watch for prop changes to reset artworksData and nextPage
+watch(() => props.artworks, (newArtworks) => {
+    artworksData.value = Array.isArray(newArtworks) ? [...newArtworks] : [];
+    currentPage.value = props.nextPage ? props.nextPage - 1 : 1; // Reset page based on initial load
+}, { deep: true });
 
-    // Add query parameters
-    url += `?page=${page}&per_page=30`;
+watch(() => props.filters, () => {
+    // Assuming filters prop change means a new set of initial artworks is loaded by Inertia
+    artworksData.value = Array.isArray(props.artworks) ? [...props.artworks] : [];
+    currentPage.value = props.nextPage ? props.nextPage - 1 : 1;
+}, { deep: true });
 
-    return url;
-};
 
-// Update loadMoreArtworks to use collectionId
 const loadMoreArtworks = async () => {
-    if (!nextPage.value || loading.value) return;
+    if (!props.nextPage || loading.value || !currentPage.value) return; // Ensure currentPage is valid
 
     loading.value = true;
     try {
-        const response = await axios.get('/fetch-artworks', {
+        const response = await axios.get(route('artworks.fetch'), { // Use named route for fetching
             params: {
-                page: nextPage.value,
+                page: currentPage.value + 1, // Fetch the actual next page
                 per_page: 30,
-                collection: props.collectionId, // Changed from collection to collectionId
-                filters: props.filters
+                collection_id: props.collectionId, // Pass collection_id
+                filters: props.filters.join('/'), // Pass filters as a string if your backend expects that
+                order: props.initialOrder, // Maintain current order
             }
         });
 
         if (response.data.artworks && response.data.artworks.length > 0) {
-            artworks.value.push(...response.data.artworks);
-            nextPage.value = response.data.nextPage;
+            artworksData.value.push(...response.data.artworks);
+            currentPage.value = response.data.nextPage ? response.data.nextPage - 1 : null; // Update current page based on the new nextPage
         } else {
-            nextPage.value = null;
+            currentPage.value = null; // No more pages
         }
     } catch (error) {
         console.error("Error loading more artworks:", error);
@@ -182,162 +192,121 @@ const handleScroll = () => {
     const bottomOfWindow = window.innerHeight + window.pageYOffset;
     const documentHeight = document.documentElement.offsetHeight;
 
-    if (bottomOfWindow >= documentHeight - 500) {
-        loadMoreArtworks();
+    if (bottomOfWindow >= documentHeight - 500) { // Trigger a bit earlier
+        if (currentPage.value !== null) { // Only load if there's a next page
+            loadMoreArtworks();
+        }
     }
 };
 
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);
+    // Set initial currentPage based on props.nextPage
+    currentPage.value = props.nextPage ? props.nextPage - 1 : (props.artworks.length > 0 ? 1 : null);
 });
 
 onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
 });
 
-watch(() => props.artworks, (newArtworks) => {
-    artworks.value = [...newArtworks];
-});
-
-watch(() => props.filters, () => {
-    // Reset artworks when filters change
-    artworks.value = [...props.artworks];
-    nextPage.value = props.nextPage;
-}, { deep: true });
+// Make artworks a computed property to reflect changes from props and loadMore
+const artworks = computed(() => artworksData.value);
 
 </script>
 
 <style scoped>
-/* Replace existing flex styles with these */
 .layout-container {
     display: flex;
     min-height: 100vh;
-    /* background-color: #f8f9fa; */
 }
 
 .main-content {
     flex: 1;
-    padding: 2rem;
+    padding: 1rem 2rem;
+    /* Adjusted padding */
     overflow-y: auto;
 }
 
 .content-wrapper {
-    /* max-width: 1600px; */
     margin: 0 auto;
     background: white;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 2rem;
+    /* Ensure padding for content */
 }
 
-.title {
-    font-size: 1.875rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin-bottom: 2rem;
-    text-align: center;
+/* Collection Header Styles */
+.collection-header {
+    border-bottom: 1px solid #e5e7eb;
+    /* Subtle separator */
+    padding-bottom: 2rem;
 }
 
-/* Adjust grid layout */
-/* :deep(.grid) {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 2rem;
-    padding: 1rem 0;
-} */
-
-/* Adjust artwork cards */
-/* :deep(.artwork-card) {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.2s;
-} */
-
-/* :deep(.artwork-card:hover) {
-    transform: translateY(-4px);
-} */
-
-/* Keep existing styles for no-image, loading, etc. */
-.no-image {
+.collection-cover-image-wrapper {
+    max-height: 400px;
+    /* Limit height of cover */
     width: 100%;
-    height: 200px;
+    overflow: hidden;
+    border-radius: 8px;
+    /* Rounded corners for the image */
     display: flex;
-    align-items: center;
+    /* Center image if it's not full width */
     justify-content: center;
+    align-items: center;
     background-color: #f0f0f0;
-    color: #888;
-    font-size: 14px;
-    border-radius: 8px;
+    /* Placeholder if image is smaller */
 }
 
-.loading {
-    text-align: center;
-    padding: 10px;
-    font-weight: bold;
+.collection-cover-image {
+    width: 100%;
+    /* Make image responsive */
+    height: 100%;
+    object-fit: cover;
+    /* Cover the area, might crop */
 }
 
-.no-results {
-    text-align: center;
-    padding: 40px;
-    /* background-color: #f9fafb; */
-    border-radius: 8px;
-    margin: 20px 0;
+.collection-title {
+    /* Tailwind classes used in template, specific styles if needed */
 }
 
+.collection-description {
+    /* Tailwind classes used in template */
+    line-height: 1.6;
+}
+
+
+/* Filter button */
 .filter-button {
-    margin-bottom: 1rem;
+    /* margin-bottom: 1rem; */
+    /* Original style */
 }
 
-.loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    gap: 1rem;
+/* Artworks Grid & Cards */
+.artwork-container {
+    position: relative;
+    overflow: hidden;
+    /* background: #f9f9f9; */
+    /* Light background for card area */
+    padding: 0.5rem;
+    /* Small padding inside the container */
+    border-radius: 6px;
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); */
 }
 
-.loading-spinner {
-    width: 50px;
-    height: 50px;
-}
-
-.loading-text {
-    color: #666;
-    font-size: 0.875rem;
-}
-
-.progress-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-/* Add these new styles */
 .artwork-link {
     display: block;
     width: 100%;
     text-align: center;
 }
 
-/* Adjust image container for better mobile display */
-img {
+.artwork-container img {
+    /* Ensure images inside link are responsive */
     max-width: 100%;
     height: auto;
     margin: 0 auto;
-}
-
-.artwork-container {
-    position: relative;
-    overflow: hidden;
+    border-radius: 4px;
+    /* Slightly rounded images */
 }
 
 .artwork-overlay {
@@ -345,11 +314,15 @@ img {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
+    /* Slightly less transparent */
     padding: 0.75rem;
     transform: translateY(100%);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    /* Added opacity transition */
     opacity: 0;
+    border-top: 1px solid #eee;
+    /* Separator for overlay */
 }
 
 .artwork-container:hover .artwork-overlay {
@@ -360,12 +333,17 @@ img {
 .overlay-content {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-content: space-between;
+    /* Space out title and ID */
+    gap: 0.5rem;
+    /* Reduced gap */
     color: #333;
 }
 
-.artwork-id, .artwork-title {
-    font-size: 0.875rem;
+.artwork-id,
+.artwork-title {
+    font-size: 0.8rem;
+    /* Slightly smaller font */
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -373,23 +351,116 @@ img {
 }
 
 .artwork-title {
-    flex: 1;
+    flex-grow: 1;
+    /* Allow title to take available space */
+    text-align: left;
 }
 
-/* Ensure the button doesn't trigger the Link navigation */
-.p-button {
-    z-index: 2;
+.artwork-id {
+    flex-shrink: 0;
+    /* Prevent ID from shrinking too much */
+    color: #555;
 }
+
+
+/* No results and loading states */
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    /* Added horizontal padding */
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    gap: 1rem;
+    width: 100%;
+    /* Ensure it takes full width */
+}
+
+.loading-spinner {
+    width: 40px;
+    /* Slightly smaller spinner */
+    height: 40px;
+}
+
+.loading-text {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.no-image {
+    /* Style for when artwork image is missing */
+    width: 100%;
+    aspect-ratio: 1/1;
+    /* Maintain square or defined aspect ratio */
+    max-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0;
+    color: #888;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
 
 /* Responsive adjustments */
+@media (max-width: 768px) {
+
+    /* md breakpoint */
+    .main-content {
+        padding: 1rem;
+    }
+
+    .content-wrapper {
+        padding: 1.5rem;
+    }
+
+    .collection-title {
+        font-size: 2xl;
+        /* Tailwind equivalent for text-2xl */
+    }
+
+    .collection-description {
+        font-size: sm;
+        /* Tailwind equivalent for text-sm */
+    }
+}
+
 @media (max-width: 640px) {
+
+    /* sm breakpoint */
     .content-wrapper {
         padding: 1rem;
     }
 
-    .title {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+    .collection-header {
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .collection-title {
+        font-size: xl;
+        /* Tailwind equivalent for text-xl */
+    }
+
+    .artwork-container {
+        padding: 0.25rem;
+    }
+
+    .artwork-overlay {
+        padding: 0.5rem;
+    }
+
+    .artwork-id,
+    .artwork-title {
+        font-size: 0.75rem;
     }
 }
 </style>
