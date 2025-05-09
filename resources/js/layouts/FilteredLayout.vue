@@ -14,6 +14,7 @@
                     />
                     <FilterSidebar 
                         :list-id="$page.props.collectionId"
+                        :collection-slug="$page.props.collectionSlug"
                         :active-filters="$page.props.filters"
                         class="floating-sidebar"
                     />

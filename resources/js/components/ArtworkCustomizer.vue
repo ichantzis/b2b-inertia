@@ -7,6 +7,8 @@ import { add } from 'lodash';
 const props = defineProps({
     artwork: Object
 });
+console.log("Artwork props:", props.artwork);
+
 
 const artwork = computed(() => props.artwork);
 
@@ -16,7 +18,7 @@ const isSquare = computed(() => props.artwork?.width === props.artwork?.height);
 
 const selectedType = ref('canvas');
 const selectedCanvas = ref('black');
-const selectedPoster = ref('black');
+// const selectedPoster = ref('black');
 const selectedSize = ref('50x70');
 const selectedSquareSize = ref('50x50');
 
@@ -124,7 +126,8 @@ const addToCartForm = useForm({
     artwork_id: props.artwork?.id || null, // Initialize with artwork ID if available
     title: props.artwork?.title?.en || null,
     type: selectedType.value,
-    frame: selectedType.value === 'canvas' ? selectedCanvas.value : selectedPoster.value,
+    // frame: selectedType.value === 'canvas' ? selectedCanvas.value : selectedPoster.value,
+    frame: selectedCanvas.value,
     size: isSquare.value ? selectedSquareSize.value : selectedSize.value,
     quantity: quantity.value,
     img_thumb: props.artwork?.urls.img_thumb || null,
@@ -136,7 +139,8 @@ const addToCart = () => {
     addToCartForm.artwork_id = props.artwork.id; // Ensure it's set before posting
     addToCartForm.title = props.artwork.title?.en || 'Artwork'; // Fallback title
     addToCartForm.type = selectedType.value;
-    addToCartForm.frame = selectedType.value === 'canvas' ? selectedCanvas.value : selectedPoster.value;
+    // addToCartForm.frame = selectedType.value === 'canvas' ? selectedCanvas.value : selectedPoster.value;
+    addToCartForm.frame = selectedCanvas.value;
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
     addToCartForm.img_thumb = props.artwork.urls.img_thumb;
@@ -191,9 +195,9 @@ watch([selectedType, selectedCanvas], () => {
             <Button v-bind="getButtonProps('canvas', selectedType)" @click="selectedType = 'canvas'">
                 <img src="/images/frames/floating-frame.svg" alt="Floating Canvas" class="canvas-icon" />
             </Button>
-            <Button v-bind="getButtonProps('poster', selectedType)" @click="selectedType = 'poster'">
+            <!-- <Button v-bind="getButtonProps('poster', selectedType)" @click="selectedType = 'poster'">
                 <img src="/images/frames/framed-print-1.svg" alt="Floating Poster" class="canvas-icon" />
-            </Button>
+            </Button> -->
         </div>
         <!-- Canvas Frames -->
         <div class="canvas-wrapper" v-show="showCanvasFrames">
@@ -219,7 +223,7 @@ watch([selectedType, selectedCanvas], () => {
                 <img src="/images/frames/floatnoframe.jpg" alt="No Frame" class="frame-icon" />
             </Button>
         </div>
-        <!-- Poster Frames -->
+        <!-- Poster Frames
         <div class="poster-wrapper" v-show="showPosterFrames">
             <Button v-bind="getButtonProps('black', selectedPoster)" @click="selectedPoster = 'black'">
                 <img src="/images/frames/blackprint-frame.jpg" alt="Black Poster Frame" class="frame-icon" />
@@ -239,7 +243,7 @@ watch([selectedType, selectedCanvas], () => {
             <Button v-bind="getButtonProps('crema', selectedPoster)" @click="selectedPoster = 'crema'">
                 <img src="/images/frames/Crema_P-1024x1024.jpg" alt="Crema Poster Frame" class="frame-icon" />
             </Button>
-        </div>
+        </div> -->
         <div class="detail-item">
             <span class="detail-label">Size</span>
         </div>

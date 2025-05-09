@@ -83,11 +83,13 @@ import Select from 'primevue/select';
 
 const props = defineProps({
     listId: String,
+    collectionSlug: String,
     activeFilters: {
         type: Array,
         default: () => []
     }
 });
+
 
 const categories = ref({});
 
@@ -202,8 +204,8 @@ const getActiveColor = () => {
 const getBaseUrl = () => {
     const currentPath = usePage().url;    
         
-    if (currentPath.startsWith('/collection/') && props.listId) {
-        return `/collection/${props.listId}`;
+    if (currentPath.startsWith('/collection/') && props.collectionSlug) {
+        return `/collection/${props.collectionSlug}`;
     }
     if (currentPath.startsWith('/lists/') && props.listId) {
         return `/lists/${props.listId}`;

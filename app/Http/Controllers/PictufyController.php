@@ -23,12 +23,12 @@ class PictufyController extends Controller
         // or flat if skip_categories=1. Decide on the structure you want.
         // For a page similar to pictufy.com/collections, you might want categories.
         $apiCollectionsResponse = $this->pictufy->getCollections(['skip_categories' => 0]); // 0 to get categories, 1 for flat list
-        
+
         $collectionsData = [];
         if (isset($apiCollectionsResponse['items'])) {
             // If skip_categories = 0, items are categories containing collections
             if (isset($apiCollectionsResponse['items'][0]['collections'])) { // Check if categorized
-                 $collectionsData = array_map(function ($category) {
+                $collectionsData = array_map(function ($category) {
                     return [
                         'category_id' => $category['category_id'] ?? null,
                         'category_name' => html_entity_decode($category['category_name'] ?? 'Unknown Category', ENT_QUOTES | ENT_HTML5),
@@ -49,16 +49,16 @@ class PictufyController extends Controller
                 }, $apiCollectionsResponse['items']);
             } else { // Flat list of collections (if skip_categories = 1)
                 $collectionsData = array_map(function ($collection) {
-                     $urlPath = parse_url($collection['url'], PHP_URL_PATH);
-                     $slug = basename($urlPath);
-                     return [
-                         'id' => $collection['id'],
-                         'name' => html_entity_decode($collection['name'], ENT_QUOTES | ENT_HTML5),
-                         'slug' => $slug,
-                         'thumb' => $collection['thumb'] ?? null,
-                         'artworks_count' => $collection['artworks'] ?? 0,
-                         'description' => html_entity_decode($collection['description'] ?? '', ENT_QUOTES | ENT_HTML5),
-                     ];
+                    $urlPath = parse_url($collection['url'], PHP_URL_PATH);
+                    $slug = basename($urlPath);
+                    return [
+                        'id' => $collection['id'],
+                        'name' => html_entity_decode($collection['name'], ENT_QUOTES | ENT_HTML5),
+                        'slug' => $slug,
+                        'thumb' => $collection['thumb'] ?? null,
+                        'artworks_count' => $collection['artworks'] ?? 0,
+                        'description' => html_entity_decode($collection['description'] ?? '', ENT_QUOTES | ENT_HTML5),
+                    ];
                 }, $apiCollectionsResponse['items']);
             }
         }
@@ -86,7 +86,7 @@ class PictufyController extends Controller
         if (!$collection_id) {
             abort(404, 'Collection not found.');
         }
-        
+
         // 2. Fetch artworks using collection_id
         $page = (int) $request->input('page', 1);
         $perPage = (int) $request->input('per_page', 30); // Default 30 artworks
@@ -103,7 +103,7 @@ class PictufyController extends Controller
             $segments = explode('/', $filters);
             foreach ($segments as $segment) {
                 // (Your existing filter logic: order, category, geometry, color)
-                 if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
+                if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
                     $params['order'] = $segment;
                     continue;
                 }
@@ -174,7 +174,7 @@ class PictufyController extends Controller
                 }
             }
         }
-        
+
         Log::info("Fetching artworks with params: " . json_encode($params));
         $artworksResponse = $this->pictufy->getArtworks($params);
 
@@ -185,14 +185,17 @@ class PictufyController extends Controller
             'nextPage' => isset($artworksResponse['items']) && count($artworksResponse['items']) >= $perPage ? $page + 1 : null,
         ]);
     }
-    
+
     public function fetchData(Request $request) // For infinite scroll / loading more artworks
     {
         Log::info("Fetching more artworks with request: " . json_encode($request->all()));
         $page = (int) $request->input('page', 1);
         $perPage = (int) $request->input('per_page', 30);
-        $collectionId = $request->input('collection_id', ''); // Expect collection_id now
-        $filters = $request->input('filters', []); // These are route segment filters
+        $collectionId = $request->input('collection_id', ''); // Correctly named 'collection_id' now
+
+        // Filters are expected as a slash-separated string from the frontend for this endpoint
+        $filtersString = $request->input('filters', ''); // Expect a string, default to empty
+
         $order = $request->input('order', 'recommended'); // Order from query param
 
         $params = [
@@ -205,29 +208,53 @@ class PictufyController extends Controller
             $params['collection_id'] = $collectionId;
         }
 
-        // Apply filters from route segments if provided
-        if (!empty($filters) && is_array($filters)) { // filters from loadMore might be an array
-            foreach ($filters as $filter_segment) {
-                 if (str_starts_with($filter_segment, 'cat_')) {
-                    $categoryId = $this->pictufy->getCategoryIdBySlug($filter_segment);
-                    if ($categoryId) $params['category'] = $categoryId;
+        // Process filtersString if it's not empty
+        if (!empty($filtersString)) {
+            $filter_segments = explode('/', $filtersString); // Explode the string into an array
+
+            foreach ($filter_segments as $segment) { // Iterate over the exploded segments
+                $segment = trim($segment); // Trim whitespace
+                if (empty($segment)) {
+                    continue; // Skip empty segments
+                }
+
+                // Handle order filter (though typically passed as 'order' param, good to be robust)
+                if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
+                    $params['order'] = $segment; // Override if present in filters string
                     continue;
                 }
-                if (in_array($filter_segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
-                    $params['geometry'] = $filter_segment;
+
+                if (str_starts_with($segment, 'cat_')) {
+                    $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
+                    if ($categoryId) {
+                        $params['category'] = $categoryId; // API expects 'category' for category ID
+                    }
                     continue;
                 }
-                // Add other filter logic if needed from segments
+                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
+                    $params['geometry'] = $segment;
+                    continue;
+                }
+                // Add other filter types from your PictufyService->getArtworks supported params
+                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
+                    $params['color'] = $segment;
+                    continue;
+                }
+                if ($segment === 'hide-nudes') {
+                    $params['nudity'] = 'hide';
+                } elseif ($segment === 'only-nudes') {
+                    $params['nudity'] = 'yes';
+                }
+                // Add any other filter logic you have in filteredArtworks or filteredCollection
             }
         }
 
-
-        Log::info("Fetching artworks (fetchData) with params: " . json_encode($params));
+        Log::info("Fetching artworks (fetchData) with processed params: " . json_encode($params));
         $response = $this->pictufy->getArtworks($params);
 
         return response()->json([
             'artworks' => $response['items'] ?? [],
-            'nextPage' => isset($response['items']) && count($response['items']) >= $perPage ? $page + 1 : null,
+            'nextPage' => (isset($response['items']) && count($response['items']) >= $perPage) ? $page + 1 : null,
         ]);
     }
 
