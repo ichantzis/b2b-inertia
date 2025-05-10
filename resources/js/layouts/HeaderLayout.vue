@@ -23,7 +23,7 @@ const currentRoute = computed(() => {
 
 const cartCount = computed(() => page.props.cartCount || 0);
 const cartItemsPreview = computed(() => {
-    return (page.props.cartItemsPreview.map(item => ({
+    return (page.props.cartItemsPreview?.map(item => ({
         ...item,
         formattedPrice: item.artwork_data?.price // format price
             ? Number(item.artwork_data.price).toFixed(2)
@@ -84,9 +84,9 @@ const mainMenuItems = computed(() => {
         label: 'Collections',
         icon: 'pi pi-fw pi-th-large',
         route: route('collections.index'),
-                command: () => {
-                    mobileMenuOpen.value = false;
-                },
+        command: () => {
+            mobileMenuOpen.value = false;
+        },
         expanded: true, // Add this to show submenu by default
     });
 
@@ -250,33 +250,55 @@ const handleDeleteItem = (itemId) => {
 };
 
 watch(() => page.props.flash?.login_success_message, (newMessage) => {
-  if (newMessage) {
-    // Wait for the next DOM update cycle before showing the toast
-    nextTick(() => {
-        try {
-          toast.add({
-              severity: 'success',
-              summary: 'Logged In',
-              detail: newMessage,
-              life: 3000 // Keep it slightly longer for testing if needed
-          });
-        } catch (error) {
-          console.error('Error calling toast.add() inside nextTick:', error);
-        }
-    });
+    if (newMessage) {
+        // Wait for the next DOM update cycle before showing the toast
+        nextTick(() => {
+            try {
+                toast.add({
+                    severity: 'success',
+                    summary: 'Logged In',
+                    detail: newMessage,
+                    life: 3000 // Keep it slightly longer for testing if needed
+                });
+            } catch (error) {
+                console.error('Error calling toast.add() inside nextTick:', error);
+            }
+        });
 
-    // Clear the flash message from Inertia's props immediately after detecting it
-    // so the watcher doesn't re-trigger unnecessarily if other props change.
-    // Do this *outside* nextTick.
-    if (page.props.flash) {
-        page.props.flash.login_success_message = null;
+        // Clear the flash message from Inertia's props immediately after detecting it
+        // so the watcher doesn't re-trigger unnecessarily if other props change.
+        // Do this *outside* nextTick.
+        if (page.props.flash) {
+            page.props.flash.login_success_message = null;
+        }
     }
-  }
 }, { immediate: true }); // immediate: true is still correct here
+
+// --- SOLUTION FOR STALE CART ON BACK NAVIGATION ---
+let unregisterNavigateListener = null;
 
 // Add lifecycle hooks
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);
+
+    unregisterNavigateListener = router.on('navigate', () => {
+        // This event fires after any Inertia navigation, including back/forward.
+        // We will ask Inertia to reload only the shared props related to the cart.
+        // This ensures that if the user navigated back to a page whose cart data was stale,
+        // it gets refreshed from the server.
+        console.log('Inertia "navigate" event triggered. Reloading cart props.');
+        router.reload({
+            only: ['cartCount', 'cartItemsPreview'], // Specify only the props you need to refresh
+            preserveState: true, // Attempt to preserve component state
+            preserveScroll: true, // Preserve scroll position
+            onSuccess: () => {
+                console.log('Cart props reloaded successfully via router.reload().');
+            },
+            onError: (errors) => {
+                console.error('Error reloading cart props on navigate:', errors);
+            }
+        });
+    });
 });
 
 onUnmounted(() => {
@@ -311,16 +333,9 @@ onUnmounted(() => {
                         <!-- Right Side - User Menu -->
                         <template #end>
                             <div class="flex items-center">
-                                <Button id="user-menu-btn" 
-                                    severity="secondary" 
-                                    icon="pi pi-user" 
-                                    pt:root:class="p-0"
-                                    pt:icon:class="text-xl" 
-                                    text 
-                                    aria-label="User menu" 
-                                    @mouseenter="showUserPopover"
-                                    @mouseleave="hideUserPopover"
-                                    @click="handleUserClick" />
+                                <Button id="user-menu-btn" severity="secondary" icon="pi pi-user" pt:root:class="p-0"
+                                    pt:icon:class="text-xl" text aria-label="User menu" @mouseenter="showUserPopover"
+                                    @mouseleave="hideUserPopover" @click="handleUserClick" />
                                 <Link :href="route('cart.index')" class="ml-4" @mouseenter="showCartPopover"
                                     @mouseleave="hideCartPopover" aria-haspopup="true"
                                     aria-controls="cart-popover-content">
@@ -331,11 +346,8 @@ onUnmounted(() => {
                                 <Button v-else id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
                                     pt:root:class="p-0" pt:icon:class="text-xl" text aria-label="Cart menu" />
                                 </Link>
-                                <Popover ref="op" 
-                                    target="#user-menu-btn" 
-                                    :showCloseIcon="false"
-                                    @mouseenter="clearUserHideTimer" 
-                                    @mouseleave="hideUserPopover">
+                                <Popover ref="op" target="#user-menu-btn" :showCloseIcon="false"
+                                    @mouseenter="clearUserHideTimer" @mouseleave="hideUserPopover">
                                     <div class="p-2 w-48">
                                         <LinksPanelMenu :model="userMenuItems" class="border-none" />
                                     </div>

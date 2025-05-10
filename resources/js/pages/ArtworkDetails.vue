@@ -1,6 +1,7 @@
 <template>
   <InertiaHead :title="currentArtwork?.title?.en || 'Artwork Details'" />
-  <Button icon="pi pi-arrow-left" class="back-button" rounded severity="secondary" variant="text" size="large" aria-label="Back" @click="goBack" />
+  <Button icon="pi pi-arrow-left" class="back-button" rounded severity="secondary" variant="text" size="large"
+    aria-label="Back" @click="goBack" />
 
   <div class="artwork-details-page" @keydown.left.prevent="prevImage" @keydown.right.prevent="nextImage" tabindex="0"
     @touchstart="handleTouchStart" @touchend="handleTouchEnd">
@@ -96,21 +97,42 @@
     </div>
 
 
-    <Dialog v-model:visible="previewVisible" modal :dismissableMask="true" class="image-preview-dialog" :pt="{
-      mask: { style: 'backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.7);' },
-      content: { class: 'p-0 border-none shadow-none', onKeydown: handleDialogKey, onTouchstart: handleTouchStart, onTouchend: handleTouchEnd }
-    }">
-      <div class="dialog-gallery-content">
-        <Button icon="pi pi-chevron-left" @click.stop="prevImage" class="dialog-nav-btn left"
-          :disabled="galleryImages.length <= 1" />
-        <img v-if="galleryImages.length > 0 && galleryImages[currentIndex]"
-          :src="galleryImages[currentIndex].itemImageSrc" class="preview-image-render"
-          :alt="galleryImages[currentIndex].alt" />
-        <Button icon="pi pi-chevron-right" @click.stop="nextImage" class="dialog-nav-btn right"
-          :disabled="galleryImages.length <= 1" />
+    <Dialog v-model:visible="previewVisible" modal :dismissableMask="true" class="image-preview-dialog"
+      :closable="false" headerClass="p-dialog-custom-header" contentClass="p-dialog-custom-content" :pt="{
+        mask: { style: 'backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.85);' }
+      }">
+      <div class="dialog-container" @keydown="handleDialogKey" @touchstart="handleTouchStart" @touchend="handleTouchEnd"
+        tabindex="-1" ref="dialogContainerRef">
+        <Button icon="pi pi-times" class="dialog-custom-close-btn" @click="previewVisible = false" text rounded
+          aria-label="Close" />
+
+        <div class="dialog-gallery-content">
+
+          <Button icon="pi pi-chevron-left" @click.stop="prevImage" class="dialog-nav-btn left"
+            :disabled="galleryImages.length <= 1" />
+
+          <template v-if="galleryImages.length > 0 && galleryImages[currentIndex]">
+            <template v-if="galleryImages[currentIndex].isPrimaryArtwork">
+              <div >
+                <img :src="selectedCanvas.url" alt="Canvas Frame" />
+                <img :src="galleryImages[currentIndex].itemImageSrc" class="artwork-on-canvas"
+                  :alt="galleryImages[currentIndex].alt"
+                  :style="{ top: selectedCanvas.artworkContainerStyle.top, left: selectedCanvas.artworkContainerStyle.left, width: selectedCanvas.artworkContainerStyle.width, height: selectedCanvas.artworkContainerStyle.height, transform: selectedCanvas.artworkTransform, transformOrigin: selectedCanvas.transformOrigin || 'center center' }" />
+              </div>
+            </template>
+            <template v-else>
+              <img :src="galleryImages[currentIndex].itemImageSrc" class="preview-image-render"
+                :alt="galleryImages[currentIndex].alt" />
+            </template>
+          </template>
+          <template v-else>
+            <div class="artwork-placeholder-on-canvas">Image not available</div>
+          </template>
+
+          <Button icon="pi pi-chevron-right" @click.stop="nextImage" class="dialog-nav-btn right"
+            :disabled="galleryImages.length <= 1" />
+        </div>
       </div>
-      <Button icon="pi pi-times" class="dialog-close-btn" @click="previewVisible = false" text rounded
-        aria-label="Close" />
     </Dialog>
   </div>
 </template>
@@ -126,7 +148,7 @@ import Dialog from 'primevue/dialog';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import ArtworkCustomizer from '@/components/ArtworkCustomizer.vue';
 import defaultCanvasImg from '@/../../public/images/frames/CANVAS_2X3_VERTICAL_OLIVE.png'; // Your previous canvas
-import verticalCanvasImg from '@/../../public/images/frames/CANVAS_2X3_VERTICAL_OLIVE.png'; // Your previous canvas
+import verticalCanvasImg from '@/../../public/images/frames/Canvas_VERTICAL.png'; // Your previous canvas
 import horizontalCanvasImg from '@/../../public/images/frames/CANVAS_2X3_HORIZONTAL_BLACK.png'; // Your previous canvas
 import squareCanvasImg from '@/../../public/images/frames/100X100_ANGLED_WHITE.png'; // Your previous canvas
 // import defaultCanvasImg from '@/../../public/images/frames/Canvas_100x70_VERTICAL_FRONT.png'; // Your previous canvas
@@ -181,17 +203,18 @@ const selectedCanvas = computed(() => {
     // IMPORTANT: Default positioning and transform for the VERTICAL OLIVE canvas
     // These MUST be fine-tuned by measuring your specific CANVAS_2X3_VERTICAL_OLIVE.jpg
     artworkContainerStyle: { top: '10%', left: '15%', width: '70%', height: '75%' }, // Example
-    artworkTransform: 'perspective(1000px) rotateY(14deg)', // Example
+    // artworkTransform: 'perspective(1000px) rotateY(14deg)', // Example
   };
 
   switch (geometry) {
     case 'vertical':
       details.url = canvasImagePaths.vertical;
       details.aspectRatioClass = 'aspect-ratio-2-3'; // e.g., for CANVAS_2X3_VERTICAL_OLIVE.jpg
-      details.isAngled = true; // Assuming the olive one is angled
+      details.isAngled = false; // Assuming the olive one is angled
       // Fine-tune these for CANVAS_2X3_VERTICAL_OLIVE.jpg
-      details.artworkContainerStyle = { top: '21.3%', left: '33.6%', width: '37.1%!important', height: '58.4%!important' }; // Needs exact values
-      details.artworkTransform = 'perspective(1000px) rotateY(14deg)'; // Needs exact values
+      // details.artworkContainerStyle = { top: '21.3%', left: '33.6%', width: '37.1%!important', height: '58.4%!important' }; // Angled versiom
+      details.artworkContainerStyle = { top: '23%', left: '30.6%', width: '37.3%!important', height: '53.4%!important' };
+      // details.artworkTransform = 'perspective(1000px) rotateY(14deg)'; // Needs exact values
       // details.transformOrigin = 'center left'; // Example, might need adjustment
       break;
     case 'horizontal':
@@ -251,32 +274,6 @@ const galleryImages = computed(() => {
   return images;
 });
 
-
-// Placeholder for dynamic transform style
-// You will need to calculate these values based on your angled canvas
-// and potentially the artwork's aspect ratio.
-const artworkStyle = computed(() => {
-  if (galleryImages.value[currentIndex.value]?.isPrimaryArtwork) {
-    // These are HIGHLY EXPERIMENTAL values for an angled canvas.
-    // You NEED to adjust these.
-    return {
-      // The transform-origin-container helps by letting you position it first,
-      // then transform the image within that container.
-      transform: 'perspective(1000px) rotateY(14deg)',
-      // A more complex matrix3d would be needed for perfect fit from 4 corners
-      // For example (these values are purely illustrative):
-      // transform: 'matrix3d(0.9, -0.1, 0, 0.0005, 0.15, 0.9, 0, -0.0003, 0, 0, 1, 0, 5, 10, 0, 1.1)',
-
-      // Simpler approach to try first - Skew and Rotate.
-      // Adjust these values extensively.
-      // transform: 'rotateY(-10deg) skewY(-3deg) scale(1)', // Example values
-      // transformOrigin: 'center center', // Or 'top left', '50% 50%', etc.
-    };
-  }
-  return {};
-});
-
-
 const previewVisible = ref(false);
 const currentIndex = ref(0);
 const touchStartX = ref(0);
@@ -306,19 +303,19 @@ function goBack() {
   // We can't directly get the "previous" Inertia URL from here easily without a custom stack.
   // However, if we know we are not on the first page of the history stack for the current SPA session.
   if (window.history.length > 1) {
-      // If referrer is empty but history length > 1, it might be an in-app navigation
-      // where referrer was lost or not set (e.g. router.replace).
-      // In this case, window.history.back() might still be the best bet if it doesn't
-      // take them out of the app. This is tricky without more context on how they got there.
-      // A common pattern: If the user opened the link in a new tab, referrer is empty.
-      // In such cases, going "back" isn't meaningful, so fallback is better.
+    // If referrer is empty but history length > 1, it might be an in-app navigation
+    // where referrer was lost or not set (e.g. router.replace).
+    // In this case, window.history.back() might still be the best bet if it doesn't
+    // take them out of the app. This is tricky without more context on how they got there.
+    // A common pattern: If the user opened the link in a new tab, referrer is empty.
+    // In such cases, going "back" isn't meaningful, so fallback is better.
 
-      // A slightly more cautious approach if referrer is empty:
-      // Only go back if there's substantial history, suggesting multiple in-app navigations.
-      if (window.history.length > 2) { // Keep your original threshold if preferred
-          window.history.back();
-          return;
-      }
+    // A slightly more cautious approach if referrer is empty:
+    // Only go back if there's substantial history, suggesting multiple in-app navigations.
+    if (window.history.length > 2) { // Keep your original threshold if preferred
+      window.history.back();
+      return;
+    }
   }
 
 
@@ -539,33 +536,8 @@ function scrollThumbnails(direction) {
   height: 58.4% !important; */
   object-fit: fill !important;
   /* Fill the container */
-  cursor: zoom-in;
 }
 
-/* This new container is positioned to define the artwork's bounding box on the frame */
-.artwork-transform-origin-container {
-  position: absolute;
-  /* CRITICAL: These percentages define where the artwork sits on the canvas frame. */
-  /* You MUST measure these from your "CANVAS_2X3_VERTICAL_OLIVE.jpg" image in an editor. */
-  /* Example values that you need to replace: */
-  top: 10%;
-  /* Percentage from the top of the .canvas-frame-wrapper */
-  left: 15%;
-  /* Percentage from the left */
-  width: 70%;
-  /* Desired width of the artwork area as a percentage of .canvas-frame-wrapper's width */
-  height: 75%;
-  /* Desired height of the artwork area as a percentage of .canvas-frame-wrapper's height */
-
-  /* This origin is for the artwork-on-canvas image *within* this container */
-  /* Usually center is a good starting point for the image itself */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* For debugging the position of this box: */
-  /* border: 1px dashed limegreen;  */
-  /* The transform for the artwork itself will be applied by :style="artworkStyle" */
-}
 
 
 /* Placeholder for when artwork image isn't available */
@@ -751,7 +723,7 @@ function scrollThumbnails(direction) {
   padding: 0 !important;
   border: none !important;
   box-shadow: none !important;
-  overflow: hidden;
+  overflow: auto;
   /* Important for clean look */
   display: flex;
   align-items: center;
@@ -760,26 +732,33 @@ function scrollThumbnails(direction) {
 
 .dialog-gallery-content {
   position: relative;
-  /* For positioning nav buttons within */
   display: flex;
   align-items: center;
   justify-content: center;
-  width: auto;
-  /* Let image determine width up to max */
+
+  /* let it size itself, up to a limit of the viewport */
+  width: 90vw;
   height: auto;
-  /* Let image determine height up to max */
   max-width: 90vw;
   max-height: 90vh;
+
+  /* if you do want scrollbars when the image really is enormous: */
+  /* overflow: auto; */
 }
 
+
 .preview-image-render {
+  display: block;
+
+  /* maintain aspect ratio, but never exceed the container */
+  width: auto;
+  height: auto;
   max-width: 100%;
-  /* Relative to dialog-gallery-content */
   max-height: 100%;
-  /* Relative to dialog-gallery-content */
-  object-fit: contain;
+
+  /* guarantees no cropping — it’ll letterbox inside the box */
+  object-fit: contain;  /* or object-fit: scale-down; */
   border-radius: 4px;
-  /* Optional rounded corners for preview */
 }
 
 .dialog-nav-btn {
@@ -897,4 +876,115 @@ function scrollThumbnails(direction) {
   gap: 0.5rem;
   margin: 1.5rem 0;
 }
+
+/* --- DIALOG SPECIFIC STYLING --- */
+/* PrimeVue class for custom header styling */
+:global(.p-dialog-custom-header) { /* Use :global for classes applied by PrimeVue internally */
+  display: none !important;
+}
+/* PrimeVue class for custom content styling */
+:global(.p-dialog-custom-content) {
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: auto !important; 
+  background: transparent !important; /* Ensure no default background */
+}
+
+.dialog-container { 
+  position: relative; /* For absolute positioning of close button */
+  width: 100%; /* Occupy the space given by Dialog component (which is full screen by default for modal) */
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none; /* For tabindex focus */
+  padding: 1rem; /* Add some padding so content doesn't touch edges */
+  box-sizing: border-box;
+}
+
+.dialog-custom-close-btn { 
+  position: absolute !important; 
+  top: clamp(0.5rem, 3vh, 1.5rem); /* Responsive based on viewport height */
+  right: clamp(0.5rem, 3vw, 1.5rem); /* Responsive based on viewport width */
+  background-color: rgba(40, 40, 40, 0.6) !important; /* Slightly darker, more contrast */
+  color: white !important;
+  z-index: 1302; /* Ensure above gallery content */
+  width: 2.75rem; height: 2.75rem; /* Slightly larger */
+  border-radius: 50%;
+}
+.dialog-custom-close-btn:hover, .dialog-custom-close-btn:focus { 
+  background-color: rgba(0,0,0,0.7) !important; 
+}
+
+.dialog-gallery-content {
+  position: relative; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%; 
+  height: 100%; 
+  /* Max size relative to the .dialog-container's padding */
+  max-width: 100%; /* Will be constrained by dialog-container's effective max-width */
+  max-height: 100%;/* Will be constrained by dialog-container's effective max-height */
+  box-sizing: border-box;
+}
+
+/* Aspect ratio classes for dialog canvas mode */
+.dialog-gallery-content.dialog-canvas-mode {
+   background-color: transparent; /* Transparent background for canvas view in dialog */
+}
+.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-2-3 { aspect-ratio: 1 / 1; }
+.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-3-2 { aspect-ratio: 1 / 1; }
+.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-1-1 { aspect-ratio: 1 / 1; }
+.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-default { aspect-ratio: 1 / 1; }
+
+.dialog-gallery-content.dialog-canvas-mode.perspective-view {
+  perspective: 1000px; /* Same as main view, or adjust for dialog size */
+  perspective-origin: center center; 
+}
+
+/* Canvas elements within the Dialog */
+/* These will use the same classes: .canvas-frame-wrapper, .canvas-frame-image, 
+   .artwork-transform-origin-container, .artwork-on-canvas. 
+   Their parent (.dialog-gallery-content in canvas-mode) dictates their overall size and perspective.
+*/
+.dialog-gallery-content .canvas-frame-wrapper {
+   /* Already position:absolute, width:100%, height:100% from shared styles */
+}
+
+/* Normal image render inside dialog */
+.dialog-gallery-content.dialog-normal-mode {
+  /* No specific aspect ratio needed, image will define it up to container bounds */
+}
+.preview-image-render { /* This is for normal interior images in dialog */
+  display: block; 
+  max-width: 100%; 
+  max-height: 100%; 
+  object-fit: contain; /* Ensures entire image is visible and maintains aspect ratio */
+  border-radius: 4px; 
+}
+
+.dialog-nav-btn { 
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(30, 30, 30, 0.5) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 50%;
+  width: clamp(2.5rem, 6vw, 3.5rem); 
+  height: clamp(2.5rem, 6vw, 3.5rem);
+  z-index: 10; 
+  opacity: 0.6;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+.dialog-nav-btn:hover { opacity: 1; background-color: rgba(0,0,0,0.6) !important; }
+.dialog-nav-btn.left { 
+  left: clamp(0.25rem, 1.5vw, 0.75rem); /* Closer to the edge of the image content */
+}
+.dialog-nav-btn.right { 
+  right: clamp(0.25rem, 1.5vw, 0.75rem);
+}
+.dialog-nav-btn:disabled { display: none; } 
 </style>
