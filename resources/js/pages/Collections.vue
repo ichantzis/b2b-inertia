@@ -1,8 +1,11 @@
 <script setup>
 import { computed } from 'vue';
-import { Link, Head as InertiaHead } from '@inertiajs/vue3';
+import { Link, Head as InertiaHead, usePage } from '@inertiajs/vue3';
 import Card from 'primevue/card';
+import Divider from 'primevue/divider';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
+import CollectionSidebar from '@/components/CollectionSidebar.vue';
+import { slugify } from '@/composables/utils.js';
 
 defineOptions({ layout: HeaderLayout });
 
@@ -19,6 +22,14 @@ const props = defineProps({
         default: () => []
     }
 });
+
+const page = usePage();
+
+// The sidebar will use page.props.allCollectionCategoriesWithCollections globally
+// This page's main content might display featured collections, or the same categorized view.
+// For this example, let's assume this page will show categories with horizontally scrollable collections.
+const categorizedCollectionsForMainView = computed(() => page.props.allCollectionCategoriesWithCollections || []);
+
 
 const decodeHTMLEntities = (text) => {
     if (typeof text !== 'string') return '';
@@ -63,17 +74,20 @@ const decodedCategorizedCollections = computed(() => {
 
 <template>
     <InertiaHead title="Collections" />
-    <div class="layout-container">
-        <div class="main-content">
+    <div class="page-with-sidebar-layout">
+        <CollectionSidebar />
+        <div class="main-content-area">
             <div class="content-wrapper">
                 <h1 class="text-3xl font-bold mb-10 text-center">Collections</h1>
 
                 <div v-if="decodedCategorizedCollections.length > 0">
                     <section v-for="category in decodedCategorizedCollections"
                         :key="category.category_id || category.category_name" class="category-section mb-12">
-                        <h2 class="category-title text-2xl font-semibold mb-5 text-left">{{ category.category_name }}
-                        </h2>
-
+                        <Link class="category-title text-2xl font-semibold mb-5 text-left"
+                            :href="route('collections.category.show', { category_collection_slug: slugify(category.category_name) })">
+                        {{ category.category_name }}
+                        <Divider />
+                        </Link>
                         <div class="horizontal-scroll-wrapper">
                             <div class="collections-row">
                                 <div v-for="collection in category.collections" :key="collection.id"
@@ -119,26 +133,45 @@ const decodedCategorizedCollections = computed(() => {
 </template>
 
 <style scoped>
-.layout-container {
+.page-with-sidebar-layout {
     display: flex;
-    min-height: 100vh;
+    padding-top: 0;
+    /* Assuming header is fixed and provides its own padding/margin for content below it */
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
 }
 
-.main-content {
-    flex: 1;
-    padding: 1rem 0.5rem;
-    /* Reduce horizontal padding for more space on small screens */
-    overflow-y: auto;
+.main-content-area {
+    flex-grow: 1;
+    padding-left: 280px;
+    /* Width of the sidebar */
+    transition: padding-left 0.3s ease-in-out;
+    /* background-color: #f4f7f6; */
+    min-height: calc(100vh - 120px);
+    /* Adjust 120px if your header height is different */
+    /* padding-top: 1.5rem; */
+    /* Padding for content inside */
+    padding-right: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+@media (max-width: 1199.98px) {
+    .main-content-area {
+        padding-left: 0;
+        /* Sidebar is hidden, content takes full width */
+    }
 }
 
 .content-wrapper {
     margin: 0 auto;
     max-width: 100%;
-    /* Allow full width to better manage horizontal scroll */
-    background: white;
-    border-radius: 8px;
-    padding: 2rem 0;
-    /* Adjust padding, especially horizontal */
+    /* Allow it to fill the main-content-area */
+    /* background: white;
+    border-radius: 12px; */
+    /* padding: 2rem; */
+    /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07); */
 }
 
 .category-section {
@@ -151,6 +184,9 @@ const decodedCategorizedCollections = computed(() => {
     padding-left: 1rem;
     /* Ensure title aligns with content */
     padding-right: 1rem;
+    text-decoration: none;
+    /* Explicitly remove underline from the Link component itself */
+    color: inherit;
 }
 
 .horizontal-scroll-wrapper {
@@ -286,12 +322,17 @@ const decodedCategorizedCollections = computed(() => {
 }
 
 .collection-link-wrapper {
-    display: block; /* Already applied via class attribute */
-    text-decoration: none; /* Explicitly remove underline from the Link component itself */
-    color: inherit; /* Make the link inherit text color from its parent */
+    display: block;
+    /* Already applied via class attribute */
+    text-decoration: none;
+    /* Explicitly remove underline from the Link component itself */
+    color: inherit;
+    /* Make the link inherit text color from its parent */
 }
+
 .collection-link-wrapper:hover {
-    text-decoration: none; /* Ensure no underline on hover either */
+    text-decoration: none;
+    /* Ensure no underline on hover either */
 }
 
 /* PrimeVue Card specific overrides if needed */
@@ -337,7 +378,7 @@ const decodedCategorizedCollections = computed(() => {
     }
 
     .content-wrapper {
-        padding: 2rem 1rem;
+        /* padding: 2rem 1rem; */
         /* Restore some horizontal padding for larger screens */
     }
 }

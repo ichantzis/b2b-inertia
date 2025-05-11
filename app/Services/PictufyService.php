@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class PictufyService
 {
@@ -73,6 +74,69 @@ class PictufyService
         // If collections are categorized (skip_categories = 0) and you didn't fetch flat
         // you would need to iterate through categories then their collections.
         Log::warning("Collection ID not found for slug: $collectionSlug");
+        return null;
+    }
+
+     /**
+     * Get all collection categories from the API.
+     * Caches the result.
+     */
+    public function getCollectionCategories()
+    {
+        $cacheKey = 'pictufy_collection_categories';
+        $cacheDuration = 1440; // Cache for 24 hours (adjust as needed)
+
+        return Cache::remember($cacheKey, $cacheDuration, function () {
+            Log::info('Fetching collection categories from API');
+            // The API docs specify the endpoint as /collectioncategories
+            return $this->request('collectioncategories');
+        });
+    }
+
+    /**
+     * Get a collection category's ID by its generated slug.
+     *
+     * @param string $slug
+     * @return string|null The category_id or null if not found.
+     */
+    public function getCollectionCategoryIdBySlug(string $categorySlugToFind): ?string
+    {
+        $collectionCategoriesResponse = $this->getCollectionCategories();
+
+        if (isset($collectionCategoriesResponse['items']) && is_array($collectionCategoriesResponse['items'])) {
+            foreach ($collectionCategoriesResponse['items'] as $category) {
+                if (isset($category['category_name']) && isset($category['category_id'])) {
+                    // Generate a slug from the category_name in the same way links would be generated
+                    $generatedSlug = Str::slug(html_entity_decode($category['category_name']));
+                    if ($generatedSlug === $categorySlugToFind) {
+                        return $category['category_id'];
+                    }
+                }
+            }
+        }
+        Log::warning("Collection category ID not found for slug: " . $categorySlugToFind);
+        return null;
+    }
+    
+    /**
+     * Get a collection category's name by its ID.
+     * (This might be useful if fetching collections by ID doesn't return the category name directly)
+     *
+     * @param string $categoryId
+     * @return string|null The category_name or null if not found.
+     */
+    public function getCollectionCategoryNameById(string $categoryId): ?string
+    {
+        $collectionCategoriesResponse = $this->getCollectionCategories();
+
+        if (isset($collectionCategoriesResponse['items']) && is_array($collectionCategoriesResponse['items'])) {
+            foreach ($collectionCategoriesResponse['items'] as $category) {
+                if (isset($category['category_id']) && $category['category_id'] === $categoryId && isset($category['category_name'])) {
+                    return html_entity_decode($category['category_name'], ENT_QUOTES | ENT_HTML5);
+                }
+            }
+        }
+        Log::warning("Collection category name not found for ID: " . $categoryId);
         return null;
     }
 

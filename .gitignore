@@ -20,3 +20,17 @@ components.d.ts
 /.fleet
 /.idea
 /.vscode
+
+# Large files
+*.psd
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+*.mp4
+*.mov
+*.wmv
+*.avi
+*.iso
+*.dmg

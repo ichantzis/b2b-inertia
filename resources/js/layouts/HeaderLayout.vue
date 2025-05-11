@@ -82,7 +82,7 @@ const mainMenuItems = computed(() => {
     // Add collections with submenu
     items.push({
         label: 'Collections',
-        icon: 'pi pi-fw pi-th-large',
+        icon: 'pi pi-fw pi-objects-column',
         route: route('collections.index'),
         command: () => {
             mobileMenuOpen.value = false;

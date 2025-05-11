@@ -36,6 +36,8 @@ Route::get('/collections', [PictufyController::class, 'indexCollections'])->name
 Route::get('/collection/{collection_slug}/{filters?}', [PictufyController::class, 'showCollectionBySlug'])
     ->where('filters', '.*')
     ->name('collection.show'); // Page to display artworks of a specific collection by slug
+Route::get('/collections/category/{category_collection_slug}', [PictufyController::class, 'showCollectionsByCategorySlug'])
+    ->name('collections.category.show');
 
 // Add categories endpoint
 Route::get('/api/categories', [PictufyController::class, 'getCategories']);

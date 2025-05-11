@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\PictufyService;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class PictufyController extends Controller
 {
@@ -70,6 +71,67 @@ class PictufyController extends Controller
             // For pictufy.com/collections look, categorized is better.
             'categorized_collections' => $collectionsData, // if skip_categories = 0
             // 'collections' => $collectionsData // if skip_categories = 1
+        ]);
+    }
+
+    public function showCollectionsByCategorySlug(Request $request, $category_collection_slug)
+    {
+        Log::info("Attempting to show collections for category slug: " . $category_collection_slug);
+
+        // Get the category ID from the slug using the service method
+        $collection_category_id = $this->pictufy->getCollectionCategoryIdBySlug($category_collection_slug);
+
+        if (!$collection_category_id) {
+            Log::error("No category ID found for slug: " . $category_collection_slug);
+            abort(404, 'Collection category not found.');
+        }
+        
+        // Fetch the category name separately, as getCollections by category_id might not return it.
+        // Or, if your getCollections API call for a specific category *does* return the category name,
+        // you can simplify this.
+        $categoryName = $this->pictufy->getCollectionCategoryNameById($collection_category_id) ?? ucfirst(str_replace('-', ' ', $category_collection_slug));
+
+
+        // Call the PictufyService to get collections for the resolved category ID.
+        $response = $this->pictufy->getCollections(['collection_category' => $collection_category_id]);
+
+        $collections = [];
+
+        // The API docs for /collections with 'collection_category' parameter suggest it returns
+        // the category object which contains its own list of 'collections'.
+        if (!empty($response['items']) && is_array($response['items'])) {
+            $categoryData = $response['items'][0] ?? null; // Assuming the API returns the single category matching the ID
+
+            if ($categoryData && isset($categoryData['collections']) && is_array($categoryData['collections'])) {
+                // If category name is returned in this response, prefer it.
+                $categoryName = html_entity_decode($categoryData['category_name'] ?? $categoryName, ENT_QUOTES | ENT_HTML5);
+                
+                $collections = array_map(function ($collection) {
+                    $urlPath = !empty($collection['url']) ? parse_url($collection['url'], PHP_URL_PATH) : '';
+                    // Generate a slug for the individual collection from its name if URL is missing
+                    $collectionSlug = !empty($urlPath) ? basename($urlPath) : Str::slug($collection['name'] ?? 'untitled-collection');
+                    
+                    return [
+                        'id' => $collection['id'] ?? Str::random(10), // Ensure an ID exists
+                        'name' => html_entity_decode($collection['name'] ?? 'Untitled Collection', ENT_QUOTES | ENT_HTML5),
+                        'slug' => $collectionSlug, // This is the slug for individual collection linking
+                        'thumb' => $collection['thumb'] ?? $collection['cover'] ?? null,
+                        'artworks_count' => $collection['artworks'] ?? 0,
+                        'description' => html_entity_decode($collection['description'] ?? '', ENT_QUOTES | ENT_HTML5),
+                    ];
+                }, $categoryData['collections']);
+                Log::info("Found " . count($collections) . " collections for category: " . $categoryName . " (ID: " . $collection_category_id . ")");
+            } else {
+                Log::warning("No 'collections' array found within the response for category ID: " . $collection_category_id, ['response_item_0' => $categoryData]);
+            }
+        } else {
+            Log::warning("API response for collections with category_id '$collection_category_id' was empty or not in expected format.", ['response' => $response]);
+        }
+
+        return Inertia::render('ByCategoryPage', [
+            'categoryName' => $categoryName,
+            'collections' => $collections,
+            'categorySlug' => $category_collection_slug // Pass the original slug for context if needed
         ]);
     }
 
