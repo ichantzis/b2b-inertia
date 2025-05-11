@@ -135,165 +135,142 @@ const decodedCategorizedCollections = computed(() => {
 <style scoped>
 .page-with-sidebar-layout {
     display: flex;
-    padding-top: 0;
-    /* Assuming header is fixed and provides its own padding/margin for content below it */
+    /* background: white; */ /* Moved background to content-wrapper if needed */
+    /* Removed padding, border-radius, box-shadow from here, should be on content-wrapper */
+}
+
+.main-content-area {
+    flex-grow: 1;
+    padding-left: 280px; /* Width of the sidebar */
+    transition: padding-left 0.3s ease-in-out;
+    min-height: calc(100vh - 120px); /* Adjust 120px if your header height is different */
+    /* padding-top: 1.5rem;  */
+    padding-right: 1.5rem;
+    padding-bottom: 1.5rem;
+    /* background-color: #f8f9fa;  */
+    overflow-y: auto; /* Allow vertical scroll for the content area itself */
+}
+
+@media (max-width: 1199.98px) {
+    .main-content-area {
+        padding-left: 0; /* Sidebar is hidden, content takes full width */
+    }
+}
+
+.content-wrapper { /* Reverted to content-wrapper, ensure styles are what you want */
+    margin: 0 auto;
+    max-width: 100%; 
     background: white;
     border-radius: 12px;
     padding: 2rem;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
 }
 
-.main-content-area {
-    flex-grow: 1;
-    padding-left: 280px;
-    /* Width of the sidebar */
-    transition: padding-left 0.3s ease-in-out;
-    /* background-color: #f4f7f6; */
-    min-height: calc(100vh - 120px);
-    /* Adjust 120px if your header height is different */
-    /* padding-top: 1.5rem; */
-    /* Padding for content inside */
-    padding-right: 1.5rem;
-    padding-bottom: 1.5rem;
-}
-
-@media (max-width: 1199.98px) {
-    .main-content-area {
-        padding-left: 0;
-        /* Sidebar is hidden, content takes full width */
-    }
-}
-
-.content-wrapper {
-    margin: 0 auto;
-    max-width: 100%;
-    /* Allow it to fill the main-content-area */
-    /* background: white;
-    border-radius: 12px; */
-    /* padding: 2rem; */
-    /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07); */
-}
-
 .category-section {
-    /* Optional: add padding if content-wrapper has no horizontal padding */
-    /* padding-left: 1rem; */
+    /* padding-left: 1rem; */ /* Optional, if .content-wrapper doesn't have side padding */
     /* padding-right: 1rem; */
 }
 
 .category-title {
-    padding-left: 1rem;
-    /* Ensure title aligns with content */
-    padding-right: 1rem;
+    display: block; /* Make the link block for better click area */
+    padding-left: 0; /* Adjusted as divider is now below */
+    padding-right: 0;
     text-decoration: none;
-    /* Explicitly remove underline from the Link component itself */
-    color: inherit;
+    color: #374151; /* text-gray-700 */
+    margin-bottom: 0.5rem; /* Space before divider */
+}
+.category-title:hover {
+    color: var(--p-primary-color, #3B82F6);
 }
 
+/* --- This section is key for per-category horizontal scroll --- */
 .horizontal-scroll-wrapper {
-    overflow-x: auto;
-    /* For a cleaner scrollbar look (might need browser prefixes or ::-webkit-scrollbar) */
-    -webkit-overflow-scrolling: touch;
-    /* Smooth scrolling on iOS */
-    scrollbar-width: thin;
-    /* For Firefox */
-    scrollbar-color: #cbd5e1 #f1f5f9;
-    /* thumb and track color for Firefox */
-    padding-left: 1rem;
-    /* Ensure first item has padding from edge */
-    padding-right: 1rem;
-    /* Ensure last item has padding before content cuts off */
+    overflow-x: auto; /* Enable horizontal scroll on this wrapper */
+    overflow-y: hidden; /* Prevent vertical scrollbars on this element */
+    white-space: nowrap; /* Prevent items in .collections-row from wrapping (alternative to flex-wrap: nowrap) - though flex is better */
+    padding: 0.5rem 0 1rem 0.25rem; /* Padding for aesthetics, esp. for scrollbar and first/last item visibility */
+    /* For a cleaner scrollbar look */
+    -webkit-overflow-scrolling: touch; 
+    scrollbar-width: thin; 
+    scrollbar-color: #cbd5e1 #f1f5f9; 
 }
 
-/* Hide scrollbar visually but keep functionality */
 .horizontal-scroll-wrapper::-webkit-scrollbar {
-    height: 8px;
-    /* Adjust height of the scrollbar */
+    height: 8px; 
 }
-
 .horizontal-scroll-wrapper::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    /* Light track */
+    background: #f8f9fa; /* Match page background */
     border-radius: 4px;
 }
-
 .horizontal-scroll-wrapper::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    /* Color of the scroll thumb */
+    background-color: #bdc1c6; /* Softer scrollbar thumb */
     border-radius: 4px;
-    /* border: 2px solid #f1f5f9;  Optional: creates padding around thumb */
 }
-
 .horizontal-scroll-wrapper::-webkit-scrollbar-thumb:hover {
     background-color: #94a3b8;
-    /* Darker on hover */
 }
 
-
 .collections-row {
-    display: flex;
+    display: inline-flex; /* Changed from flex to inline-flex. Or keep flex and ensure wrapper has width context */
     flex-direction: row;
-    flex-wrap: nowrap;
-    /* Crucial for horizontal scrolling */
-    gap: 2rem;
-    /* Space between collection items */
-    padding-bottom: 1rem;
-    /* Space for scrollbar or just visual */
+    /* flex-wrap: nowrap; /* Redundant if using white-space: nowrap on parent, but good for clarity with flex */
+    gap: 1.5rem; 
+    /* padding-bottom: 1rem; Removed, handled by wrapper */
+    /* min-width: min-content; /* Allow row to be as wide as its content */
 }
 
 .collection-item-wrapper {
-    flex: 0 0 auto;
-    /* Prevent items from shrinking or growing */
-    /* To show ~3.5 items on smaller screens:
-      If screen width is ~320px (smallest common mobile), 320px / 3.5 = ~91px. This is too small for a card.
-      Let's aim for a minimum card width and let the "half card" be natural due to overflow.
-      A common small card width could be around 140px to 160px.
-      If we set width to calc((100% / 3) - 1rem) /* for 3 items with gap 
-      Or better, set a fixed min-width and a percentage based width for larger views.
+    flex: 0 0 auto; /* Prevent items from shrinking or growing */
+    
+    /* MODIFIED: Set a fixed or percentage width that makes sense for the card content */
+    /* This ensures at least 2 items are shown on smaller screens for the HORIZONTAL SCROLL */
+    /* If you want to show ~2.5 items before scrolling starts on a typical mobile (e.g. 375px wide)
+       375px / 2.5 = 150px. Let's use a base width and allow more on wider horizontal scroll areas.
     */
-    width: calc((100vw - 2rem - 2rem - (2 * 1rem)) / 3.5);
-    /* (viewport - wrapper_padding - row_gap) / num_items */
-    max-width: 180px;
-    /* Max width for a single card in the row */
-    min-width: 140px;
-    /* Min width to ensure readability */
+    width: 160px; /* Example fixed width */
+    /* Or for responsive width within the scroll, if desired: */
+    /* width: clamp(150px, 40vw, 220px); */ /* Adjust clamp values */
+    
+    /* To guarantee at least 2 full items visually on small viewports before scrolling becomes very apparent */
+    /* this implies the viewport itself would need to be around 2*width + gap. */
+    /* The "at least 2 collections per row" might be better applied to a grid, not a horizontal scroll. */
+    /* For horizontal scroll, this just sets individual item width. */
 }
+/* --- End of key horizontal scroll section --- */
 
 
-.collection-card {
+.collection-card { /* Renamed to match user's provided template */
     width: 100%;
-    height: 100%;
-    /* Make card fill the wrapper */
+    height: 100%; 
     display: flex;
     flex-direction: column;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
     border-radius: 8px;
     overflow: hidden;
-    /* border: 1px solid #e5e7eb; */
-    box-shadow: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Softer default shadow */
+    border: 1px solid transparent; /* for smooth hover transition */
 }
 
 .collection-card:hover {
-    /* transform: translateY(-4px); */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e5e7eb;
-
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    border-color: #e5e7eb; 
 }
 
-.collection-image-wrapper {
-    aspect-ratio: 1 / 1;
-    /* Square images */
+.collection-image-wrapper { /* Renamed to match user's template */
+    aspect-ratio: 1 / 1; /* Kept square as per user's template */
     width: 100%;
     background-color: #f0f0f0;
     overflow: hidden;
 }
 
-.collection-image {
+.collection-image { /* Renamed */
     width: 100%;
     height: 100%;
-    object-fit: fill;
+    object-fit: cover; /* Changed from fill to cover as it's usually better */
 }
 
-.collection-image-placeholder {
+.collection-image-placeholder { /* Renamed */
     width: 100%;
     height: 100%;
     display: flex;
@@ -303,99 +280,43 @@ const decodedCategorizedCollections = computed(() => {
     font-size: 0.8rem;
 }
 
-.collection-name-heading {
-    /* text-md font-semibold text-center block mt-3 mb-1 are from Tailwind via class attribute */
+.collection-name-heading { /* Renamed */
     color: #1f2937;
-    /* Darker gray, adjust as needed */
     line-height: 1.4;
-    /* Adjust line height for better readability */
-    /* Ensure it can wrap if needed, but also truncate for consistency */
     display: -webkit-box;
     -webkit-line-clamp: 2;
-    /* Limit to 2 lines */
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-height: 2.5em;
-    /* Adjust based on font-size and line-height to prevent jumpiness */
-    /* The px-2 class adds horizontal padding to the heading text */
+    min-height: 2.5em; 
+    padding: 0 0.5rem; /* Added padding here instead of directly on text for centering */
 }
 
-.collection-link-wrapper {
+.collection-link-wrapper { /* From user template */
     display: block;
-    /* Already applied via class attribute */
     text-decoration: none;
-    /* Explicitly remove underline from the Link component itself */
     color: inherit;
-    /* Make the link inherit text color from its parent */
 }
-
 .collection-link-wrapper:hover {
     text-decoration: none;
-    /* Ensure no underline on hover either */
 }
 
-/* PrimeVue Card specific overrides if needed */
 :deep(.p-card-body) {
-    padding: 0rem;
-    flex-grow: 1;
-    /* Allow body to grow to fill height */
+    padding: 0rem; 
+    flex-grow: 1; 
     display: flex;
     flex-direction: column;
 }
-
-:deep(.p-card-content) {
-    padding: 0.5rem 0.75rem;
-    flex-grow: 1;
-    /* Allow content (description, artwork count) to push title up if card fixed height */
+:deep(.p-card-content) { /* Controls padding around "X artworks" text */
+    padding: 0.25rem 0.75rem 0.75rem; /* Reduced top padding */
+    flex-grow: 1; 
+}
+:deep(.p-card-title) { /* Controls padding around h3 title */
+    padding: 0; /* Removed direct padding here, handle on h3 itself */
 }
 
-:deep(.p-card-title) {
-    padding: 0 0.75rem;
-}
+/* Media queries for collection-item-wrapper if using fixed widths for different screen classes */
+/* Not strictly needed if using a single fixed width like 160px for horizontal scroll items,
+   as the number of visible items will naturally adjust. */
 
-/* Responsive adjustments for card widths in the horizontal row */
-@media (min-width: 480px) {
-
-    /* Slightly larger small screens */
-    .collection-item-wrapper {
-        width: calc((100vw - 2rem - 2rem - (3 * 1rem)) / 4.5);
-        /* Aim for ~4.5 items */
-        max-width: 200px;
-        min-width: 150px;
-    }
-}
-
-@media (min-width: 768px) {
-
-    /* md screens */
-    .collection-item-wrapper {
-        /* Show more items or let them be larger */
-        width: calc((768px - 2rem - 2rem - (4 * 1rem)) / 5);
-        /* Example: show 5 if container is full width */
-        max-width: 220px;
-        min-width: 160px;
-    }
-
-    .content-wrapper {
-        /* padding: 2rem 1rem; */
-        /* Restore some horizontal padding for larger screens */
-    }
-}
-
-@media (min-width: 1024px) {
-
-    /* lg screens */
-    .collection-item-wrapper {
-        width: auto;
-        /* Let items take natural width based on content or a larger fixed min-width */
-        min-width: 180px;
-        /* Adjust as desired */
-        max-width: 240px;
-    }
-
-    /* On larger screens, you might not need the aggressive horizontal scroll if items fit.
-       The overflow-x: auto will handle it.
-    */
-}
 </style>

@@ -94,7 +94,7 @@ watch(collectionTreeData, (newTreeData) => {
   /* Adjust based on your header's height, make it dynamic if header height changes */
   left: 0;
   bottom: 0;
-  /* background-color: #f8f9fa; */
+  background-color: white;
   /* Light background */
   /* border: 1px solid #e5e7eb; */
   border-radius: 5px;
