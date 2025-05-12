@@ -76,7 +76,7 @@ watch(collectionTreeData, (newTreeData) => {
 <template>
   <aside class="collection-sidebar print:hidden">
     <div class="sidebar-content">
-      <h3 class="text-lg font-semibold mb-4 px-3 text-gray-700">Collections</h3>
+      <Link :href="route('collections.index')" class="text-lg font-semibold mb-4 px-3 text-gray-700 hover:text-primary-600 no-underline"><h3>All Collections</h3></Link>
       <PanelMenu :model="menuItems" v-model:expandedKeys="expandedCategoryKeys" class="w-full custom-panel-menu"
         multiple />
     </div>

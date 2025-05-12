@@ -127,5 +127,6 @@ const decodeHTMLEntities = (text) => {
     height: 100%;
     object-fit: cover;
     border-radius: 8px;
+    object-position: top center;
 }
 </style>

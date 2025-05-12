@@ -70,7 +70,9 @@
           </div>
           <div class="detail-item">
             <span class="detail-label">Category</span>
-            <span class="detail-value">{{ currentArtwork.category }}</span>
+            <span class="detail-value clickable-category" @click="navigateToCategory(currentArtwork.category)">
+              {{ currentArtwork.category }}
+            </span>
           </div>
           <!-- <div class="detail-item" v-if="currentArtwork.width && currentArtwork.height">
             <span class="detail-label">Dimensions</span>
@@ -113,7 +115,7 @@
 
           <template v-if="galleryImages.length > 0 && galleryImages[currentIndex]">
             <template v-if="galleryImages[currentIndex].isPrimaryArtwork">
-              <div >
+              <div>
                 <img :src="selectedCanvas.url" alt="Canvas Frame" />
                 <img :src="galleryImages[currentIndex].itemImageSrc" class="artwork-on-canvas"
                   :alt="galleryImages[currentIndex].alt"
@@ -155,6 +157,8 @@ import squareCanvasImg from '@/../../public/images/frames/100X100_ANGLED_WHITE.p
 // Import your new angled canvas - ensure this path is correct for your project setup
 // For Vite/Vue CLI, placing in `public` and using absolute path `/` is common.
 // If using imports for assets, ensure your build process handles it.
+import { slugify } from '@/composables/utils.js';
+
 
 defineOptions({ layout: HeaderLayout });
 
@@ -330,6 +334,26 @@ function goBack() {
     }
   });
 }
+
+const generateCategorySlug = (categoryName) => {
+  if (!categoryName || typeof categoryName !== 'string') {
+    return '';
+  }
+  let slug = slugify(categoryName);
+  // // Replace spaces with hyphens to match example format like "text-&-quotes" or "creative-edit"
+  // slug = slug.replace(/\s+/g, '-');
+  // Prepend "cat_"
+  return `cat_${currentArtwork.value.artwork_type}_${slug}`;
+};
+
+const navigateToCategory = (categoryName) => {
+  const categorySlug = generateCategorySlug(categoryName);
+  if (categorySlug && categoryName) { // Ensure categoryName is not empty to avoid "cat_" slug
+    // Assumes 'artworks' is the correct route name from web.php
+    // and it accepts 'filters' as a parameter.
+    router.visit(route('artworks', { filters: categorySlug }));
+  }
+};
 
 function openPreview(index) {
   if (galleryImages.value[index]) {
@@ -596,6 +620,14 @@ function scrollThumbnails(direction) {
   cursor: zoom-in;
 }
 
+.clickable-category {
+  cursor: pointer;
+  text-decoration: none; /* Optional: to make it look more like a link */
+}
+.clickable-category:hover {
+  color: var(--p-primary-color, #007bff); /* Optional: hover effect */
+}
+
 
 /* Gallery Navigation Buttons (common for both modes, positioned on .main-image-container) */
 .gallery-nav-button {
@@ -757,7 +789,8 @@ function scrollThumbnails(direction) {
   max-height: 100%;
 
   /* guarantees no cropping — it’ll letterbox inside the box */
-  object-fit: contain;  /* or object-fit: scale-down; */
+  object-fit: contain;
+  /* or object-fit: scale-down; */
   border-radius: 4px;
 }
 
@@ -879,69 +912,100 @@ function scrollThumbnails(direction) {
 
 /* --- DIALOG SPECIFIC STYLING --- */
 /* PrimeVue class for custom header styling */
-:global(.p-dialog-custom-header) { /* Use :global for classes applied by PrimeVue internally */
+:global(.p-dialog-custom-header) {
+  /* Use :global for classes applied by PrimeVue internally */
   display: none !important;
 }
+
 /* PrimeVue class for custom content styling */
 :global(.p-dialog-custom-content) {
   padding: 0 !important;
   border: none !important;
   box-shadow: none !important;
-  overflow: auto !important; 
-  background: transparent !important; /* Ensure no default background */
+  overflow: auto !important;
+  background: transparent !important;
+  /* Ensure no default background */
 }
 
-.dialog-container { 
-  position: relative; /* For absolute positioning of close button */
-  width: 100%; /* Occupy the space given by Dialog component (which is full screen by default for modal) */
+.dialog-container {
+  position: relative;
+  /* For absolute positioning of close button */
+  width: 100%;
+  /* Occupy the space given by Dialog component (which is full screen by default for modal) */
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  outline: none; /* For tabindex focus */
-  padding: 1rem; /* Add some padding so content doesn't touch edges */
+  outline: none;
+  /* For tabindex focus */
+  padding: 1rem;
+  /* Add some padding so content doesn't touch edges */
   box-sizing: border-box;
 }
 
-.dialog-custom-close-btn { 
-  position: absolute !important; 
-  top: clamp(0.5rem, 3vh, 1.5rem); /* Responsive based on viewport height */
-  right: clamp(0.5rem, 3vw, 1.5rem); /* Responsive based on viewport width */
-  background-color: rgba(40, 40, 40, 0.6) !important; /* Slightly darker, more contrast */
+.dialog-custom-close-btn {
+  position: absolute !important;
+  top: clamp(0.5rem, 3vh, 1.5rem);
+  /* Responsive based on viewport height */
+  right: clamp(0.5rem, 3vw, 1.5rem);
+  /* Responsive based on viewport width */
+  background-color: rgba(40, 40, 40, 0.6) !important;
+  /* Slightly darker, more contrast */
   color: white !important;
-  z-index: 1302; /* Ensure above gallery content */
-  width: 2.75rem; height: 2.75rem; /* Slightly larger */
+  z-index: 1302;
+  /* Ensure above gallery content */
+  width: 2.75rem;
+  height: 2.75rem;
+  /* Slightly larger */
   border-radius: 50%;
 }
-.dialog-custom-close-btn:hover, .dialog-custom-close-btn:focus { 
-  background-color: rgba(0,0,0,0.7) !important; 
+
+.dialog-custom-close-btn:hover,
+.dialog-custom-close-btn:focus {
+  background-color: rgba(0, 0, 0, 0.7) !important;
 }
 
 .dialog-gallery-content {
-  position: relative; 
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%; 
-  height: 100%; 
+  width: 100%;
+  height: 100%;
   /* Max size relative to the .dialog-container's padding */
-  max-width: 100%; /* Will be constrained by dialog-container's effective max-width */
-  max-height: 100%;/* Will be constrained by dialog-container's effective max-height */
+  max-width: 100%;
+  /* Will be constrained by dialog-container's effective max-width */
+  max-height: 100%;
+  /* Will be constrained by dialog-container's effective max-height */
   box-sizing: border-box;
 }
 
 /* Aspect ratio classes for dialog canvas mode */
 .dialog-gallery-content.dialog-canvas-mode {
-   background-color: transparent; /* Transparent background for canvas view in dialog */
+  background-color: transparent;
+  /* Transparent background for canvas view in dialog */
 }
-.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-2-3 { aspect-ratio: 1 / 1; }
-.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-3-2 { aspect-ratio: 1 / 1; }
-.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-1-1 { aspect-ratio: 1 / 1; }
-.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-default { aspect-ratio: 1 / 1; }
+
+.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-2-3 {
+  aspect-ratio: 1 / 1;
+}
+
+.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-3-2 {
+  aspect-ratio: 1 / 1;
+}
+
+.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-1-1 {
+  aspect-ratio: 1 / 1;
+}
+
+.dialog-gallery-content.dialog-canvas-mode.aspect-ratio-default {
+  aspect-ratio: 1 / 1;
+}
 
 .dialog-gallery-content.dialog-canvas-mode.perspective-view {
-  perspective: 1000px; /* Same as main view, or adjust for dialog size */
-  perspective-origin: center center; 
+  perspective: 1000px;
+  /* Same as main view, or adjust for dialog size */
+  perspective-origin: center center;
 }
 
 /* Canvas elements within the Dialog */
@@ -950,22 +1014,25 @@ function scrollThumbnails(direction) {
    Their parent (.dialog-gallery-content in canvas-mode) dictates their overall size and perspective.
 */
 .dialog-gallery-content .canvas-frame-wrapper {
-   /* Already position:absolute, width:100%, height:100% from shared styles */
+  /* Already position:absolute, width:100%, height:100% from shared styles */
 }
 
 /* Normal image render inside dialog */
 .dialog-gallery-content.dialog-normal-mode {
   /* No specific aspect ratio needed, image will define it up to container bounds */
 }
-.preview-image-render { /* This is for normal interior images in dialog */
-  display: block; 
-  max-width: 100%; 
-  max-height: 100%; 
-  object-fit: contain; /* Ensures entire image is visible and maintains aspect ratio */
-  border-radius: 4px; 
+
+.preview-image-render {
+  /* This is for normal interior images in dialog */
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  /* Ensures entire image is visible and maintains aspect ratio */
+  border-radius: 4px;
 }
 
-.dialog-nav-btn { 
+.dialog-nav-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -973,18 +1040,28 @@ function scrollThumbnails(direction) {
   color: white !important;
   border: none !important;
   border-radius: 50%;
-  width: clamp(2.5rem, 6vw, 3.5rem); 
+  width: clamp(2.5rem, 6vw, 3.5rem);
   height: clamp(2.5rem, 6vw, 3.5rem);
-  z-index: 10; 
+  z-index: 10;
   opacity: 0.6;
   transition: opacity 0.2s, background-color 0.2s;
 }
-.dialog-nav-btn:hover { opacity: 1; background-color: rgba(0,0,0,0.6) !important; }
-.dialog-nav-btn.left { 
-  left: clamp(0.25rem, 1.5vw, 0.75rem); /* Closer to the edge of the image content */
+
+.dialog-nav-btn:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.6) !important;
 }
-.dialog-nav-btn.right { 
+
+.dialog-nav-btn.left {
+  left: clamp(0.25rem, 1.5vw, 0.75rem);
+  /* Closer to the edge of the image content */
+}
+
+.dialog-nav-btn.right {
   right: clamp(0.25rem, 1.5vw, 0.75rem);
 }
-.dialog-nav-btn:disabled { display: none; } 
+
+.dialog-nav-btn:disabled {
+  display: none;
+}
 </style>

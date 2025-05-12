@@ -50,7 +50,7 @@ const processedCollections = computed(() => {
 <template>
     <InertiaHead :title="props.categoryName" />
     <div class="page-with-sidebar-layout">
-        <CollectionSidebar />
+        <CollectionSidebar class="hide" />
         <div class="main-content-area">
             <div class="content-wrapper">
                 <h1 class="text-3xl lg:text-4xl font-bold mb-8 text-center text-gray-800">{{ props.categoryName }}</h1>                
@@ -65,7 +65,7 @@ const processedCollections = computed(() => {
                                     <img v-if="collection.thumb" 
                                          :src="collection.thumb" 
                                          :alt="collection.name"
-                                         class="collection-image-vue group-hover:scale-105 transition-transform duration-500 ease-in-out"
+                                         class="collection-image-vue transition-transform duration-500 ease-in-out"
                                          loading="lazy" />
                                     <div v-else class="collection-image-placeholder-vue">
                                         <span>No Image</span>
@@ -75,7 +75,7 @@ const processedCollections = computed(() => {
                         </template>
                         <template #title>
                            <Link :href="route('collection.show', { collection_slug: collection.slug })"
-                                  class="collection-name-link-vue text-lg font-semibold text-gray-700 hover:text-primary-600 text-center block mt-4 mb-2 no-underline px-2">
+                                  class="collection-name-link-vue text-lg font-semibold text-gray-700 hover:text-primary-600 text-center block mt-4 no-underline px-2">
                                 {{ collection.name }}
                             </Link>
                         </template>
@@ -103,95 +103,113 @@ const processedCollections = computed(() => {
 </template>
 
 <style scoped>
-/* Added -vue suffix to avoid style conflicts if you have global styles with same names */
+/* Main layout structure for pages using the sidebar */
 .page-with-sidebar-layout {
     display: flex;
-    padding-top: 0;
-    /* Assuming header is fixed and provides its own padding/margin for content below it */
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+    /* Let HeaderLayout manage overall page background and min-height */
 }
 
 .main-content-area {
     flex-grow: 1;
-    padding-left: 280px;
-    /* Width of the sidebar */
+    /* Padding left to make space for the fixed sidebar */
+    padding-left: 300px; /* Sidebar width (e.g., 280px) + some margin (e.g., 20px) */
     transition: padding-left 0.3s ease-in-out;
-    /* background-color: #f4f7f6; */
-    min-height: calc(100vh - 120px);
-    /* Adjust 120px if your header height is different */
-    padding-top: 1.5rem;
-    /* Padding for content inside */
+    /* padding-top: 1.5rem;  */
     padding-right: 1.5rem;
     padding-bottom: 1.5rem;
+    width: 100%; /* Ensure it tries to take available width */
+    box-sizing: border-box; /* Include padding in width calculation */
+    overflow-x: hidden; /* Prevent this area from causing horizontal scroll */
 }
 
 @media (max-width: 1199.98px) {
     .main-content-area {
-        padding-left: 0;
-        /* Sidebar is hidden, content takes full width */
+        padding-left: 1.5rem; /* Adjust to your desired padding when sidebar is hidden */
+        /* Or padding-left: 0; if you want content to go full width */
+    }
+    .hide {
+        display: none; /* Hide sidebar on smaller screens */
     }
 }
 
-.content-wrapper {
+.content-wrapper { /* This was .content-wrapper-vue in a previous suggestion, ensure consistency */
     margin: 0 auto;
-    max-width: 100%;
-    /* Allow it to fill the main-content-area */
-    /* background: white;
-    border-radius: 12px; */
-    /* padding: 2rem; */
-    /* box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07); */
+    max-width: 100%; /* Takes full width of .main-content-area */
+    background: white;
+    border-radius: 12px;
+    padding: clamp(1rem, 5vw, 2rem); /* Responsive padding */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
 }
 
-
-@media (min-width: 768px) {
-    .main-content {
-        padding: 2rem;
-    }
-}
-
-@media (min-width: 768px) {
-    .content-wrapper {
-        padding: 2.5rem;
-    }
-}
-
+/* Grid for collections within this specific category page */
 .collections-grid-vue {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Responsive grid */
-    gap: 2rem;
+    gap: 1.5rem; /* Consistent gap */
+    /* Ensure at least 2 columns on small screens, then adapt */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Smaller min for more items */
 }
 
+/* Media queries for explicit column counts if auto-fill isn't enough */
+@media (max-width: 599.98px) { /* Screens smaller than 600px */
+    .collections-grid-vue {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Even smaller min for 2 columns */
+        /* Or, to force 2 columns if items are very flexible: */
+        /* grid-template-columns: repeat(2, 1fr); */
+        gap: 1rem; /* Reduce gap on smallest screens */
+    }
+     .content-wrapper {
+        padding: clamp(1rem, 5vw, 1.5rem);
+    }
+    .main-content-area { /* Adjust padding for very small screens */
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+     @media (max-width: 1199.98px) { /* When sidebar is hidden */
+        .main-content-area {
+            padding-left: 1rem;
+        }
+    }
+}
+
+
 .collection-card-vue {
-    border-radius: 10px; /* Consistent radius */
+    border-radius: 10px; 
     background-color: #fff;
-    /* PrimeVue card might have its own padding, p-0 removes it from the component itself */
+    display: flex; /* Added for flex context within card */
+    flex-direction: column; /* Ensure content stacks vertically */
+    height: 100%; /* Make cards in a row equal height if grid implies it */
+}
+.collection-card-vue:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
 .collection-image-wrapper-vue {
-    aspect-ratio: 4 / 3; /* More common aspect ratio for collection covers */
+    aspect-ratio: 1 / 1; 
     width: 100%;
-    background-color: #e9ecef; /* Lighter placeholder */
-    border-top-left-radius: 10px; /* Match card radius */
+    background-color: #e9ecef; 
+    border-top-left-radius: 10px; 
     border-top-right-radius: 10px;
+    overflow: hidden; /* Ensure image scaling doesn't break radius */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
 }
 
 .collection-image-vue {
     width: 100%;
     height: 100%;
-    object-fit: fill;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    object-fit: cover; /* Changed from fill, cover is usually better */
+    object-position: top center;
 }
+
 .collection-image-placeholder-vue {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #adb5bd; /* Softer placeholder text color */
+    color: #adb5bd; 
     font-size: 0.9rem;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
@@ -203,11 +221,31 @@ const processedCollections = computed(() => {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-height: 2.8em; /* Adjusted for text-lg and line-height */
+    /* min-height: 2.8em;  */
     line-height: 1.4em; 
-    /* color defined by Tailwind classes */
+    color: #1f2937; /* Default text color */
+    padding: 0 0.5rem; /* Add some horizontal padding */
+}
+.collection-name-link-vue:hover {
+    color: var(--p-primary-color, #3B82F6);
 }
 .no-underline {
     text-decoration: none !important;
+}
+
+/* Ensure PrimeVue Card's internal body allows flex to work for card height */
+:deep(.p-card-body) {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 0; /* Reset if you control padding via slots */
+}
+:deep(.p-card-content) {
+    flex-grow: 1; /* Allows content to push footer down if card heights are equal */
+    padding-top: 0.5rem; /* Adjust as needed */
+}
+:deep(.p-card-title) {
+    padding-top: 0.75rem; /* PrimeVue specific slot padding for title */
+    padding-bottom: 0.25rem;
 }
 </style>

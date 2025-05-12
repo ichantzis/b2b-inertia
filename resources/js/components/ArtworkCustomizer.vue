@@ -188,7 +188,7 @@ watch([selectedType, selectedCanvas], () => {
     <Form>
         <h2 class="artwork-option">Choose an option:</h2>
         <div class="detail-item">
-            <span class="detail-label">Frame</span>
+            <span class="detail-label">Type</span>
         </div>
 
         <div class="type-wrapper">
@@ -200,6 +200,9 @@ watch([selectedType, selectedCanvas], () => {
             </Button> -->
         </div>
         <!-- Canvas Frames -->
+         <div class="detail-item">
+            <span class="detail-label">Frame</span>
+        </div>
         <div class="canvas-wrapper" v-show="showCanvasFrames">
             <Button v-bind="getButtonProps('black', selectedCanvas)" @click="selectedCanvas = 'black'">
                 <img src="/images/frames/floatblack-frame.png" alt="Black Frame" class="frame-icon" />
@@ -254,7 +257,7 @@ watch([selectedType, selectedCanvas], () => {
                 '70x100', '80x120', '100x140', '100x150',
                 '120x160', '120x180'
             ]" :key="size" v-show="showSize(size)" v-bind="getButtonProps(size, selectedSize)"
-                @click="selectedSize = size" :label="size" severity="contrast" />
+                @click="selectedSize = size" :label="size" />
         </div>
         <!-- Sizes Square -->
         <div class="sizes-square-wrapper" v-if="isSquare">
@@ -266,7 +269,13 @@ watch([selectedType, selectedCanvas], () => {
         <!-- Replace cart section with new design -->
         <div class="cart-section">
             <div class="total-section">
-                <h2 class="artwork-option">FINAL TOTAL</h2>
+                <h2 class="final-total">FINAL TOTAL</h2>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm sm:text-base text-muted-color"><span class="font-semibold">Type:</span> {{ selectedType }}</p>
+                    <p class="text-sm sm:text-base text-muted-color"><span class="font-semibold">Frame:</span> {{ selectedCanvas }}</p>
+                    <p v-if="!isSquare" class="text-sm sm:text-base text-muted-color"><span class="font-semibold">Size:</span> {{ selectedSize }}</p>
+                    <p v-else class="text-sm sm:text-base text-muted-color"><span class="font-semibold">Size:</span> {{ selectedSquareSize }}</p>
+                </div>
                 <span class="total-amount">{{ formattedTotalPrice }}</span>
                 <div class="cart-actions">
                     <div class="quantity-wrapper">
@@ -284,6 +293,7 @@ watch([selectedType, selectedCanvas], () => {
 
 <style scoped>
 .tags-wrapper,
+.type-wrapper,
 .canvas-wrapper,
 .poster-wrapper,
 .sizes-wrapper,
@@ -316,6 +326,12 @@ watch([selectedType, selectedCanvas], () => {
     color: #666;
     font-weight: 500;
     margin-block: 1rem;
+}
+
+.final-total {
+    font-size: 1.25rem;
+    color: #666;
+    font-weight: 500;
 }
 
 .detail-item {

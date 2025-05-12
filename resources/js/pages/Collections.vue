@@ -79,7 +79,6 @@ const decodedCategorizedCollections = computed(() => {
         <div class="main-content-area">
             <div class="content-wrapper">
                 <h1 class="text-3xl font-bold mb-10 text-center">Collections</h1>
-
                 <div v-if="decodedCategorizedCollections.length > 0">
                     <section v-for="category in decodedCategorizedCollections"
                         :key="category.category_id || category.category_name" class="category-section mb-12">
@@ -141,7 +140,7 @@ const decodedCategorizedCollections = computed(() => {
 
 .main-content-area {
     flex-grow: 1;
-    padding-left: 280px; /* Width of the sidebar */
+    padding-left: 300px; /* Width of the sidebar */
     transition: padding-left 0.3s ease-in-out;
     min-height: calc(100vh - 120px); /* Adjust 120px if your header height is different */
     /* padding-top: 1.5rem;  */
@@ -268,6 +267,8 @@ const decodedCategorizedCollections = computed(() => {
     width: 100%;
     height: 100%;
     object-fit: cover; /* Changed from fill to cover as it's usually better */
+    object-position: top center;
+
 }
 
 .collection-image-placeholder { /* Renamed */
@@ -288,7 +289,7 @@ const decodedCategorizedCollections = computed(() => {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-height: 2.5em; 
+    /* min-height: 2.5em;  */
     padding: 0 0.5rem; /* Added padding here instead of directly on text for centering */
 }
 
