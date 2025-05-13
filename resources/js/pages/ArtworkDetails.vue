@@ -151,6 +151,8 @@ import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import ArtworkCustomizer from '@/components/ArtworkCustomizer.vue';
 import defaultCanvasImg from '@/../../public/images/frames/CANVAS_2X3_VERTICAL_OLIVE.png'; // Your previous canvas
 import verticalCanvasImg from '@/../../public/images/frames/Canvas_VERTICAL.png'; // Your previous canvas
+import verticalWalnutImg from '@/../../public/images/frames/VERTICAL_WALNUT.jpg';
+import verticalNaturalImg from '@/../../public/images/frames/VERTICAL_NATURAL.jpg';
 import horizontalCanvasImg from '@/../../public/images/frames/CANVAS_2X3_HORIZONTAL_BLACK.png'; // Your previous canvas
 import squareCanvasImg from '@/../../public/images/frames/100X100_ANGLED_WHITE.png'; // Your previous canvas
 // import defaultCanvasImg from '@/../../public/images/frames/Canvas_100x70_VERTICAL_FRONT.png'; // Your previous canvas

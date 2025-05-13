@@ -25,7 +25,7 @@ class CartController extends Controller
      * Get the current user's or session's cart.
      * Creates a cart if one doesn't exist.
      */
-    protected function getCurrentCart(bool $create = true): ?Cart
+    public function getCurrentCart(bool $create = true): ?Cart
     {
         $user = Auth::user();
         $sessionId = Session::getId();
@@ -69,7 +69,7 @@ class CartController extends Controller
             $cart->load('items');
         } elseif ($cart && !$cart->relationLoaded('items')) {
             // Ensure items are loaded if cart was found but items weren't eager loaded
-             $cart->load('items');
+            $cart->load('items');
         }
 
 
@@ -82,16 +82,16 @@ class CartController extends Controller
     public function mergeSessionCart(Cart $sessionCart, Cart $userCart): void
     {
         if ($sessionCart->id === $userCart->id) {
-             Log::warning("Attempted to merge a cart with itself. Cart ID: {$sessionCart->id}");
-             return; // Avoid merging a cart with itself
+            Log::warning("Attempted to merge a cart with itself. Cart ID: {$sessionCart->id}");
+            return; // Avoid merging a cart with itself
         }
 
         Log::info("Merging session cart ID {$sessionCart->id} into user cart ID {$userCart->id}");
 
         DB::transaction(function () use ($sessionCart, $userCart) {
             foreach ($sessionCart->items as $sessionItem) {
-                 // Find item in user's cart matching artwork_id AND variations
-                 $existingItem = $userCart->items()
+                // Find item in user's cart matching artwork_id AND variations
+                $existingItem = $userCart->items()
                     ->where('artwork_id', $sessionItem->artwork_id)
                     ->where('type', $sessionItem->type)
                     ->where('frame', $sessionItem->frame)
@@ -99,29 +99,29 @@ class CartController extends Controller
                     ->first();
 
                 if ($existingItem) {
-                     // Exact match found, update quantity
-                     Log::info("Exact match found for session item ID {$sessionItem->id}. Updating quantity on user item ID {$existingItem->id}.");
-                     $existingItem->quantity += $sessionItem->quantity;
-                     $existingItem->save();
-                     // Delete the handled session item explicitly AFTER potentially updating the user item
-                     $sessionItem->delete();
-                 } else {
-                     // No exact match, move the item to the user's cart
-                     Log::info("No exact match for session item ID {$sessionItem->id}. Moving to user cart ID {$userCart->id}.");
-                     $sessionItem->cart_id = $userCart->id;
-                     $sessionItem->save(); // The item is now part of the user cart
-                 }
+                    // Exact match found, update quantity
+                    Log::info("Exact match found for session item ID {$sessionItem->id}. Updating quantity on user item ID {$existingItem->id}.");
+                    $existingItem->quantity += $sessionItem->quantity;
+                    $existingItem->save();
+                    // Delete the handled session item explicitly AFTER potentially updating the user item
+                    $sessionItem->delete();
+                } else {
+                    // No exact match, move the item to the user's cart
+                    Log::info("No exact match for session item ID {$sessionItem->id}. Moving to user cart ID {$userCart->id}.");
+                    $sessionItem->cart_id = $userCart->id;
+                    $sessionItem->save(); // The item is now part of the user cart
+                }
             }
 
-             // Check if session cart still exists before attempting deletion
+            // Check if session cart still exists before attempting deletion
             $sessionCartExists = Cart::find($sessionCart->id);
-             if ($sessionCartExists) {
+            if ($sessionCartExists) {
                 // After processing all items, delete the (now likely empty) session cart record itself
                 Log::info("Deleting session cart ID {$sessionCart->id}.");
                 $sessionCartExists->delete();
-             } else {
-                 Log::warning("Session cart ID {$sessionCart->id} was already deleted before final delete call.");
-             }
+            } else {
+                Log::warning("Session cart ID {$sessionCart->id} was already deleted before final delete call.");
+            }
         });
 
         // No need to reload items here, it's done in getCurrentCart after merge call
@@ -161,7 +161,7 @@ class CartController extends Controller
     }
 
     // ... store, update, destroy, calculateCartTotal, shareCartData, getSharedCartData methods remain the same ...
-     /**
+    /**
      * Add an item to the cart.
      */
     public function store(Request $request)
@@ -292,10 +292,32 @@ class CartController extends Controller
         return back()->with('success', 'Item removed from cart.');
     }
 
-     /**
+    /**
+     * Clear the cart for the current user or session.
+     */
+    public function clearCart(): void
+    {
+        $user = Auth::user();
+        $sessionId = Session::getId();
+
+        if ($user) {
+            // Clear the user's cart
+            Cart::where('user_id', $user->id)->delete();
+        } else {
+            // Clear the session's cart
+            Cart::where('session_id', $sessionId)->delete();
+        }
+
+        // Optionally, reset session cart ID
+        Session::forget('cart_id');
+
+        Log::info('Cart cleared successfully.');
+    }
+
+    /**
      * Calculate total - Implement your pricing logic here
      */
-    protected function calculateCartTotal(Cart $cart): float
+    public function calculateCartTotal(Cart $cart): float
     {
         // Refresh items to ensure we have the latest data after potential merges/updates
         $cart->loadMissing('items');
@@ -336,17 +358,17 @@ class CartController extends Controller
         // Note: This might be slightly less performant than directly accessing session/auth in middleware,
         // but keeps the cart logic centralized in the CartController.
         try {
-             $controller = app(CartController::class);
-             $cart = $controller->getCurrentCart(false); // Get cart, don't create if none exists
-             $itemsPreview = [];
-             $totalQuantity = 0;
+            $controller = app(CartController::class);
+            $cart = $controller->getCurrentCart(false); // Get cart, don't create if none exists
+            $itemsPreview = [];
+            $totalQuantity = 0;
 
-             if ($cart) {
-                 // Use the relationship to sum quantity directly in the DB if possible, or collection sum
-                 $totalQuantity = $cart->items->sum('quantity');
+            if ($cart) {
+                // Use the relationship to sum quantity directly in the DB if possible, or collection sum
+                $totalQuantity = $cart->items->sum('quantity');
 
                 // Prepare preview items
-                 $itemsPreview = $cart->items()
+                $itemsPreview = $cart->items()
                     ->latest() // Optional: show most recently added
                     ->take(5)  // Limit to 5 items for preview
                     ->get()
@@ -373,5 +395,4 @@ class CartController extends Controller
             ];
         }
     }
-
 }

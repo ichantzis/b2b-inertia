@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PictufyController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Middleware\EnsureUserIsAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -57,15 +58,9 @@ Route::put('/cart/{cartItem}', [CartController::class, 'update'])->name('cart.up
 Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy'); // Use DELETE for removals
 
 // Checkout Route (Example) - Protect with authentication middleware
-Route::get('/checkout', function () {
-    // Checkout logic/page here
-    // Ensure cart items are present before proceeding
-    $cart = app(CartController::class)->getCurrentCart(false);
-    if (!$cart || $cart->items->isEmpty()) {
-        return redirect()->route('cart.index')->withErrors(['cart' => 'Your cart is empty.']);
-    }
-    return Inertia::render('Checkout/Index', [ /* checkout data */]);
-})->middleware(['auth', 'verified'])->name('checkout.index'); // Laravel's default auth middleware
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+Route::get('/checkout/complete/{orderId}', [CheckoutController::class, 'complete'])->name('checkout.complete');
 
 // You might need a POST route for processing the checkout form
 // Route::post('/checkout', [CheckoutController::class, 'store'])->middleware(['auth', 'verified'])->name('checkout.store');
