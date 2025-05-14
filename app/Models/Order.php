@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-        'customer_id',
+        'user_id', // Keep user_id
         'order_number',
         'total_amount',
         'status',
+        'shipping_first_name', // Add first name
+        'shipping_last_name',  // Add last name
+        'shipping_email',      // Add email
         'shipping_address',
         'shipping_city',
         'shipping_country',

@@ -55,7 +55,7 @@ class CheckoutController extends Controller
             'shippingInfo.firstName' => 'required|string|max:255',
             'shippingInfo.lastName' => 'required|string|max:255',
             'shippingInfo.email' => 'required|email|max:255',
-            'shippingInfo.country' => 'required|string|size:2', // Adjust size as needed
+            'shippingInfo.country' => 'required|string|size:2',
             'shippingInfo.streetAddress' => 'required|string|max:255',
             'shippingInfo.city' => 'required|string|max:255',
             'shippingInfo.stateOrCounty' => 'nullable|string|max:255',
@@ -83,15 +83,18 @@ class CheckoutController extends Controller
             // 3. Create the Order
             $order = Order::create([
                 'user_id' => $user?->id, // If user is logged in
-                'order_number' => 'ORD-' . uniqid(), // Generate a unique order number
+                'order_number' => 'ORD-' . uniqid(),
                 'total_amount' => $validatedData['totalAmount'],
-                'status' => 'pending', // Initial status
+                'status' => 'pending',
+                'shipping_first_name' => $validatedData['shippingInfo']['firstName'], // Save first name
+                'shipping_last_name' => $validatedData['shippingInfo']['lastName'],   // Save last name
+                'shipping_email' => $validatedData['shippingInfo']['email'],         // Save email
                 'shipping_address' => $validatedData['shippingInfo']['streetAddress'],
                 'shipping_city' => $validatedData['shippingInfo']['city'],
                 'shipping_country' => $validatedData['shippingInfo']['country'],
                 'shipping_postal_code' => $validatedData['shippingInfo']['postalCode'],
                 'payment_method' => $validatedData['paymentMethod'],
-                'payment_status' => 'pending', // Initially pending
+                'payment_status' => 'pending',
                 'notes' => $validatedData['notes'] ?? null,
             ]);
 
@@ -129,7 +132,7 @@ class CheckoutController extends Controller
 
     public function complete($orderId)
     {
-        $order = Order::find($orderId);
+        $order = Order::with('items')->find($orderId);
 
         if (!$order) {
             // Handle the case where the order doesn't exist (e.g., show an error)

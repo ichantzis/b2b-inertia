@@ -18,6 +18,7 @@ import { useDark } from '@vueuse/core';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const darkMode = useDark(); // sets Light/Dark Mode
+darkMode.value = false;
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
