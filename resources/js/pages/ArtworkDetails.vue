@@ -807,7 +807,7 @@ function scrollThumbnails(direction) {
   padding: 0 !important; /* Remove PrimeVue's default padding */
   border: none !important;
   box-shadow: none !important;
-  overflow: hidden !important; /* Changed from auto to hidden to prevent double scrollbars */
+  /* overflow: hidden !important;  Changed from auto to hidden to prevent double scrollbars */
   background: transparent !important;
 }
 
@@ -865,7 +865,7 @@ function scrollThumbnails(direction) {
   aspect-ratio: 1 / 1;
   perspective: 1000px; /* For 3D transforms */
   perspective-origin: center center;
-  overflow: hidden; /* Good practice */
+  overflow: auto; /* Good practice */
   /* For debugging sizing: background-color: rgba(0, 255, 0, 0.1); */
 }
 
