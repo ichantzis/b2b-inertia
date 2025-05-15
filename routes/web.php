@@ -43,7 +43,16 @@ Route::get('/collections/category/{category_collection_slug}', [PictufyControlle
 // Add categories endpoint
 Route::get('/api/categories', [PictufyController::class, 'getCategories']);
 
-Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'verified'])->name('dashboard');
+// Admin Dashboard Routes
+Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('dashboard.')->group(function () {
+    Route::get('/', DashboardController::class)->name('index'); //  e.g., /dashboard -> dashboard.index
+
+    // You can add more admin routes here:
+    // Example:
+    // Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    // Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    // Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

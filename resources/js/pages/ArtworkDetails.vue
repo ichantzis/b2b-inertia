@@ -15,7 +15,8 @@
           }">
             <template v-if="galleryImages[currentIndex].isPrimaryArtwork">
               <div class="canvas-frame-wrapper">
-                <img v-if="selectedCanvas.url" :src="selectedCanvas.url" alt="Canvas Frame" class="canvas-frame-image" />
+                <img v-if="selectedCanvas.url" :src="selectedCanvas.url" alt="Canvas Frame"
+                  class="canvas-frame-image" />
                 <img :src="galleryImages[currentIndex].itemImageSrc" class="artwork-on-canvas clickable"
                   :alt="galleryImages[currentIndex].alt"
                   :style="{ top: selectedCanvas.artworkContainerStyle.top, left: selectedCanvas.artworkContainerStyle.left, width: selectedCanvas.artworkContainerStyle.width, height: selectedCanvas.artworkContainerStyle.height, transform: selectedCanvas.artworkTransform, transformOrigin: selectedCanvas.transformOrigin || 'center center', boxShadow: selectedCanvas.artworkShadow }"
@@ -71,7 +72,9 @@
           <div class="detail-item">
             <span class="detail-label">Category</span>
             <span class="detail-value clickable-category" @click="navigateToCategory(currentArtwork.category)">
-              {{ currentArtwork.category }}
+              <Tag :value="currentArtwork.category" severity="warn" :pt="{
+                root: { class: 'text-sm md:text-base' }
+              }" />
             </span>
           </div>
         </div>
@@ -577,7 +580,8 @@ function scrollThumbnails(direction) {
 /* Specific styling for when in canvas mode, especially the angled one */
 .main-image-container.canvas-mode.angled-canvas-mode {
   /* This aspect ratio should match your primary canvas image container's desired display */
-  aspect-ratio: 1 / 1; /* Or another ratio if your frames are not meant to be in a square container */
+  aspect-ratio: 1 / 1;
+  /* Or another ratio if your frames are not meant to be in a square container */
   background-color: #f0f0f0;
   /* Fallback bg if frame image is transparent or fails */
   perspective: 1000px;
@@ -597,9 +601,11 @@ function scrollThumbnails(direction) {
 
 
 /* Canvas Frame Styling (when galleryImages[currentIndex].isPrimaryArtwork is true) */
-.canvas-frame-wrapper { /* This applies to both main view and dialog view */
-  position: absolute; /* For main view, relative to .main-image-container */
-                      /* For dialog view, relative to .dialog-gallery-content .canvas-frame-wrapper if that's how it's nested */
+.canvas-frame-wrapper {
+  /* This applies to both main view and dialog view */
+  position: absolute;
+  /* For main view, relative to .main-image-container */
+  /* For dialog view, relative to .dialog-gallery-content .canvas-frame-wrapper if that's how it's nested */
   top: 0;
   left: 0;
   right: 0;
@@ -608,21 +614,27 @@ function scrollThumbnails(direction) {
   height: 100%;
   border-radius: 8px;
   overflow: hidden;
-  transform-style: preserve-3d; /* For 3D transformations of children */
+  transform-style: preserve-3d;
+  /* For 3D transformations of children */
 }
 
-.canvas-frame-image { /* This applies to both main view and dialog view */
+.canvas-frame-image {
+  /* This applies to both main view and dialog view */
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Ensures the whole frame image is visible, respecting its aspect ratio */
-  border-radius: 8px; /* If the image file itself has rounded corners */
+  object-fit: contain;
+  /* Ensures the whole frame image is visible, respecting its aspect ratio */
+  border-radius: 8px;
+  /* If the image file itself has rounded corners */
 }
 
-.artwork-on-canvas { /* This applies to both main view and dialog view */
+.artwork-on-canvas {
+  /* This applies to both main view and dialog view */
   position: absolute;
   /* top, left, width, height, transform are dynamically set via :style binding */
-  object-fit: fill !important; /* Fill the container defined by dynamic styles */
+  object-fit: fill !important;
+  /* Fill the container defined by dynamic styles */
 }
 
 
@@ -667,7 +679,8 @@ function scrollThumbnails(direction) {
   border-radius: 8px;
 }
 
-.normal-image-render { /* For interior images in main view */
+.normal-image-render {
+  /* For interior images in main view */
   display: block;
   max-width: 100%;
   max-height: 100%;
@@ -680,12 +693,16 @@ function scrollThumbnails(direction) {
   /* Generic class for zoom-in cursor */
   cursor: zoom-in;
 }
+
 .clickable-category {
   cursor: pointer;
-  text-decoration: none; /* Optional: to make it look more like a link */
+  text-decoration: none;
+  /* Optional: to make it look more like a link */
 }
+
 .clickable-category:hover {
-  color: var(--p-primary-color, #007bff); /* Optional: hover effect */
+  color: var(--p-primary-color, #007bff);
+  /* Optional: hover effect */
 }
 
 
@@ -804,7 +821,8 @@ function scrollThumbnails(direction) {
 
 /* PrimeVue class for custom content styling of the dialog itself */
 :global(.p-dialog-custom-content) {
-  padding: 0 !important; /* Remove PrimeVue's default padding */
+  padding: 0 !important;
+  /* Remove PrimeVue's default padding */
   border: none !important;
   box-shadow: none !important;
   /* overflow: hidden !important;  Changed from auto to hidden to prevent double scrollbars */
@@ -814,27 +832,34 @@ function scrollThumbnails(direction) {
 /* This is the direct child of .p-dialog-custom-content (the one we bind to ref="dialogContainerRef") */
 .dialog-container {
   position: relative;
-  width: 100%; /* Fill the .p-dialog-custom-content area */
-  height: 100%; /* Fill the .p-dialog-custom-content area */
+  width: 100%;
+  /* Fill the .p-dialog-custom-content area */
+  height: 100%;
+  /* Fill the .p-dialog-custom-content area */
   display: flex;
   align-items: center;
   justify-content: center;
-  outline: none; /* For tabindex focus */
-  padding: 1rem; /* Padding inside the dialog so content doesn't touch edges */
+  outline: none;
+  /* For tabindex focus */
+  padding: 1rem;
+  /* Padding inside the dialog so content doesn't touch edges */
   box-sizing: border-box;
 }
 
-.dialog-custom-close-btn { /* The X button */
+.dialog-custom-close-btn {
+  /* The X button */
   position: absolute !important;
   top: clamp(0.5rem, 3vh, 1.5rem);
   right: clamp(0.5rem, 3vw, 1.5rem);
   background-color: rgba(40, 40, 40, 0.6) !important;
   color: white !important;
-  z-index: 1302; /* Ensures it's above other dialog content */
+  z-index: 1302;
+  /* Ensures it's above other dialog content */
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 50%;
 }
+
 .dialog-custom-close-btn:hover,
 .dialog-custom-close-btn:focus {
   background-color: rgba(0, 0, 0, 0.7) !important;
@@ -846,26 +871,38 @@ function scrollThumbnails(direction) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;  /* Fill the padded .dialog-container */
-  height: 100%; /* Fill the padded .dialog-container */
-  max-width: 100%; /* Should not exceed its parent */
-  max-height: 100%; /* Should not exceed its parent */
+  width: 100%;
+  /* Fill the padded .dialog-container */
+  height: 100%;
+  /* Fill the padded .dialog-container */
+  max-width: 100%;
+  /* Should not exceed its parent */
+  max-height: 100%;
+  /* Should not exceed its parent */
   box-sizing: border-box;
 }
 
 /* Styling for the canvas frame display within the dialog */
 .dialog-gallery-content .canvas-frame-wrapper {
-  position: relative; /* Crucial for positioning .artwork-on-canvas absolutely */
-  display: block; /* Or 'flex' if its children need it, 'block' is usually fine */
-  width: auto;    /* Let aspect-ratio and max-constraints determine size */
-  height: auto;   /* Let aspect-ratio and max-constraints determine size */
-  max-width: 400px;  /* Fit within .dialog-gallery-content */
-  max-height: 400px; /* Fit within .dialog-gallery-content */
+  position: relative;
+  /* Crucial for positioning .artwork-on-canvas absolutely */
+  display: block;
+  /* Or 'flex' if its children need it, 'block' is usually fine */
+  width: auto;
+  /* Let aspect-ratio and max-constraints determine size */
+  height: auto;
+  /* Let aspect-ratio and max-constraints determine size */
+  max-width: 400px;
+  /* Fit within .dialog-gallery-content */
+  max-height: 400px;
+  /* Fit within .dialog-gallery-content */
   /* Enforce a square container for the frame, consistent with main view's .main-image-container.canvas-mode */
   aspect-ratio: 1 / 1;
-  perspective: 1000px; /* For 3D transforms */
+  perspective: 1000px;
+  /* For 3D transforms */
   perspective-origin: center center;
-  overflow: auto; /* Good practice */
+  overflow: auto;
+  /* Good practice */
   /* For debugging sizing: background-color: rgba(0, 255, 0, 0.1); */
 }
 
@@ -874,28 +911,34 @@ function scrollThumbnails(direction) {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Respects aspect ratio of the frame image itself */
+  object-fit: contain;
+  /* Respects aspect ratio of the frame image itself */
 }
 
 /* The artwork image placed onto the canvas frame within the dialog */
 .dialog-gallery-content .artwork-on-canvas {
   position: absolute;
   /* top, left, width, height, transform are dynamically set via :style binding */
-  object-fit: fill !important; /* As per existing style */
+  object-fit: fill !important;
+  /* As per existing style */
 }
 
 /* For normal interior images displayed in the dialog */
 .dialog-gallery-content .preview-image-render {
   display: block;
-  max-width: 100%;  /* Fit within .dialog-gallery-content */
-  max-height: 100%; /* Fit within .dialog-gallery-content */
+  max-width: 100%;
+  /* Fit within .dialog-gallery-content */
+  max-height: 100%;
+  /* Fit within .dialog-gallery-content */
   width: auto;
   height: auto;
-  object-fit: contain; /* Respects aspect ratio of the interior image */
+  object-fit: contain;
+  /* Respects aspect ratio of the interior image */
   border-radius: 4px;
 }
 
-.dialog-nav-btn { /* Navigation arrows within the dialog */
+.dialog-nav-btn {
+  /* Navigation arrows within the dialog */
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -905,22 +948,28 @@ function scrollThumbnails(direction) {
   border-radius: 50%;
   width: clamp(2.5rem, 6vw, 3.5rem);
   height: clamp(2.5rem, 6vw, 3.5rem);
-  z-index: 10; /* Above the displayed image/canvas but below close button if necessary */
+  z-index: 10;
+  /* Above the displayed image/canvas but below close button if necessary */
   opacity: 0.6;
   transition: opacity 0.2s, background-color 0.2s;
 }
+
 .dialog-nav-btn:hover {
   opacity: 1;
   background-color: rgba(0, 0, 0, 0.6) !important;
 }
+
 .dialog-nav-btn.left {
   left: clamp(0.25rem, 1.5vw, 0.75rem);
 }
+
 .dialog-nav-btn.right {
   right: clamp(0.25rem, 1.5vw, 0.75rem);
 }
+
 .dialog-nav-btn:disabled {
-  display: none; /* Hide if disabled */
+  display: none;
+  /* Hide if disabled */
 }
 
 
@@ -969,7 +1018,7 @@ function scrollThumbnails(direction) {
 }
 
 .detail-value {
-  font-size: 0.95rem;
+  font-size: 1.2rem;
   color: #2d3748;
   font-weight: 500;
 }

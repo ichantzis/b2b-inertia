@@ -70,7 +70,7 @@ const mainMenuItems = computed(() => {
     if (page.props.auth?.user?.role === 'admin') {
         items.push({
             label: 'Dashboard',
-            route: route('dashboard'),
+            route: route('dashboard.index'),
             icon: 'pi pi-fw pi-sliders-h',
             active: currentRoute.value == 'dashboard',
             command: () => {
@@ -249,30 +249,30 @@ const handleDeleteItem = (itemId) => {
     });
 };
 
-watch(() => page.props.flash?.login_success_message, (newMessage) => {
-    if (newMessage) {
+// Watch for changes in flash messages
+watch(() => page.props.flash, (flashMessages) => {
+    if (flashMessages) {
         // Wait for the next DOM update cycle before showing the toast
         nextTick(() => {
             try {
-                toast.add({
-                    severity: 'success',
-                    summary: 'Logged In',
-                    detail: newMessage,
-                    life: 3000 // Keep it slightly longer for testing if needed
-                });
+                if (flashMessages.success) {
+                    toast.add({ severity: 'success', summary: 'Success', detail: flashMessages.success, life: 3000 });
+                }
+                if (flashMessages.error) {
+                    toast.add({ severity: 'error', summary: 'Error', detail: flashMessages.error, life: 3000 });
+                }
+                if (flashMessages.login_success_message) { // Your custom one
+                    toast.add({ severity: 'success', summary: 'Logged In', detail: flashMessages.login_success_message, life: 3000 });
+                }
+                // Add more conditions for other flash types like 'warning' or 'info' if needed
             } catch (error) {
                 console.error('Error calling toast.add() inside nextTick:', error);
             }
         });
 
-        // Clear the flash message from Inertia's props immediately after detecting it
-        // so the watcher doesn't re-trigger unnecessarily if other props change.
-        // Do this *outside* nextTick.
-        if (page.props.flash) {
-            page.props.flash.login_success_message = null;
-        }
     }
-}, { immediate: true }); // immediate: true is still correct here
+}, { deep: true }); // Use deep watch if flash is an object and its properties might change
+
 
 // --- SOLUTION FOR STALE CART ON BACK NAVIGATION ---
 let unregisterNavigateListener = null;

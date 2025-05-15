@@ -232,7 +232,7 @@ class CartController extends Controller
         $this->shareCartData();
 
         // Redirect back with success message
-        return back()->with('success', 'Item added to cart.');
+        return back();
     }
 
     /**
@@ -289,7 +289,7 @@ class CartController extends Controller
 
         $this->shareCartData();
 
-        return back()->with('success', 'Item removed from cart.');
+        return back();
     }
 
     /**

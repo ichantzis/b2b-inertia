@@ -16,7 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
             Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        // Registering middleware aliases
+        $middleware->alias([
+            // Add other aliases here if you have them, for example:
+            // 'auth' => \App\Http\Middleware\Authenticate::class, // Usually already defined or handled by Laravel
+            // 'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class, // Usually already defined
+            // 'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class, // Usually already defined
+
+            'admin' => \App\Http\Middleware\AdminMiddleware::class, // <-- THIS IS THE LINE YOU ADD
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -3,23 +3,23 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+// Auth facade is no longer needed here for role checking
 use Inertia\Inertia;
-use App\Models\Order;
+use App\Models\Order; // Make sure you have an Order model if you use it
 
 class DashboardController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $user = Auth::user();
+        // The 'admin' middleware has already verified the user's role.
+        // If the code reaches this point, the user is an admin.
 
-        if ($user && $user->role === 'admin') {
-            $recentOrders = Order::latest()->take(10)->get(); // Fetch 10 latest orders
-            return Inertia::render('Dashboard', [
-                'recentOrders' => $recentOrders, // Pass orders to the component
-            ]);
-        }
+        $recentOrders = Order::latest()->take(10)->get(); // Example: Fetch recent orders
+        return Inertia::render('Dashboard', [
+            'recentOrders' => $recentOrders,
+        ]);
 
-        return redirect()->route('welcome');
+        // The redirect logic previously here is no longer needed as
+        // the middleware handles unauthorized access.
     }
 }
