@@ -79,7 +79,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import Checkbox from 'primevue/checkbox';
 import Select from 'primevue/select';
-
+import { slugify } from '@/composables/utils.js';
 
 const props = defineProps({
     listId: String,
@@ -160,6 +160,8 @@ const activeSort = computed({
 const fetchCategories = async () => {
     try {
         const response = await axios.get('/api/categories');
+        console.log('Fetched categories:', response.data.items);
+        
         categories.value = response.data.items;     
     } catch (error) {
         console.error('Error fetching categories:', error);
@@ -174,7 +176,8 @@ const isActiveFilter = (filterValue) => props.activeFilters.includes(filterValue
 
 // Modify buildCategoryUrl to include section
 const buildCategoryUrl = (category, section) => {
-    const categorySlug = `cat_${section}_${category.category_name.toLowerCase().replace(/ /g, '-')}`;
+    const categoryName = category.category_name;
+    const categorySlug = `cat_${section}_${slugify(categoryName)}`; // e.g., cat_photography_abstract
     return categorySlug;
 };
 

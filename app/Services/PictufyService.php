@@ -154,31 +154,37 @@ class PictufyService
 
     public function getCategoryIdBySlug($categorySlug) // from 'cat_section_categoryname'
     {
-        Log::info("Finding category ID for slug: $categorySlug");
-        $categoriesData = $this->getCategories();
+        Log::info("Finding category ID for slug (raw input): $categorySlug");
+        $categoriesData = $this->getCategories(); // This should return your API structure
 
+        // Expected slug format: cat_sectionkey_category-name-slug
         preg_match('/cat_([^_]+)_(.+)/', $categorySlug, $matches);
 
         if (count($matches) !== 3) {
-            Log::warning("Invalid category slug format: $categorySlug");
+            Log::warning("Invalid category slug format: $categorySlug. Expected 'cat_section_slugifiedcategoryname'.");
             return null;
         }
 
-        $sectionKey = $matches[1]; // e.g., 'photography'
-        $categoryNameSlug = str_replace('-', ' ', $matches[2]); // e.g., 'abstract' from 'abstract'
+        $sectionKey = $matches[1];         // e.g., 'photography'
+        $slugToFind = $matches[2]; // e.g., 'text-quotes' or 'text-&-quotes' (this is what client sends)
 
         if (isset($categoriesData['items'][$sectionKey])) {
             foreach ($categoriesData['items'][$sectionKey] as $category) {
-                // Compare by creating a slug from the API's category_name or directly if API provides slug
-                $apiCategoryNameSlug = strtolower(str_replace(' ', '-', $category['category_name']));
-                if ($apiCategoryNameSlug === str_replace(' ', '-', $categoryNameSlug)) { // Normalize comparison
-                    Log::info("Found category ID {$category['category_id']} for $categorySlug");
-                    return $category['category_id'];
+                if (isset($category['category_name']) && isset($category['category_id'])) {
+                    // Generate a slug from the API's category_name using Laravel's Str::slug
+                    // This will handle '&' and other special characters correctly, typically by removing them.
+                    $apiGeneratedSlug = Str::slug(html_entity_decode($category['category_name']));
+                    Log::debug("Comparing API generated slug '$apiGeneratedSlug' with slug to find '$slugToFind'");
+
+                    if ($apiGeneratedSlug === $slugToFind) {
+                        Log::info("Found category ID {$category['category_id']} for section '$sectionKey' and slug '$slugToFind' (Original API name: '{$category['category_name']}')");
+                        return $category['category_id'];
+                    }
                 }
             }
         }
 
-        Log::warning("Category not found for slug: $categorySlug (Section: $sectionKey, Name Slug: $categoryNameSlug)");
+        Log::warning("Category not found for slug: $categorySlug (Section: $sectionKey, Processed Slug to Find: $slugToFind)");
         return null;
     }
 
