@@ -87,6 +87,10 @@ const props = defineProps({
     activeFilters: {
         type: Array,
         default: () => []
+    },
+    currentSearchQuery: {
+        type: String,
+        default: ''
     }
 });
 
@@ -156,8 +160,7 @@ const activeSort = computed({
 const fetchCategories = async () => {
     try {
         const response = await axios.get('/api/categories');
-        categories.value = response.data.items;
-        console.log('Categories:', categories.value);        
+        categories.value = response.data.items;     
     } catch (error) {
         console.error('Error fetching categories:', error);
     }
@@ -213,59 +216,102 @@ const getBaseUrl = () => {
     return '/artworks';
 };
 
-const updateUrl = (filters) => {
-    const cleanFilters = filters.filter(f => f).join('/');
+const updateUrl = (pathFiltersArray) => {
+    const cleanPathFilters = pathFiltersArray.filter(f => f).join('/');
     const baseUrl = getBaseUrl();
-    router.visit(`${baseUrl}/${cleanFilters}`);
+    let targetUrl = baseUrl;
+
+    if (cleanPathFilters) {
+        targetUrl = `${baseUrl}/${cleanPathFilters}`;
+    }
+
+    const queryParams = {};
+    if (props.currentSearchQuery) { // Use the passed-in search query
+        queryParams.search = props.currentSearchQuery;
+    }
+
+    // Preserve other existing query parameters not related to filters or search, if any
+    // This part can be tricky. For now, we'll focus on just adding the search.
+    // If you have other query params like 'page' or 'order' that are NOT part of path filters,
+    // you might need a more robust way to merge them.
+    // However, your sort order seems to be part of path filters.
+
+    router.visit(targetUrl, {
+        data: queryParams, // Send query parameters as 'data'
+        preserveState: true,
+        preserveScroll: true, // Or false if you want to scroll to top
+        replace: true, // Good for filter changes
+    });
 };
 
 const clearFilters = () => {
-    const baseUrl = getBaseUrl();
-    router.visit(baseUrl);
+    const baseUrl = getBaseUrl(); // This gets /artworks, /collection/slug, or /lists/id
+    const queryParams = {};
+
+    // IMPORTANT: Preserve the current search query when clearing path filters
+    if (props.currentSearchQuery) {
+        queryParams.search = props.currentSearchQuery;
+    }
+
+    // Navigate to the base URL (which removes all path segments for filters)
+    // and include the current search query if it exists.
+    router.visit(baseUrl, {
+        data: queryParams, // Send search query parameter
+        preserveState: true,
+        preserveScroll: true, // Or false, depending on desired scroll behavior
+        replace: true, // Good for filter changes
+    });
 };
 
 // Update the handler to include section
 const handleCategoryChange = (category, section) => {
-    const categorySlug = buildCategoryUrl(category, section);
-    const otherFilters = props.activeFilters.filter(f => !f.startsWith('cat_'));
+    const categorySlug = buildCategoryUrl(category, section); // e.g., cat_photography_abstract
+    let otherPathFilters = props.activeFilters.filter(f => !f.startsWith('cat_')); // Remove old category
 
-    if (getActiveCategory() === categorySlug) {
-        updateUrl(otherFilters);
+    const currentActiveCategory = getActiveCategory(); // From your existing computed prop logic
+
+    if (currentActiveCategory === categorySlug) { // If clicking the same category to deselect
+        // Filters are already without this category in otherPathFilters
+        updateUrl(otherPathFilters);
     } else {
-        updateUrl([categorySlug, ...otherFilters]);
+        // Add new category, keep other filters
+        updateUrl([categorySlug, ...otherPathFilters]);
     }
 };
 
-const handleFormatChange = (format) => {
-    const otherFilters = props.activeFilters.filter(f => !formats.map(f => f.value).includes(f));
+const handleFormatChange = (formatValue) => {
+    let otherPathFilters = props.activeFilters.filter(f => !formats.map(opt => opt.value).includes(f)); // Remove old format
+    const currentActiveFormat = getActiveFormat();
 
-    if (getActiveFormat() === format) {
-        updateUrl(otherFilters);
+    if (currentActiveFormat === formatValue) {
+        updateUrl(otherPathFilters);
     } else {
-        updateUrl([format, ...otherFilters]);
+        updateUrl([formatValue, ...otherPathFilters]);
     }
 };
 
-const handleColorChange = (color) => {
-    const otherFilters = props.activeFilters.filter(f => !colors.map(c => c.value).includes(f));
+const handleColorChange = (colorValue) => {
+    let otherPathFilters = props.activeFilters.filter(f => !colors.map(opt => opt.value).includes(f)); // Remove old color
+    const currentActiveColor = getActiveColor();
 
-    if (getActiveColor() === color) {
-        updateUrl(otherFilters);
+    if (currentActiveColor === colorValue) {
+        updateUrl(otherPathFilters);
     } else {
-        updateUrl([color, ...otherFilters]);
+        updateUrl([colorValue, ...otherPathFilters]);
     }
 };
 
 const handleSortChange = (event) => {
-    const otherFilters = props.activeFilters.filter(f => !sortOptions.map(o => o.value).includes(f));
-    
-    if (event.value === 'recommended') {
-        updateUrl(otherFilters);
-    } else {
-        updateUrl([event.value, ...otherFilters]);
-    }
-};
+    const newSortValue = event.value;
+    // Remove any existing sort order from path filters
+    let otherPathFilters = props.activeFilters.filter(f => !sortOptions.map(o => o.value).includes(f));
 
+    if (newSortValue && newSortValue !== 'recommended') { // 'recommended' often means no sort param
+        otherPathFilters = [newSortValue, ...otherPathFilters];
+    }
+    // No need to manage queryParams.order here if sort is path-based
+    updateUrl(otherPathFilters);
+};
 onMounted(fetchCategories);
 </script>
 

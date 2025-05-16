@@ -1,52 +1,53 @@
 <template>
-    <HeaderLayout>
-        <div class="layout-wrapper">
-            <!-- Update transition element -->
+    <HeaderLayout> <div class="layout-wrapper">
             <Transition name="slide">
                 <div v-show="showFilters" class="sidebar-container">
-                    <Button 
-                        icon="pi pi-times" 
+                    <Button
+                        icon="pi pi-times"
                         @click="toggleFilters"
                         class="close-button lg:hidden"
                         severity="secondary"
                         text
                         rounded
                     />
-                    <FilterSidebar 
+                    <FilterSidebar
                         :list-id="$page.props.collectionId"
                         :collection-slug="$page.props.collectionSlug"
-                        :active-filters="$page.props.filters"
+                        :active-filters="$page.props.filters || []"
+                        :current-search-query="currentPageSearchTerm"
                         class="floating-sidebar"
                     />
                 </div>
             </Transition>
 
             <main :class="['main-content', { 'with-sidebar': showFilters }]">
-                <slot></slot>
-            </main>
+                <slot></slot> </main>
 
-            <!-- Overlay for mobile -->
-            <div v-if="showFilters" 
+            <div v-if="showFilters"
                  class="sidebar-overlay lg:hidden"
                  @click="toggleFilters">
             </div>
         </div>
-    </HeaderLayout>>
+    </HeaderLayout>
 </template>
 
 <script setup>
 import { ref, provide, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3'; // Import usePage
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import FilterSidebar from '@/components/FilterSidebar.vue';
-import { Head } from '@inertiajs/vue3';
+// import { Head } from '@inertiajs/vue3'; // Head is usually for page components, not layouts directly setting document head title.
 
+const page = usePage(); // Initialize usePage
 const showFilters = ref(false);
 
 function toggleFilters() {
     showFilters.value = !showFilters.value;
 }
 
-// Provide both the function and a computed for the state
+// This will be the search term active for the current page, passed from the controller via page props
+const currentPageSearchTerm = computed(() => page.props.currentSearchTerm || '');
+
 provide('layout', {
     toggleFilters,
     isFiltersVisible: computed(() => showFilters.value)

@@ -1,5 +1,5 @@
 <template>
-    <InertiaHead :title="props.collectionName" />
+    <InertiaHead :title="props.collectionName || 'Artworks'" />
     <div class="layout-container">
         <main class="main-content">
             <div class="content-wrapper">
@@ -15,30 +15,38 @@
                         {{ props.collectionDescription }}
                     </p>
                 </div>
+
+                <div class="mb-6 px-4 md:px-0 max-w-xl mx-auto">
+                    <IconField iconPosition="left" class="w-full">
+                        <InputIcon class="pi pi-search"></InputIcon>
+                        <InputText v-model="searchQuery" placeholder="Search for artworks..."
+                            class="w-full p-inputtext-lg" aria-label="Search artworks" />
+                        <InputIcon v-if="searchQuery || localCurrentSearchTerm"
+                            class="pi pi-times cursor-pointer text-gray-500 hover:text-gray-700"
+                            aria-label="Clear Search" @click="clearSearch" tabindex="0" @keydown.enter="clearSearch"
+                            @keydown.space="clearSearch" />
+                    </IconField>
+                </div>
+
                 <div class="flex justify-center items-center mb-6">
                     <Button icon="pi pi-filter" @click="layout?.toggleFilters()"
                         :label="layout?.isFiltersVisible?.value ? 'Hide Filters' : 'Filters'" severity="info"
                         size="large" class="filter-button" variant="outlined" raised />
                 </div>
 
-                <div v-if="!artworks.length" class="no-results">
-                    <div v-if="artworksLoading" class="my-2 flex items-center justify-center">
-                        <ProgressSpinner strokeWidth="3" animationDuration=".8s" class="loading-spinner" />
-                    </div>
-                    <div v-else>
-                        <h2 class="text-xl font-semibold mb-2">No artworks found</h2>
-                        <p class="text-gray-600">We didn't find any artworks, try another search term or remove filters.
-                        </p>
-                    </div>
+                <div v-if="artworksLoading && !artworks.length"
+                    class="my-2 flex items-center justify-center col-span-full">
+                    <ProgressSpinner strokeWidth="3" animationDuration=".8s" class="loading-spinner" />
+                </div>
+                <div v-else-if="!artworks.length && !artworksLoading" class="no-results text-center py-10">
+                    <h2 class="text-xl font-semibold mb-2">No artworks found</h2>
+                    <p class="text-gray-600">We didn't find any artworks matching your criteria. Try another search term
+                        or adjust your filters.</p>
                 </div>
 
                 <DataView v-else :value="artworks" layout="grid">
                     <template #grid="slotProps">
-                        <div v-if="artworksLoading && !slotProps.items.length"
-                            class="my-2 flex items-center justify-center col-span-full">
-                            <ProgressSpinner strokeWidth="3" animationDuration=".8s" class="loading-spinner" />
-                        </div>
-                        <div v-else class="grid grid-cols-12 gap-4 md:gap-8">
+                        <div class="grid grid-cols-12 gap-4 md:gap-8">
                             <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
                                 class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
                                 <div class="rounded flex flex-col artwork-container">
@@ -48,7 +56,6 @@
                                             :alt="artwork.title?.en || 'Untitled'"
                                             class="rounded w-full h-auto object-contain max-h-[300px]" />
                                         <div v-else class="no-image">No Image Available</div>
-
                                         <div class="artwork-overlay">
                                             <div class="overlay-content">
                                                 <span class="artwork-title">{{ artwork.title?.en || 'Untitled' }}</span>
@@ -64,7 +71,7 @@
                     </template>
                 </DataView>
 
-                <div v-if="loading && nextPage" class="loading-container">
+                <div v-if="loading && localNextPage" class="loading-container">
                     <ProgressSpinner strokeWidth="3" animationDuration=".8s" class="loading-spinner" />
                     <p class="loading-text">Loading more artworks...</p>
                 </div>
@@ -76,110 +83,172 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, defineProps, watch, inject, computed } from "vue"; // Added computed
+import { ref, onMounted, onUnmounted, defineProps, watch, inject, computed } from "vue";
 import axios from "axios";
+import { debounce } from 'lodash-es'; // Import debounce from lodash-es
 import DataView from "primevue/dataview";
 import Button from "primevue/button";
-import { Link, Head as InertiaHead } from "@inertiajs/vue3"; // Added Head
+import InputText from 'primevue/inputtext';
+import { Link, Head as InertiaHead, router, usePage } from "@inertiajs/vue3";
 import FilteredLayout from '@/layouts/FilteredLayout.vue';
-// import { ProgressSpinner, Divider } from "primevue"; // Already imported in your version
 import ProgressSpinner from 'primevue/progressspinner';
 import Divider from 'primevue/divider';
 import ScrollTop from 'primevue/scrolltop';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
 
-import { router } from '@inertiajs/vue3'
-
-router.on('start', () => { // Removed event parameter as it's not used
-    artworksLoading.value = true;
-})
-
-router.on('finish', () => { // Changed from 'success' to 'finish' to cover all navigation ends
-    artworksLoading.value = false;
-})
 
 defineOptions({ layout: FilteredLayout });
 
 const props = defineProps({
-    artworks: {
-        type: Array,
-        default: () => [],
-    },
-    collectionId: { // This is the actual ID, not the slug
-        type: String,
-        default: null
-    },
-    collectionSlug: { // Keep this if you build filter URLs using the slug
-        type: String,
-        default: null,
-    },
-    collectionName: {
-        type: String,
-        default: 'Artworks'
-    },
-    collectionCover: {
-        type: String,
-        default: null
-    },
-    collectionDescription: {
-        type: String,
-        default: null
-    },
-    filters: { // These are the filter segments from the URL path
-        type: Array,
-        default: () => []
-    },
-    nextPage: {
-        type: Number,
-        default: null,
-    },
-    initialOrder: { // To set the initial state of an order dropdown if you have one
-        type: String,
-        default: 'recommended',
+    artworks: { type: Array, default: () => [] },
+    collectionId: { type: String, default: null },
+    collectionSlug: { type: String, default: null },
+    collectionName: { type: String, default: 'Artworks' },
+    collectionCover: { type: String, default: null },
+    collectionDescription: { type: String, default: null },
+    filters: { type: Array, default: () => [] },
+    currentSearchTerm: String, // From controller, reflecting URL query
+    nextPage: { type: Number, default: null },
+    initialOrder: { type: String, default: 'recommended' },
+});
+
+const page = usePage();
+const layout = inject('layout');
+
+const localArtworks = ref([]);
+const localNextPage = ref(null);
+const loading = ref(false); // For "load more"
+const artworksLoading = ref(false); // For initial/filter/search main content load
+const localCurrentPageForLoadMore = ref(1);
+
+const searchQuery = ref(''); // Bound to the InputText
+const localCurrentSearchTerm = ref(''); // The term that was actually searched for
+
+// --- Inertia Event Handlers for global loading state ---
+const unregisterStartListener = router.on('start', () => artworksLoading.value = true);
+const unregisterFinishListener = router.on('finish', () => artworksLoading.value = false);
+const unregisterErrorListener = router.on('error', () => artworksLoading.value = false);
+
+
+const performSearchRequest = (searchVal) => {
+    artworksLoading.value = true;
+    localCurrentSearchTerm.value = searchVal.trim();
+
+    const queryParams = {
+        search: localCurrentSearchTerm.value || undefined,
+        // page: 1 // Reset to page 1 for a new search
+    };
+
+    let baseRouteName = page.props.ziggy?.current_route_name || 'artworks'; // Default to 'artworks'
+    let routeParams = { ...page.props.ziggy?.parameters }; // Copy existing route parameters
+
+    // If filters are part of path and not ziggy params, ensure they are included
+    if (props.filters && props.filters.length > 0 && !routeParams.filters) {
+        routeParams.filters = props.filters.join('/');
+    }
+    // Ensure specific IDs are present if on specific pages
+    if (baseRouteName === 'collection.show' && !routeParams.collection_slug && props.collectionSlug) {
+        routeParams.collection_slug = props.collectionSlug;
+    } else if (baseRouteName === 'list.filtered' && !routeParams.list_id && props.collectionId) {
+        routeParams.list_id = props.collectionId; // Assuming collectionId is list_id for this route
+    }
+
+
+    router.get(route(baseRouteName, routeParams), queryParams, {
+        preserveState: true,
+        preserveScroll: true, // Let Inertia manage scroll on success, or handle manually
+        replace: true,
+        onSuccess: (newPage) => {
+            // Data (artworks, nextPage, currentSearchTerm) will be updated via props.
+            // Update local searchQuery to match the actual searched term from the backend response.
+            searchQuery.value = newPage.props.currentSearchTerm || '';
+            localCurrentSearchTerm.value = newPage.props.currentSearchTerm || '';
+        },
+        onFinish: () => {
+            // artworksLoading.value = false; // Already handled by global listener
+        }
+    });
+};
+
+// Create the debounced version of performSearchRequest
+const debouncedPerformSearch = debounce((newValue) => {
+    performSearchRequest(newValue);
+}, 1000); // 1000ms = 1 second delay
+
+// Watch the searchQuery model for changes
+watch(searchQuery, (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+        debouncedPerformSearch(newValue);
     }
 });
 
-const artworksData = ref(Array.isArray(props.artworks) ? [...props.artworks] : []); // Renamed to avoid conflict
-const loading = ref(false); // For loading more, not initial load
-const artworksLoading = ref(false); // For initial page load or filter changes
-const currentPage = ref(props.nextPage ? props.nextPage - 1 : 1); // Keep track of current page, assuming nextPage is the one to fetch
+const clearSearch = () => {
+    searchQuery.value = ''; // This will trigger the watcher and then debouncedPerformSearch
+    // performSearchRequest(''); // Or call directly if immediate clearing is desired
+};
 
-// Get reference to the parent layout
-const layout = inject('layout');
+// --- Lifecycle and Data Handling ---
+onMounted(() => {
+    localArtworks.value = Array.isArray(props.artworks) ? [...props.artworks] : [];
+    localNextPage.value = props.nextPage;
+    localCurrentPageForLoadMore.value = props.nextPage ? props.nextPage - 1 : (props.artworks.length > 0 ? 1 : null);
+    searchQuery.value = props.currentSearchTerm || ''; // Initialize from prop
+    localCurrentSearchTerm.value = props.currentSearchTerm || '';
 
+    window.addEventListener('scroll', handleScroll);
+});
 
-// Watch for prop changes to reset artworksData and nextPage
+onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll);
+    // Unregister Inertia listeners
+    unregisterStartListener();
+    unregisterFinishListener();
+    unregisterErrorListener();
+});
+
+// Watch props to update local state when Inertia navigates
 watch(() => props.artworks, (newArtworks) => {
-    artworksData.value = Array.isArray(newArtworks) ? [...newArtworks] : [];
-    currentPage.value = props.nextPage ? props.nextPage - 1 : 1; // Reset page based on initial load
+    if (!loading.value) { // Avoid race condition with loadMore
+        localArtworks.value = Array.isArray(newArtworks) ? [...newArtworks] : [];
+    }
 }, { deep: true });
 
-watch(() => props.filters, () => {
-    // Assuming filters prop change means a new set of initial artworks is loaded by Inertia
-    artworksData.value = Array.isArray(props.artworks) ? [...props.artworks] : [];
-    currentPage.value = props.nextPage ? props.nextPage - 1 : 1;
-}, { deep: true });
+watch(() => props.nextPage, (newNextPage) => {
+    localNextPage.value = newNextPage;
+    localCurrentPageForLoadMore.value = newNextPage ? newNextPage - 1 : (localArtworks.value.length > 0 ? 1 : null);
+});
+
+watch(() => props.currentSearchTerm, (newSearchTerm) => {
+    // This ensures that if navigation changes the search term (e.g. back button, header search if implemented later)
+    // the local searchQuery and localCurrentSearchTerm reflect it.
+    searchQuery.value = newSearchTerm || '';
+    localCurrentSearchTerm.value = newSearchTerm || '';
+});
 
 
 const loadMoreArtworks = async () => {
-    if (!props.nextPage || loading.value || !currentPage.value) return; // Ensure currentPage is valid
+    if (!localNextPage.value || loading.value) return;
 
     loading.value = true;
     try {
-        const response = await axios.get(route('artworks.fetch'), { // Use named route for fetching
+        const response = await axios.get(route('artworks.fetch'), {
             params: {
-                page: currentPage.value + 1, // Fetch the actual next page
-                per_page: 30,
-                collection_id: props.collectionId, // Pass collection_id
-                filters: props.filters.join('/'), // Pass filters as a string if your backend expects that
-                order: props.initialOrder, // Maintain current order
+                page: localNextPage.value,
+                per_page: 30, // Or your configured per_page
+                collection_id: props.collectionId,
+                filters: props.filters?.join('/'),
+                order: props.initialOrder, // or a reactive order ref
+                search: localCurrentSearchTerm.value || undefined, // Use the actual searched term
             }
         });
 
         if (response.data.artworks && response.data.artworks.length > 0) {
-            artworksData.value.push(...response.data.artworks);
-            currentPage.value = response.data.nextPage ? response.data.nextPage - 1 : null; // Update current page based on the new nextPage
+            localArtworks.value.push(...response.data.artworks);
+            localNextPage.value = response.data.nextPage;
+            localCurrentPageForLoadMore.value = response.data.nextPage ? response.data.nextPage - 1 : null;
         } else {
-            currentPage.value = null; // No more pages
+            localNextPage.value = null;
         }
     } catch (error) {
         console.error("Error loading more artworks:", error);
@@ -188,31 +257,18 @@ const loadMoreArtworks = async () => {
     }
 };
 
-const handleScroll = () => {
+const handleScroll = debounce(() => { // Also debounce scroll handler slightly
     const bottomOfWindow = window.innerHeight + window.pageYOffset;
     const documentHeight = document.documentElement.offsetHeight;
-
-    if (bottomOfWindow >= documentHeight - 500) { // Trigger a bit earlier
-        if (currentPage.value !== null) { // Only load if there's a next page
-            loadMoreArtworks();
-        }
+    if (bottomOfWindow >= documentHeight - 500 && localNextPage.value && !loading.value) {
+        loadMoreArtworks();
     }
-};
+}, 200);
 
-onMounted(() => {
-    window.addEventListener('scroll', handleScroll);
-    // Set initial currentPage based on props.nextPage
-    currentPage.value = props.nextPage ? props.nextPage - 1 : (props.artworks.length > 0 ? 1 : null);
-});
-
-onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll);
-});
-
-// Make artworks a computed property to reflect changes from props and loadMore
-const artworks = computed(() => artworksData.value);
+const artworks = computed(() => localArtworks.value);
 
 </script>
+
 
 <style scoped>
 .layout-container {
@@ -222,7 +278,7 @@ const artworks = computed(() => artworksData.value);
 
 .main-content {
     flex: 1;
-    padding: 1rem 2rem;
+    padding: 0rem 2rem;
     /* Adjusted padding */
     overflow-y: auto;
 }
@@ -409,13 +465,22 @@ const artworks = computed(() => artworksData.value);
     border-radius: 4px;
 }
 
+.p-input-icon-left>.p-inputtext {
+    padding-left: 2.5rem;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+}
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
 
     /* md breakpoint */
     .main-content {
-        padding: 1rem;
+        padding: 0rem 1rem;
     }
 
     .content-wrapper {

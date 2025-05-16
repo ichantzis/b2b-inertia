@@ -77,7 +77,7 @@ class PictufyService
         return null;
     }
 
-     /**
+    /**
      * Get all collection categories from the API.
      * Caches the result.
      */
@@ -117,7 +117,7 @@ class PictufyService
         Log::warning("Collection category ID not found for slug: " . $categorySlugToFind);
         return null;
     }
-    
+
     /**
      * Get a collection category's name by its ID.
      * (This might be useful if fetching collections by ID doesn't return the category name directly)
@@ -158,7 +158,7 @@ class PictufyService
         $categoriesData = $this->getCategories();
 
         preg_match('/cat_([^_]+)_(.+)/', $categorySlug, $matches);
-        
+
         if (count($matches) !== 3) {
             Log::warning("Invalid category slug format: $categorySlug");
             return null;
@@ -192,7 +192,7 @@ class PictufyService
             return $this->request('lists', $params);
         });
     }
-    
+
     public function getArtworks($params = [])
     {
         // Default params if not set
@@ -204,15 +204,20 @@ class PictufyService
 
         // Specific filters from API docs
         if (isset($params['collection_id'])) $requestParams['collection_id'] = $params['collection_id'];
-        if (isset($params['list_id'])) $requestParams['list_id'] = $params['list_id']; // If you use lists
-        if (isset($params['category'])) $requestParams['category'] = $params['category']; // This is category_id
+        if (isset($params['list_id'])) $requestParams['list_id'] = $params['list_id'];
+        if (isset($params['category'])) $requestParams['category'] = $params['category'];
         if (isset($params['geometry'])) $requestParams['geometry'] = $params['geometry'];
         if (isset($params['color'])) $requestParams['color'] = $params['color'];
         if (isset($params['nudity'])) $requestParams['nudity'] = $params['nudity'];
         if (isset($params['artwork_type'])) $requestParams['artwork_type'] = $params['artwork_type'];
         if (isset($params['artist_id'])) $requestParams['artist_id'] = $params['artist_id'];
-        // Add other params as needed: from_timestamp, grade, aspect_ratio, resolution, people, buildings, animals, search etc.
-        
+
+        // *** ADD SEARCH PARAMETER HERE ***
+        if (!empty($params['search'])) { // Check if search term is provided and not empty
+            $requestParams['search'] = $params['search'];
+        }
+        // Add other params as needed: from_timestamp, grade, aspect_ratio, resolution, people, buildings, animals, etc.
+
         Log::debug("Service fetching artworks with params: " . json_encode($requestParams));
         return $this->request('artworks', $requestParams);
     }
@@ -222,7 +227,7 @@ class PictufyService
         // API params: artwork_id, translate, languages
         return $this->request('artwork', ['artwork_id' => $artworkId]);
     }
-    
+
     public function refreshListsCache()
     {
         $cacheKey = 'pictufy_lists'; // Example for one list type
@@ -237,7 +242,7 @@ class PictufyService
         Cache::forget($cacheKey);
         return $this->getCategories();
     }
-    
+
     public function refreshCollectionsCache($params = []) // For specific collection cache if params are used
     {
         $cacheKey = 'pictufy_collections_' . md5(json_encode($params));

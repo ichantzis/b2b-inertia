@@ -71,15 +71,27 @@
           </div>
           <div class="detail-item">
             <span class="detail-label">Category</span>
-            <span class="detail-value clickable-category" @click="navigateToCategory(currentArtwork.category)">
-              <Tag :value="currentArtwork.category" severity="warn" :pt="{
+            <span class="detail-value clickable-category" >
+              <Tag :value="currentArtwork.category" severity="warn" @click="navigateToCategory(currentArtwork.category)" :pt="{
                 root: { class: 'text-sm md:text-base' }
               }" />
             </span>
           </div>
         </div>
         <div class="tags-wrapper" v-if="parsedKeywords.length > 0">
-          <Tag v-for="(tag, index) in parsedKeywords" :key="index" :value="tag" severity="secondary" rounded />
+          <Tag
+                v-for="(tag, index) in parsedKeywords"
+                :key="index"
+                :value="tag"
+                severity="secondary"
+                rounded
+                @click="navigateToArtworksWithTag(tag)"
+                class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150"
+                tabindex="0"
+                @keydown.enter="navigateToArtworksWithTag(tag)"
+                @keydown.space="navigateToArtworksWithTag(tag)"
+                role="link"
+            />
         </div>
 
         <Divider />
@@ -423,6 +435,20 @@ const navigateToCategory = (categoryName) => {
   }
 };
 
+const navigateToArtworksWithTag = (tag) => {
+    if (!tag) return;
+
+    // We want to navigate to the general 'artworks' route
+    // without any existing collection or list filters from the current artwork details page.
+    // The 'filters' parameter for the 'artworks' route is for path-based filters (category, geometry etc.)
+    // The search term will be a query parameter.
+    router.visit(route('artworks'), { // Assuming 'artworks' is the name of your general artworks listing route
+        data: { search: tag.trim() }, // Pass the tag as the 'search' query parameter
+        preserveState: false, // Typically false for a new search context
+        preserveScroll: false, // Scroll to top of new page
+    });
+};
+
 function openPreview(index) {
   // ... (η λογική παραμένει ίδια)
   if (galleryImages.value[index]) {
@@ -494,7 +520,7 @@ function scrollThumbnails(direction) {
 
 <style scoped>
 .artwork-details-page {
-  padding: 1rem;
+  padding: 0rem 1rem;
   max-width: 100vw;
   /* Ensure it doesn't exceed viewport width */
   box-sizing: border-box;

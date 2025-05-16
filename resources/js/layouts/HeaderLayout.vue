@@ -279,20 +279,19 @@ let unregisterNavigateListener = null;
 
 // Add lifecycle hooks
 onMounted(() => {
-    window.addEventListener('scroll', handleScroll);
+    // window.addEventListener('scroll', handleScroll);
 
     unregisterNavigateListener = router.on('navigate', () => {
         // This event fires after any Inertia navigation, including back/forward.
         // We will ask Inertia to reload only the shared props related to the cart.
         // This ensures that if the user navigated back to a page whose cart data was stale,
         // it gets refreshed from the server.
-        console.log('Inertia "navigate" event triggered. Reloading cart props.');
         router.reload({
             only: ['cartCount', 'cartItemsPreview'], // Specify only the props you need to refresh
             preserveState: true, // Attempt to preserve component state
             preserveScroll: true, // Preserve scroll position
             onSuccess: () => {
-                console.log('Cart props reloaded successfully via router.reload().');
+                // console.log('Cart props reloaded successfully via router.reload().');
             },
             onError: (errors) => {
                 console.error('Error reloading cart props on navigate:', errors);
@@ -302,7 +301,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll);
+    // window.removeEventListener('scroll', handleScroll);
 });
 </script>
 
@@ -412,7 +411,7 @@ onUnmounted(() => {
             </nav>
 
             <!-- Add padding to prevent content from going under fixed header -->
-            <div class="h-[120px]"></div>
+            <div class="h-[80px]"></div>
 
             <!-- Drawer Menu (now used for all screen sizes) -->
             <Drawer v-model:visible="mobileMenuOpen" position="left">
