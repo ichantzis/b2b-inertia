@@ -143,6 +143,7 @@ class PictufyController extends Controller
         $collectionName = html_entity_decode($collection['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
         $collectionCover = $collection['cover'] ?? null; // Assuming the API returns a 'cover' key
         $collectionDescription = html_entity_decode($collection['description'] ?? '', ENT_QUOTES | ENT_HTML5);
+        $searchTerm = $request->input('search'); // <-- GET SEARCH TERM FROM QUERY
 
 
         if (!$collection_id) {
@@ -160,6 +161,10 @@ class PictufyController extends Controller
             'per_page' => $perPage,
             'order' => $order,
         ];
+
+        if ($searchTerm) {
+            $params['search'] = $searchTerm; // <-- ADD SEARCH TERM TO PARAMS
+        }
 
         if ($filters) {
             $segments = explode('/', $filters);
@@ -195,6 +200,7 @@ class PictufyController extends Controller
             'collectionCover' => $collectionCover, // Pass the fetched collection cover
             'collectionDescription' => $collectionDescription, // Pass the fetched collection description
             'collectionSlug' => $collection_slug,
+            'currentSearchTerm' => $searchTerm, // <-- PASS SEARCH TERM TO VUE
             'filters' => $filters ? explode('/', $filters) : [],
             'nextPage' => isset($artworksResponse['items']) && count($artworksResponse['items']) >= $perPage ? $page + 1 : null,
         ]);
@@ -331,7 +337,7 @@ class PictufyController extends Controller
         return Inertia::render('Lists');
     }
 
-    public function filteredList($listId = null, $filters = null)
+    public function filteredList($listId = null, Request $request, $filters = null)
     {
         $params = [
             'list_id' => $listId,
@@ -343,9 +349,12 @@ class PictufyController extends Controller
         // Get list details to access the name
         $lists = $this->pictufy->getLists();
         $currentCollection = collect($lists['items'])->firstWhere('list_id', $listId);
-        Log::info("Current list: " . json_encode($currentCollection));
         $collectionName = html_entity_decode($currentCollection['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
-        Log::info("Collection name: " . $collectionName);
+        $searchTerm = $request->input('search'); // <-- GET SEARCH TERM FROM QUERY
+        
+        if ($searchTerm) {
+            $params['search'] = $searchTerm; // <-- ADD SEARCH TERM TO PARAMS
+        }
 
         if ($filters) {
             $segments = explode('/', $filters);
@@ -386,6 +395,7 @@ class PictufyController extends Controller
             'artworks' => $artworks['items'] ?? [],
             'collectionId' => $listId,
             'collectionName' => $collectionName,
+            'currentSearchTerm' => $searchTerm,
             'filters' => $filters ? explode('/', $filters) : [],
             'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
         ]);

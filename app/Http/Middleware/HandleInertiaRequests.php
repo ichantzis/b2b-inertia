@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request; // Make sure Request is imported
 use Inertia\Middleware;
+use Tighten\Ziggy\Ziggy; // Ensure Ziggy is imported
 use App\Services\PictufyService; // Your existing service
 use App\Http\Controllers\CartController; // Your existing controller
 use Illuminate\Support\Str; // Your existing Str usage
@@ -108,7 +109,12 @@ class HandleInertiaRequests extends Middleware
             })->values()->all(),
             'cartCount' => $cartData['cartCount'],
             'cartItemsPreview' => $cartData['cartItemsPreview'],
-            'flash' => $flashMessages, // Pass all collected flash messages under the 'flash' key
+            'flash' => $flashMessages, // Pass all collected flash messages under the 'flash' key,
+            'ziggy' => fn () => [
+                ...(new Ziggy)->toArray(),
+                'location' => $request->url(), // Current full URL
+                'current_route_name' => $request->route()->getName(), // Alternative if Ziggy object isn't enough
+            ],
         ]);
     }
 }
