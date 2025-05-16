@@ -56,15 +56,15 @@ const userName = computed(() => {
 const mainMenuItems = computed(() => {
     const items = [];
 
-    items.push({
-        label: 'Home',
-        route: route('welcome'),
-        icon: 'pi pi-fw pi-home',
-        active: currentRoute.value == '/',
-        command: () => {
-            mobileMenuOpen.value = false;
-        }
-    });
+    // items.push({
+    //     label: 'Home',
+    //     route: route('welcome'),
+    //     icon: 'pi pi-fw pi-home',
+    //     active: currentRoute.value == '/',
+    //     command: () => {
+    //         mobileMenuOpen.value = false;
+    //     }
+    // });
 
     // Only add Dashboard if user is admin
     if (page.props.auth?.user?.role === 'admin') {
@@ -92,7 +92,7 @@ const mainMenuItems = computed(() => {
 
     // Add collections with submenu
     items.push({
-        label: 'Lists',
+        label: 'Our Lists',
         icon: 'pi pi-fw pi-th-large',
         expanded: true, // Add this to show submenu by default
         items: [
@@ -117,7 +117,7 @@ const mainMenuItems = computed(() => {
 
     // Add other menu items
     items.push({
-        label: 'Artworks',
+        label: 'Browse',
         route: route('artworks'),
         icon: 'pi pi-fw pi-images',
         active: currentRoute.value == 'artworks',
@@ -314,20 +314,32 @@ onUnmounted(() => {
                 { '-translate-y-full': !isHeaderVisible }
             ]">
                 <Container class="relative max-w-none">
-                    <!-- Logo - Absolute Center -->
-                    <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                        <Link :href="route('welcome')">
-                        <ApplicationLogo
-                            class="block transition-transform duration-200 h-8 w-auto sm:h-10 md:h-12 lg:h-14" />
-                        </Link>
-                    </div>
 
-                    <LinksMenuBar pt:root:class="py-8 sm:py-10 md:py-12 border-0 rounded-none dynamic-bg w-full"
-                        pt:container:class="p-0" pt:start:class="w-1/3 pl-4" pt:end:class="w-1/3 flex justify-end pr-4">
+
+                    <LinksMenuBar :model="mainMenuItems" :key="currentRoute"
+                        pt:root:class="px-0 py-4 border-0 rounded-none dynamic-bg"
+                        pt:button:class="hidden">
                         <!-- Left Side - Hamburger Menu -->
                         <template #start>
-                            <Button severity="secondary" icon="pi pi-bars" pt:root:class="p-0" pt:icon:class="text-xl"
-                                text @click="openMenu" />
+                            <!-- Mobile Hamburger -->
+                            <div class="flex items-center lg:hidden">
+                                <div class="relative">
+                                    <Button
+                                        severity="secondary"
+                                        icon="pi pi-bars"
+                                        pt:icon:class="text-xl"
+                                        text
+                                        @click="mobileMenuOpen = true"
+                                    />
+                                </div>
+                            </div>
+                            <!-- Logo - Absolute Center -->
+                            <div class="shrink-0 flex items-center mr-5">
+                                <Link :href="route('welcome')">
+                                <ApplicationLogo
+                                    class="block transition-transform duration-200 h-8 w-auto sm:h-10 md:h-12 lg:h-14" />
+                                </Link>
+                            </div>
                         </template>
 
                         <!-- Right Side - User Menu -->
