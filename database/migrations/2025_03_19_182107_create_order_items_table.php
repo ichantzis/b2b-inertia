@@ -15,10 +15,16 @@ return new class extends Migration
             $table->id();
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
             $table->string('artwork_id');  // ID from Pictufy API
-            $table->string('artwork_title');
-            $table->decimal('price', 10, 2);
+            $table->string('artwork_title')->nullable(); // Title at the time of order
+
+            // Add dedicated columns for type, frame, and size
+            $table->string('type', 20)->nullable(); // Max length based on expected values
+            $table->string('frame', 20)->nullable();
+            $table->string('size', 10)->nullable();
+
+            $table->decimal('price', 10, 2); // Price per unit at the time of order
             $table->integer('quantity');
-            $table->json('artwork_data')->nullable(); // Store additional artwork data
+            $table->json('artwork_data')->nullable(); // Store additional/snapshot artwork data (like img_thumb, original API response)
             $table->timestamps();
         });
     }

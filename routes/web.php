@@ -46,12 +46,15 @@ Route::get('/api/categories', [PictufyController::class, 'getCategories']);
 // Admin Dashboard Routes
 Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', DashboardController::class)->name('index'); //  e.g., /dashboard -> dashboard.index
+    Route::get('/orders', [DashboardController::class, 'listOrders'])->name('orders.index');
+    Route::get('/orders/{order}', [DashboardController::class, 'showOrder'])->name('orders.show'); // For viewing
+    Route::put('/orders/{order}', [DashboardController::class, 'updateOrder'])->name('orders.update'); // For updating
 
     // You can add more admin routes here:
     // Example:
-    // Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
-    // Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
-    // Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    // Route::get('/orders', [DashboardController::class, 'index'])->name('orders.index');
+    // Route::get('/orders/{order}', [DashboardController::class, 'show'])->name('orders.show');
+    // Route::get('/users', [DashboardController::class, 'index'])->name('users.index');
 });
 
 Route::middleware('auth')->group(function () {

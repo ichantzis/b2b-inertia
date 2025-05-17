@@ -5,144 +5,342 @@
         <Container>
             <PageTitleSection title="Checkout" />
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="col-span-2">
-                    <Card>
-                        <template #title>
-                            <h2 class="text-lg font-semibold">Shipping Information</h2>
-                        </template>
-                        <template #subtitle>
-                            <p class="text-sm text-gray-600">
-                                Please fill in your shipping information.
-                            </p>
-                        </template>
-                        <template #content>
-                            <form @submit.prevent="submit" class="space-y-6">
-
-                                <div>
-                                    <label for="email" class="block font-medium mb-1">Email</label>
-                                    <InputText id="email" type="email" v-model="form.shippingInfo.email"
-                                        :class="{ 'p-invalid': form.errors['shippingInfo.email'] }" class="w-full" />
-                                    <small v-if="form.errors['shippingInfo.email']" class="p-error">
-                                        {{ form.errors['shippingInfo.email'] }}
-                                    </small>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6">
+                <div class="lg:col-span-2">
+                    <form @submit.prevent="submit" class="space-y-6">
+                        <Card>
+                            <template #title>
+                                <h2 class="text-lg font-semibold">Billing Information</h2>
+                            </template>
+                            <template #content>
+                                <div class="space-y-6">
                                     <div>
-                                        <label for="firstName" class="block font-medium mb-1">First Name</label>
-                                        <InputText id="firstName" v-model="form.shippingInfo.firstName"
-                                            :class="{ 'p-invalid': form.errors['shippingInfo.firstName'] }" class="w-full" />
-                                        <small v-if="form.errors['shippingInfo.firstName']" class="p-error">
-                                            {{ form.errors['shippingInfo.firstName'] }}
-                                        </small>
+                                        <label for="billingEmail" class="block font-medium mb-1">Email</label>
+                                        <InputText id="billingEmail" type="email" v-model="form.billingInfo.email"
+                                            :class="{ 'p-invalid': form.errors['billingInfo.email'] }" class="w-full" />
+                                        <small v-if="form.errors['billingInfo.email']" class="p-error">{{
+                                            form.errors['billingInfo.email'] }}</small>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="billingFirstName" class="block font-medium mb-1">First
+                                                Name</label>
+                                            <InputText id="billingFirstName" v-model="form.billingInfo.firstName"
+                                                :class="{ 'p-invalid': form.errors['billingInfo.firstName'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['billingInfo.firstName']" class="p-error">{{
+                                                form.errors['billingInfo.firstName'] }}</small>
+                                        </div>
+                                        <div>
+                                            <label for="billingLastName" class="block font-medium mb-1">Last
+                                                Name</label>
+                                            <InputText id="billingLastName" v-model="form.billingInfo.lastName"
+                                                :class="{ 'p-invalid': form.errors['billingInfo.lastName'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['billingInfo.lastName']" class="p-error">{{
+                                                form.errors['billingInfo.lastName'] }}</small>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label for="lastName" class="block font-medium mb-1">Last Name</label>
-                                        <InputText id="lastName" v-model="form.shippingInfo.lastName"
-                                            :class="{ 'p-invalid': form.errors['shippingInfo.lastName'] }" class="w-full" />
-                                        <small v-if="form.errors['shippingInfo.lastName']" class="p-error">
-                                            {{ form.errors['shippingInfo.lastName'] }}
-                                        </small>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for="country" class="block font-medium mb-1">Country</label>
-                                    <Dropdown id="country" v-model="form.shippingInfo.country" :options="countries"
-                                        optionLabel="label" optionValue="value" placeholder="Select a country"
-                                        :class="{ 'p-invalid': form.errors['shippingInfo.country'] }" class="w-full" />
-                                    <small v-if="form.errors['shippingInfo.country']" class="p-error">
-                                        {{ form.errors['shippingInfo.country'] }}
-                                    </small>
-                                </div>
-
-                                <div>
-                                    <label for="streetAddress" class="block font-medium mb-1">Street Address</label>
-                                    <InputText id="streetAddress" v-model="form.shippingInfo.streetAddress"
-                                        :class="{ 'p-invalid': form.errors['shippingInfo.streetAddress'] }" class="w-full" />
-                                    <small v-if="form.errors['shippingInfo.streetAddress']" class="p-error">
-                                        {{ form.errors['shippingInfo.streetAddress'] }}
-                                    </small>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label for="city" class="block font-medium mb-1">City/Town</label>
-                                        <InputText id="city" v-model="form.shippingInfo.city"
-                                            :class="{ 'p-invalid': form.errors['shippingInfo.city'] }" class="w-full" />
-                                        <small v-if="form.errors['shippingInfo.city']" class="p-error">
-                                            {{ form.errors['shippingInfo.city'] }}
-                                        </small>
+                                        <label for="billingCountry" class="block font-medium mb-1">Country</label>
+                                        <Select inputId="billingCountry" v-model="form.billingInfo.country_object"
+                                            :options="countries" filter optionLabel="name"
+                                            placeholder="Select a country"
+                                            :class="{ 'p-invalid': form.errors['billingInfo.country'] }" class="w-full"
+                                            @change="onBillingCountryChange" dataKey="code">
+                                            <template #value="slotProps">
+                                                <div v-if="slotProps.value" class="flex items-center">
+                                                    <span v-if="slotProps.value.code"
+                                                        :class="`fi fi-${slotProps.value.code.toLowerCase()} mr-2 rounded-sm`"
+                                                        style="font-size: 1.2rem;"></span>
+                                                    <div v-else class="mr-2 inline-block rounded-sm"
+                                                        style="width: 20px; height:15px; background-color: #f0f0f0;">
+                                                    </div>
+                                                    <div>{{ slotProps.value.name }}</div>
+                                                </div>
+                                                <span v-else>{{ slotProps.placeholder }}</span>
+                                            </template>
+                                            <template #option="slotProps">
+                                                <div class="flex items-center">
+                                                    <span v-if="slotProps.option.code"
+                                                        :class="`fi fi-${slotProps.option.code.toLowerCase()} mr-2 rounded-sm`"
+                                                        style="font-size: 1.2rem;"></span>
+                                                    <div v-else class="mr-2 inline-block rounded-sm"
+                                                        style="width: 20px; height:15px; background-color: #f0f0f0;">
+                                                    </div>
+                                                    <div>{{ slotProps.option.name }}</div>
+                                                </div>
+                                            </template>
+                                        </Select>
+                                        <small v-if="form.errors['billingInfo.country']" class="p-error">{{
+                                            form.errors['billingInfo.country'] }}</small>
                                     </div>
                                     <div>
-                                        <label for="stateOrCounty" class="block font-medium mb-1">State/County</label>
-                                        <InputText id="stateOrCounty" v-model="form.shippingInfo.stateOrCounty"
-                                            :class="{ 'p-invalid': form.errors['shippingInfo.stateOrCounty'] }"
+                                        <label for="billingStreetAddress" class="block font-medium mb-1">Street
+                                            Address</label>
+                                        <InputText id="billingStreetAddress" v-model="form.billingInfo.streetAddress"
+                                            :class="{ 'p-invalid': form.errors['billingInfo.streetAddress'] }"
                                             class="w-full" />
-                                        <small v-if="form.errors['shippingInfo.stateOrCounty']" class="p-error">
-                                            {{ form.errors['shippingInfo.stateOrCounty'] }}
-                                        </small>
+                                        <small v-if="form.errors['billingInfo.streetAddress']" class="p-error">{{
+                                            form.errors['billingInfo.streetAddress'] }}</small>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label for="billingCity" class="block font-medium mb-1">City/Town</label>
+                                            <InputText id="billingCity" v-model="form.billingInfo.city"
+                                                :class="{ 'p-invalid': form.errors['billingInfo.city'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['billingInfo.city']" class="p-error">{{
+                                                form.errors['billingInfo.city'] }}</small>
+                                        </div>
+                                        <div>
+                                            <label for="billingStateOrCounty"
+                                                class="block font-medium mb-1">State/County</label>
+                                            <InputText id="billingStateOrCounty"
+                                                v-model="form.billingInfo.stateOrCounty"
+                                                :class="{ 'p-invalid': form.errors['billingInfo.stateOrCounty'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['billingInfo.stateOrCounty']" class="p-error">{{
+                                                form.errors['billingInfo.stateOrCounty'] }}</small>
+                                        </div>
+                                        <div>
+                                            <label for="billingPostalCode"
+                                                class="block font-medium mb-1">Postcode/ZIP</label>
+                                            <InputText id="billingPostalCode" v-model="form.billingInfo.postalCode"
+                                                :class="{ 'p-invalid': form.errors['billingInfo.postalCode'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['billingInfo.postalCode']" class="p-error">{{
+                                                form.errors['billingInfo.postalCode'] }}</small>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label for="postalCode" class="block font-medium mb-1">Postcode/ZIP</label>
-                                        <InputText id="postalCode" v-model="form.shippingInfo.postalCode"
-                                            :class="{ 'p-invalid': form.errors['shippingInfo.postalCode'] }"
+                                        <label for="billingPhone" class="block font-medium mb-1">Phone</label>
+                                        <InputText id="billingPhone" v-model="form.billingInfo.phone"
+                                            :class="{ 'p-invalid': form.errors['billingInfo.phone'] }" class="w-full" />
+                                        <small v-if="form.errors['billingInfo.phone']" class="p-error">{{
+                                            form.errors['billingInfo.phone'] }}</small>
+                                    </div>
+
+                                    <Divider />
+
+                                    <div class="flex items-center py-2">
+                                        <Checkbox inputId="wantsInvoice" v-model="form.wantsInvoice" :binary="true" />
+                                        <label for="wantsInvoice" class="ml-2 font-medium">I require an invoice (for
+                                            company/professional)</label>
+                                    </div>
+
+                                    <Fieldset legend="Invoice Details" v-if="form.wantsInvoice" :toggleable="false"
+                                        class="mt-4">
+                                        <div class="space-y-4 p-fluid">
+                                            <div>
+                                                <label for="invoiceCompanyName" class="block font-medium mb-1">Company
+                                                    Name</label>
+                                                <InputText id="invoiceCompanyName"
+                                                    v-model="form.invoiceDetails.companyName"
+                                                    :class="{ 'p-invalid': form.errors['invoiceDetails.companyName'] }"
+                                                    class="w-full" />
+                                                <small v-if="form.errors['invoiceDetails.companyName']"
+                                                    class="p-error">{{
+                                                        form.errors['invoiceDetails.companyName']
+                                                    }}</small>
+                                            </div>
+                                            <div>
+                                                <label for="invoiceVatNumber" class="block font-medium mb-1">VAT
+                                                    Number</label>
+                                                <InputText id="invoiceVatNumber" v-model="form.invoiceDetails.vatNumber"
+                                                    :class="{ 'p-invalid': form.errors['invoiceDetails.vatNumber'] }"
+                                                    class="w-full" />
+                                                <small v-if="form.errors['invoiceDetails.vatNumber']" class="p-error">{{
+                                                    form.errors['invoiceDetails.vatNumber'] }}</small>
+                                            </div>
+                                            <div>
+                                                <label for="invoiceProfession" class="block font-medium mb-1">Profession
+                                                    / Business Activity</label>
+                                                <InputText id="invoiceProfession"
+                                                    v-model="form.invoiceDetails.profession"
+                                                    :class="{ 'p-invalid': form.errors['invoiceDetails.profession'] }"
+                                                    class="w-full" />
+                                                <small v-if="form.errors['invoiceDetails.profession']"
+                                                    class="p-error">{{
+                                                        form.errors['invoiceDetails.profession']
+                                                    }}</small>
+                                            </div>
+                                            <div>
+                                                <label for="invoiceTaxOffice" class="block font-medium mb-1">Tax Office
+                                                    (ΔΟΥ - Optional)</label>
+                                                <InputText id="invoiceTaxOffice" v-model="form.invoiceDetails.taxOffice"
+                                                    :class="{ 'p-invalid': form.errors['invoiceDetails.taxOffice'] }"
+                                                    class="w-full" />
+                                                <small v-if="form.errors['invoiceDetails.taxOffice']" class="p-error">{{
+                                                    form.errors['invoiceDetails.taxOffice'] }}</small>
+                                            </div>
+                                        </div>
+                                    </Fieldset>
+                                </div>
+                            </template>
+                        </Card>
+
+                        <Card>
+                            <template #content>
+                                <div class="flex items-center">
+                                    <Checkbox inputId="shippingIsDifferent" v-model="form.shippingIsDifferent"
+                                        :binary="true" />
+                                    <label for="shippingIsDifferent" class="ml-2 font-medium">Ship to a different
+                                        address?</label>
+                                </div>
+                            </template>
+                        </Card>
+
+
+                        <Card v-if="form.shippingIsDifferent">
+                            <template #title>
+                                <h2 class="text-lg font-semibold">Shipping Information</h2>
+                            </template>
+                            <template #content>
+                                <div class="space-y-6">
+                                    <div>
+                                        <label for="shippingEmail" class="block font-medium mb-1">Shipping Contact Email
+                                            (Optional)</label>
+                                        <InputText id="shippingEmail" type="email" v-model="form.shippingInfo.email"
+                                            :class="{ 'p-invalid': form.errors['shippingInfo.email'] }"
                                             class="w-full" />
-                                        <small v-if="form.errors['shippingInfo.postalCode']" class="p-error">
-                                            {{ form.errors['shippingInfo.postalCode'] }}
-                                        </small>
+                                        <small v-if="form.errors['shippingInfo.email']" class="p-error">{{
+                                            form.errors['shippingInfo.email'] }}</small>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="shippingFirstName" class="block font-medium mb-1">First
+                                                Name</label>
+                                            <InputText id="shippingFirstName" v-model="form.shippingInfo.firstName"
+                                                :class="{ 'p-invalid': form.errors['shippingInfo.firstName'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['shippingInfo.firstName']" class="p-error">{{
+                                                form.errors['shippingInfo.firstName'] }}</small>
+                                        </div>
+                                        <div>
+                                            <label for="shippingLastName" class="block font-medium mb-1">Last
+                                                Name</label>
+                                            <InputText id="shippingLastName" v-model="form.shippingInfo.lastName"
+                                                :class="{ 'p-invalid': form.errors['shippingInfo.lastName'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['shippingInfo.lastName']" class="p-error">{{
+                                                form.errors['shippingInfo.lastName'] }}</small>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="shippingCountry" class="block font-medium mb-1">Country</label>
+                                        <Select inputId="shippingCountry" v-model="form.shippingInfo.country_object"
+                                            :options="countries" filter optionLabel="name"
+                                            placeholder="Select a country"
+                                            :class="{ 'p-invalid': form.errors['shippingInfo.country'] }" class="w-full"
+                                            @change="onShippingCountryChange" dataKey="code">
+                                            <template #value="slotProps">
+                                                <div v-if="slotProps.value" class="flex items-center">
+                                                    <span v-if="slotProps.value.code"
+                                                        :class="`fi fi-${slotProps.value.code.toLowerCase()} mr-2 rounded-sm`"
+                                                        style="font-size: 1.2rem;"></span>
+                                                    <div v-else class="mr-2 inline-block rounded-sm"
+                                                        style="width: 20px; height:15px; background-color: #f0f0f0;">
+                                                    </div>
+                                                    <div>{{ slotProps.value.name }}</div>
+                                                </div>
+                                                <span v-else>{{ slotProps.placeholder }}</span>
+                                            </template>
+                                            <template #option="slotProps">
+                                                <div class="flex items-center">
+                                                    <span v-if="slotProps.option.code"
+                                                        :class="`fi fi-${slotProps.option.code.toLowerCase()} mr-2 rounded-sm`"
+                                                        style="font-size: 1.2rem;"></span>
+                                                    <div v-else class="mr-2 inline-block rounded-sm"
+                                                        style="width: 20px; height:15px; background-color: #f0f0f0;">
+                                                    </div>
+                                                    <div>{{ slotProps.option.name }}</div>
+                                                </div>
+                                            </template>
+                                        </Select>
+                                        <small v-if="form.errors['shippingInfo.country']" class="p-error">{{
+                                            form.errors['shippingInfo.country'] }}</small>
+                                    </div>
+                                    <div>
+                                        <label for="shippingStreetAddress" class="block font-medium mb-1">Street
+                                            Address</label>
+                                        <InputText id="shippingStreetAddress" v-model="form.shippingInfo.streetAddress"
+                                            :class="{ 'p-invalid': form.errors['shippingInfo.streetAddress'] }"
+                                            class="w-full" />
+                                        <small v-if="form.errors['shippingInfo.streetAddress']" class="p-error">{{
+                                            form.errors['shippingInfo.streetAddress'] }}</small>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label for="shippingCity" class="block font-medium mb-1">City/Town</label>
+                                            <InputText id="shippingCity" v-model="form.shippingInfo.city"
+                                                :class="{ 'p-invalid': form.errors['shippingInfo.city'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['shippingInfo.city']" class="p-error">{{
+                                                form.errors['shippingInfo.city'] }}</small>
+                                        </div>
+                                        <div>
+                                            <label for="shippingStateOrCounty"
+                                                class="block font-medium mb-1">State/County</label>
+                                            <InputText id="shippingStateOrCounty"
+                                                v-model="form.shippingInfo.stateOrCounty"
+                                                :class="{ 'p-invalid': form.errors['shippingInfo.stateOrCounty'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['shippingInfo.stateOrCounty']" class="p-error">{{
+                                                form.errors['shippingInfo.stateOrCounty'] }}</small>
+                                        </div>
+                                        <div>
+                                            <label for="shippingPostalCode"
+                                                class="block font-medium mb-1">Postcode/ZIP</label>
+                                            <InputText id="shippingPostalCode" v-model="form.shippingInfo.postalCode"
+                                                :class="{ 'p-invalid': form.errors['shippingInfo.postalCode'] }"
+                                                class="w-full" />
+                                            <small v-if="form.errors['shippingInfo.postalCode']" class="p-error">{{
+                                                form.errors['shippingInfo.postalCode'] }}</small>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="shippingPhone" class="block font-medium mb-1">Phone
+                                            (Optional)</label>
+                                        <InputText id="shippingPhone" v-model="form.shippingInfo.phone"
+                                            :class="{ 'p-invalid': form.errors['shippingInfo.phone'] }"
+                                            class="w-full" />
+                                        <small v-if="form.errors['shippingInfo.phone']" class="p-error">{{
+                                            form.errors['shippingInfo.phone'] }}</small>
                                     </div>
                                 </div>
+                            </template>
+                        </Card>
 
-                                <div>
-                                    <label for="phone" class="block font-medium mb-1">Phone</label>
-                                    <InputText id="phone" v-model="form.shippingInfo.phone"
-                                        :class="{ 'p-invalid': form.errors['shippingInfo.phone'] }" class="w-full" />
-                                    <small v-if="form.errors['shippingInfo.phone']" class="p-error">
-                                        {{ form.errors['shippingInfo.phone'] }}
-                                    </small>
-                                </div>
+                        <Card>
+                            <template #title>
+                                <h2 class="text-lg font-semibold">Order Notes</h2>
+                            </template>
+                            <template #content>
+                                <TextArea id="notes" v-model="form.notes" rows="3"
+                                    placeholder="Notes about your order, e.g. special notes for delivery."
+                                    :class="{ 'p-invalid': form.errors.notes }" class="w-full" />
+                                <small v-if="form.errors.notes" class="p-error">{{ form.errors.notes }}</small>
+                            </template>
+                        </Card>
 
-                                <div>
-                                    <label for="notes" class="block font-medium mb-1">Order Notes</label>
-                                    <TextArea id="notes" v-model="form.shippingInfo.notes" rows="3"
-                                        :class="{ 'p-invalid': form.errors['shippingInfo.notes'] }" class="w-full" />
-                                    <small v-if="form.errors['shippingInfo.notes']" class="p-error">
-                                        {{ form.errors['shippingInfo.notes'] }}
-                                    </small>
-                                </div>
-
-                                <Divider />
-
-                            </form>
-                        </template>
-                    </Card>
+                    </form>
                 </div>
 
-                <div>
+                <div class="lg:col-span-1">
                     <Card>
                         <template #title>
                             <h2 class="text-lg font-semibold">Your Order</h2>
-                        </template>
-                        <template #subtitle>
-                            <p class="text-sm text-gray-600">
-                                Review your order before proceeding to payment.
-                            </p>
                         </template>
                         <template #content>
                             <div class="space-y-4">
                                 <div v-for="item in cartItems" :key="item.id" class="flex justify-between items-start">
                                     <div>
-                                        <div class="font-medium">
-                                            {{ item.artwork_data.title || 'Artwork' }}
-                                        </div>
-                                        <div class="text-sm text-gray-600">
-                                            Size: {{ item.size }}, Frame: {{ item.frame }}
-                                        </div>
-                                        <div class="text-sm text-gray-600">
-                                            Qty: {{ item.quantity }}
-                                        </div>
+                                        <div class="font-medium">{{ item.artwork_data.title || 'Artwork' }}</div>
+                                        <div class="text-sm text-gray-600">Type: {{ item.type }}</div>
+                                        <div class="text-sm text-gray-600">Frame: {{ item.frame }}</div>
+                                        <div class="text-sm text-gray-600">Size: {{ item.size }}</div>
+                                        <div class="text-sm text-gray-600">Qty: {{ item.quantity }}</div>
                                     </div>
                                     <div>{{ formatCurrency(item.artwork_data.price * item.quantity) }}</div>
                                 </div>
@@ -172,13 +370,12 @@
                                         <label for="pmBank" class="ml-2">Bank Transfer</label>
                                     </div>
                                 </div>
-                                <small v-if="form.errors.paymentMethod" class="p-error">
-                                    {{ form.errors.paymentMethod }}
-                                </small>
+                                <small v-if="form.errors.paymentMethod" class="p-error">{{ form.errors.paymentMethod
+                                    }}</small>
                             </div>
 
-                            <Button label="Place Order" icon="pi pi-check" type="submit" class="mt-4 w-full"
-                                :loading="form.processing" @click="submit" />
+                            <Button label="Place Order" icon="pi pi-check" type="submit" @click="submit"
+                                class="mt-4 w-full" :loading="form.processing" />
                         </template>
                     </Card>
                 </div>
@@ -188,18 +385,21 @@
 </template>
 
 <script setup>
-import { useForm } from '@inertiajs/vue3';
+import { ref, watch, computed, onMounted } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { Head } from '@inertiajs/vue3';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import Container from '@/components/Container.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import InputText from 'primevue/inputtext';
 import TextArea from 'primevue/textarea';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import RadioButton from 'primevue/radiobutton';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Divider from 'primevue/divider';
+import Checkbox from 'primevue/checkbox';
+import Fieldset from 'primevue/fieldset';
 
 // Props
 const { cartItems, cartTotal } = defineProps({
@@ -207,55 +407,72 @@ const { cartItems, cartTotal } = defineProps({
     cartTotal: Number,
 });
 
-// Form state
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+
 const form = useForm({
+    billingInfo: {
+        firstName: user.value?.name?.split(' ')[0] || '',
+        lastName: user.value?.name?.split(' ').slice(1).join(' ') || '',
+        email: user.value?.email || '',
+        country: user.value?.country || '', // This will store the CODE (e.g., 'AT')
+        country_object: null, // Temporary holder for the selected country object from <Select>
+        streetAddress: user.value?.address || '',
+        city: user.value?.city || '',
+        stateOrCounty: user.value?.state_or_county || '',
+        postalCode: user.value?.postal_code || '',
+        phone: user.value?.phone || '',
+    },
+    wantsInvoice: false, // New flag for requesting invoice details
+    invoiceDetails: {    // New object for invoice specific fields
+        companyName: '',
+        vatNumber: '',
+        taxOffice: '',   // Optional
+        profession: '',
+    },
+    shippingIsDifferent: false,
     shippingInfo: {
-        firstName: '',
-        lastName: '',
-        email: '',
-        country: '',
-        streetAddress: '',
-        city: '',
-        stateOrCounty: '',
-        postalCode: '',
-        phone: '',
-        notes: '',
+        firstName: '', lastName: '', email: '', country: '', // This will store the CODE
+        country_object: null, // Temporary holder
+        streetAddress: '', city: '', stateOrCounty: '', postalCode: '', phone: '',
     },
     paymentMethod: 'stripe',
     items: cartItems,
     totalAmount: cartTotal,
+    notes: '',
 });
 
 // European countries list
-const countries = [
-    { label: 'Austria', value: 'AT' },
-    { label: 'Belgium', value: 'BE' },
-    { label: 'Bulgaria', value: 'BG' },
-    { label: 'Croatia', value: 'HR' },
-    { label: 'Cyprus', value: 'CY' },
-    { label: 'Czech Republic', value: 'CZ' },
-    { label: 'Denmark', value: 'DK' },
-    { label: 'Estonia', value: 'EE' },
-    { label: 'Finland', value: 'FI' },
-    { label: 'France', value: 'FR' },
-    { label: 'Germany', value: 'DE' },
-    { label: 'Greece', value: 'GR' },
-    { label: 'Hungary', value: 'HU' },
-    { label: 'Ireland', value: 'IE' },
-    { label: 'Italy', value: 'IT' },
-    { label: 'Latvia', value: 'LV' },
-    { label: 'Lithuania', value: 'LT' },
-    { label: 'Luxembourg', value: 'LU' },
-    { label: 'Malta', value: 'MT' },
-    { label: 'Netherlands', value: 'NL' },
-    { label: 'Poland', value: 'PL' },
-    { label: 'Portugal', value: 'PT' },
-    { label: 'Romania', value: 'RO' },
-    { label: 'Slovakia', value: 'SK' },
-    { label: 'Slovenia', value: 'SI' },
-    { label: 'Spain', value: 'ES' },
-    { label: 'Sweden', value: 'SE' },
-];
+const countries = ref([
+    { name: 'Austria', code: 'AT' },
+    { name: 'Belgium', code: 'BE' },
+    { name: 'Bulgaria', code: 'BG' },
+    { name: 'Croatia', code: 'HR' },
+    { name: 'Cyprus', code: 'CY' },
+    { name: 'Czech Republic', code: 'CZ' }, // Note: PrimeVue flag CSS might use 'cz'
+    { name: 'Denmark', code: 'DK' },
+    { name: 'Estonia', code: 'EE' },
+    { name: 'Finland', code: 'FI' },
+    { name: 'France', code: 'FR' },
+    { name: 'Germany', code: 'DE' },
+    { name: 'Greece', code: 'GR' },
+    { name: 'Hungary', code: 'HU' },
+    { name: 'Ireland', code: 'IE' },
+    { name: 'Italy', code: 'IT' },
+    { name: 'Latvia', value: 'LV' }, // Should be code: 'LV'
+    { name: 'Lithuania', code: 'LT' },
+    { name: 'Luxembourg', code: 'LU' },
+    { name: 'Malta', code: 'MT' },
+    { name: 'Netherlands', code: 'NL' },
+    { name: 'Poland', code: 'PL' },
+    { name: 'Portugal', code: 'PT' },
+    { name: 'Romania', code: 'RO' },
+    { name: 'Slovakia', code: 'SK' },
+    { name: 'Slovenia', code: 'SI' },
+    { name: 'Spain', code: 'ES' },
+    { name: 'Sweden', code: 'SE' },
+    // Add other countries as needed
+]);
 
 // Submit handler
 function submit() {
@@ -266,4 +483,80 @@ function submit() {
 function formatCurrency(value) {
     return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR' }).format(value);
 }
+
+// Function to initialize country_object based on country code from user profile or existing form data
+const initializeCountryObjects = () => {
+    if (form.billingInfo.country) {
+        form.billingInfo.country_object = countries.value.find(c => c.code === form.billingInfo.country) || null;
+    }
+    if (form.shippingInfo.country) { // if shipping is different and pre-filled
+        form.shippingInfo.country_object = countries.value.find(c => c.code === form.shippingInfo.country) || null;
+    }
+};
+
+const onBillingCountryChange = (event) => {
+    // event.value will be the selected country object (e.g., { name: 'Austria', code: 'AT' })
+    if (event.value) {
+        form.billingInfo.country = event.value.code; // Store the code in the actual form field
+        form.billingInfo.country_object = event.value; // Keep the object for display in Select
+    } else {
+        form.billingInfo.country = '';
+        form.billingInfo.country_object = null;
+    }
+    // If shipping is same as billing, update shipping country too
+    if (!form.shippingIsDifferent) {
+        form.shippingInfo.country = form.billingInfo.country;
+        form.shippingInfo.country_object = form.billingInfo.country_object;
+    }
+};
+
+// Similar function for shipping country if you have a separate dropdown for it
+const onShippingCountryChange = (event) => {
+    if (event.value) {
+        form.shippingInfo.country = event.value.code;
+        form.shippingInfo.country_object = event.value;
+    } else {
+        form.shippingInfo.country = '';
+        form.shippingInfo.country_object = null;
+    }
+};
+
+// Watcher to copy billing to shipping if not different
+watch(() => form.shippingIsDifferent, (isDifferent) => {
+    if (!isDifferent) {
+        form.shippingInfo = { ...form.billingInfo }; // This will copy country code and country_object
+    } else {
+        // Reset shipping info, including country_object
+        form.shippingInfo = {
+            firstName: '', lastName: '', email: '',
+            country: '', country_object: null, // Reset country fields
+            streetAddress: '', city: '', stateOrCounty: '', postalCode: '', phone: ''
+        };
+    }
+});
+
+// Also watch billingInfo if shipping is not different
+watch(() => form.billingInfo, (newBillingInfo) => {
+    if (!form.shippingIsDifferent) {
+        // Ensure country_object is also copied or derived if only code is copied
+        form.shippingInfo = { ...newBillingInfo };
+        if (newBillingInfo.country && !newBillingInfo.country_object) {
+            form.shippingInfo.country_object = countries.value.find(c => c.code === newBillingInfo.country) || null;
+        }
+    }
+}, { deep: true });
+
+// Clear invoice details if wantsInvoice is false
+watch(() => form.wantsInvoice, (wants) => {
+    if (!wants) {
+        form.invoiceDetails = {
+            companyName: '', vatNumber: '', taxOffice: '', profession: ''
+        };
+    }
+});
+
+onMounted(() => {
+    // ... your existing onMounted logic for pre-filling ...
+    initializeCountryObjects(); // Initialize after other pre-fills
+});
 </script>
