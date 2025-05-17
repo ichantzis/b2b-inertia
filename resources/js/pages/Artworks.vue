@@ -278,7 +278,7 @@ const artworks = computed(() => localArtworks.value);
 
 .main-content {
     flex: 1;
-    padding: 0rem 2rem;
+    padding: 2rem 2rem;
     /* Adjusted padding */
     overflow-y: auto;
 }

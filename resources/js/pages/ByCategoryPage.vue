@@ -114,9 +114,9 @@ const processedCollections = computed(() => {
     /* Padding left to make space for the fixed sidebar */
     padding-left: 300px; /* Sidebar width (e.g., 280px) + some margin (e.g., 20px) */
     transition: padding-left 0.3s ease-in-out;
-    /* padding-top: 1.5rem;  */
-    padding-right: 1.5rem;
-    padding-bottom: 1.5rem;
+    padding-top: 2rem; 
+    padding-right: 2rem;
+    padding-bottom: 2rem;
     width: 100%; /* Ensure it tries to take available width */
     box-sizing: border-box; /* Include padding in width calculation */
     overflow-x: hidden; /* Prevent this area from causing horizontal scroll */
@@ -124,7 +124,7 @@ const processedCollections = computed(() => {
 
 @media (max-width: 1199.98px) {
     .main-content-area {
-        padding-left: 1.5rem; /* Adjust to your desired padding when sidebar is hidden */
+        padding-left: 2rem; /* Adjust to your desired padding when sidebar is hidden */
         /* Or padding-left: 0; if you want content to go full width */
     }
     .hide {

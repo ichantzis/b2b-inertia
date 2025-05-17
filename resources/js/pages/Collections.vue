@@ -143,16 +143,17 @@ const decodedCategorizedCollections = computed(() => {
     padding-left: 300px; /* Width of the sidebar */
     transition: padding-left 0.3s ease-in-out;
     min-height: calc(100vh - 120px); /* Adjust 120px if your header height is different */
-    /* padding-top: 1.5rem;  */
-    padding-right: 1.5rem;
-    padding-bottom: 1.5rem;
+    padding-top: 2rem; 
+    padding-right: 2rem;
+    padding-bottom: 2rem;
     /* background-color: #f8f9fa;  */
     overflow-y: auto; /* Allow vertical scroll for the content area itself */
 }
 
 @media (max-width: 1199.98px) {
     .main-content-area {
-        padding-left: 0; /* Sidebar is hidden, content takes full width */
+        padding: 2rem 2 rem; /* Sidebar is hidden, content takes full width */
+        padding-left: 2rem;
     }
 }
 

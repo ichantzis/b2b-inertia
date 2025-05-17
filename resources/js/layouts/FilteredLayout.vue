@@ -103,7 +103,7 @@ provide('layout', {
 
 .sidebar-container {
     position: fixed;
-    top: 120px;
+    top: 110px;
     left: 20px;
     bottom: 20px;
     z-index: 997;

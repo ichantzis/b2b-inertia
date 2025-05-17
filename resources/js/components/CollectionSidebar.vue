@@ -90,7 +90,7 @@ watch(collectionTreeData, (newTreeData) => {
   /* Fixed width for the sidebar */
   position: fixed;
   /* Floating sidebar */
-  top: 120px;
+  top: 110px;
   /* Adjust based on your header's height, make it dynamic if header height changes */
   left: 0;
   bottom: 0;
@@ -111,10 +111,11 @@ watch(collectionTreeData, (newTreeData) => {
 /* Hide sidebar on screens narrower than 1200px */
 @media (max-width: 1199.98px) {
   .collection-sidebar {
-    transform: translateX(-100%);
-    box-shadow: none;
-    /* Slide out */
-    /* Or display: none; if you don't want slide animation */
+    /* with animation /* Slide out */
+    /* transform: translateX(-100%);
+    box-shadow: none; */
+    
+    display: none; /* if you don't want slide animation */
   }
 }
 
