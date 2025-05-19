@@ -6,7 +6,8 @@
 
             <div class="grid grid-cols-12 gap-8 pt-4">
                 <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-                    <div class="card mb-0">
+                    <Link :href="route('dashboard.orders.index')" class="no-underline">
+                    <div class="card mb-0 hover:shadow-sm">
                         <div class="flex justify-between mb-4">
                             <div>
                                 <span class="block text-muted-color font-medium mb-4">Orders</span>
@@ -21,10 +22,12 @@
                         <span class="text-primary font-medium">{{ newOrders }} new </span>
                         <span class="text-muted-color">since last visit</span>
                     </div>
+                    </Link>
                 </div>
 
                 <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-                    <div class="card mb-0">
+                    <Link class="no-underline">
+                    <div class="card mb-0 hover:shadow-sm">
                         <div class="flex justify-between mb-4">
                             <div>
                                 <span class="block text-muted-color font-medium mb-4">Revenue</span>
@@ -39,15 +42,17 @@
                         <span class="text-primary font-medium">%{{ revenueChange }}+ </span>
                         <span class="text-muted-color">since last week</span>
                     </div>
+                    </Link>
                 </div>
 
                 <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-                    <div class="card mb-0">
+                    <Link class="no-underline">
+                    <div class="card mb-0 hover:shadow-sm">
                         <div class="flex justify-between mb-4">
                             <div>
                                 <span class="block text-muted-color font-medium mb-4">Customers</span>
                                 <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ customerCount
-                                    }}</div>
+                                }}</div>
                             </div>
                             <div class="flex items-center justify-center bg-cyan-100 dark:bg-cyan-400/10 rounded-border"
                                 style="width:2.5rem;height:2.5rem;">
@@ -55,17 +60,19 @@
                             </div>
                         </div>
                         <span class="text-primary font-medium">{{ newCustomers }} </span>
-                        <span class="text-muted-color">newly registered</span>
+                        <span class="text-muted-color"> newly registered</span>
                     </div>
+                    </Link>
                 </div>
 
                 <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-                    <div class="card mb-0">
+                    <Link class="no-underline">
+                    <div class="card mb-0 hover:shadow-sm">
                         <div class="flex justify-between mb-4">
                             <div>
                                 <span class="block text-muted-color font-medium mb-4">Comments</span>
                                 <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ unreadComments
-                                    }} Unread</div>
+                                }} Unread</div>
                             </div>
                             <div class="flex items-center justify-center bg-purple-100 dark:bg-purple-400/10 rounded-border"
                                 style="width:2.5rem;height:2.5rem;">
@@ -75,6 +82,7 @@
                         <span class="text-primary font-medium">{{ respondedComments }} </span>
                         <span class="text-muted-color">responded</span>
                     </div>
+                    </Link>
                 </div>
 
                 <div class="col-span-12">
@@ -120,15 +128,19 @@ import moment from 'moment';
 
 const props = defineProps({
     recentOrders: Array, // Define the recentSales prop
+    orderCount: Number,
+    newOrders: Number,
+    customerCount: Number,
+    newCustomers: Number,
 });
 
 // Dummy Data - Replace with your actual data fetching logic
-const orderCount = ref(152);
-const newOrders = ref(24);
+const orderCount = computed(() => props.orderCount);
+const newOrders = computed(() => props.newOrders);
 const revenue = ref(2100);
 const revenueChange = ref(52);
-const customerCount = ref(28441);
-const newCustomers = ref(520);
+const customerCount = computed(() => props.customerCount);
+const newCustomers = computed(() => props.newCustomers);
 const unreadComments = ref(152);
 const respondedComments = ref(85);
 
@@ -141,8 +153,6 @@ const recentOrders = computed(() => {
         price: order.total_amount,
     }));
 });
-console.log(recentOrders);
-
 
 const bestSellingProducts = ref([
     { name: 'Space T-Shirt', category: 'Clothing', percentage: '50%', color: 'orange' },

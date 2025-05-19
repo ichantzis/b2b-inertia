@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\OrderController as AdminOrderController; // Add this import
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PictufyController;
@@ -46,9 +47,11 @@ Route::get('/api/categories', [PictufyController::class, 'getCategories']);
 // Admin Dashboard Routes
 Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', DashboardController::class)->name('index'); //  e.g., /dashboard -> dashboard.index
-    Route::get('/orders', [DashboardController::class, 'listOrders'])->name('orders.index');
-    Route::get('/orders/{order}', [DashboardController::class, 'showOrder'])->name('orders.show'); // For viewing
-    Route::put('/orders/{order}', [DashboardController::class, 'updateOrder'])->name('orders.update'); // For updating
+    // Order Management Routes for Admin using new controller
+    Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/export', [AdminOrderController::class, 'exportOrders'])->name('orders.export'); // New export route
+    Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::put('/orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
 
     // You can add more admin routes here:
     // Example:
