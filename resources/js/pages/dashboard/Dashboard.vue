@@ -46,11 +46,11 @@
                 </div>
 
                 <div class="col-span-12 lg:col-span-6 xl:col-span-3">
-                    <Link class="no-underline">
+                    <Link :href="route('dashboard.users.index')" class="no-underline">
                     <div class="card mb-0 hover:shadow-sm">
                         <div class="flex justify-between mb-4">
                             <div>
-                                <span class="block text-muted-color font-medium mb-4">Customers</span>
+                                <span class="block text-muted-color font-medium mb-4">Users</span>
                                 <div class="text-surface-900 dark:text-surface-0 font-medium text-xl">{{ customerCount
                                 }}</div>
                             </div>

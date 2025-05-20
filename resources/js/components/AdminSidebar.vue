@@ -22,6 +22,12 @@ const adminMenuItems = computed(() => [
         route: route('dashboard.orders.index'),
         active: currentRoute.value && currentRoute.value.startsWith('dashboard.orders')
     },
+    { // Add this for Users
+        label: 'Users',
+        icon: 'pi pi-fw pi-users',
+        route: route('dashboard.users.index'),
+        active: currentRoute.value && currentRoute.value.startsWith('dashboard.users')
+    },
     // {
     //     label: 'Management',
     //     icon: 'pi pi-fw pi-cog',

@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\Admin\OrderController as AdminOrderController; // Add this import
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PictufyController;
@@ -53,11 +54,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::put('/orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
 
-    // You can add more admin routes here:
-    // Example:
-    // Route::get('/orders', [DashboardController::class, 'index'])->name('orders.index');
-    // Route::get('/orders/{order}', [DashboardController::class, 'show'])->name('orders.show');
-    // Route::get('/users', [DashboardController::class, 'index'])->name('users.index');
+    // User Management Routes
+    Route::resource('users', AdminUserController::class)->except(['show']); // We'll use edit for show
+    // If you want a dedicated show route, remove except(['show']) and implement show method.
+    // For simplicity, edit often serves as the show/detail page.
 });
 
 Route::middleware('auth')->group(function () {

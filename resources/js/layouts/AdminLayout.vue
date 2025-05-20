@@ -5,7 +5,7 @@ import AdminSidebar from '@/components/AdminSidebar.vue'; // Verify path
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button'; // Import Button
-import Sidebar from 'primevue/sidebar'; // Import Sidebar (Drawer)
+import Drawer from 'primevue/drawer'; // Import Sidebar (Drawer)
 
 const props = defineProps({
     title: {
@@ -51,9 +51,9 @@ const toggleMobileMenu = () => {
         <div class="min-h-screen flex bg-surface-50 dark:bg-surface-900">
             <AdminSidebar class="w-64 flex-shrink-0 hidden lg:block" />
 
-            <Sidebar v-model:visible="mobileMenuOpen" position="left" class="lg:hidden w-full sm:w-72">
+            <Drawer v-model:visible="mobileMenuOpen" position="left" class="lg:hidden w-full sm:w-72">
                 <AdminSidebar @navigate="mobileMenuOpen = false" />
-            </Sidebar>
+            </Drawer>
 
             <div class="flex-1 flex flex-col overflow-hidden">
                 <header class="bg-white dark:bg-surface-800 shadow-md">

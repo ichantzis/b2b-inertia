@@ -10,6 +10,7 @@ import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
 import PrimeVue from 'primevue/config';
 import ToastService from 'primevue/toastservice';
+import ConfirmationService from 'primevue/confirmationservice';
 
 import Container from '@/components/Container.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
@@ -46,6 +47,7 @@ createInertiaApp({
                 },
             })
             .use(ToastService)
+            .use(ConfirmationService)
             .component('InertiaHead', Head)
             .component('InertiaLink', Link)
             .component('Container', Container)
