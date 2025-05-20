@@ -1,5 +1,5 @@
 <template>
-    <HeaderLayout>
+    <AdminLayout :title="`Order ${orderForm.order_number}`">
         <InertiaHead :title="`Admin - Order ${orderForm.order_number}`" />
         <Container>
             <PageTitleSection :title="`Order Details: ${orderForm.order_number}`"
@@ -442,13 +442,13 @@
                 </div> -->
             </div>
         </Container>
-    </HeaderLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { defineProps, ref, reactive, computed, onMounted, watch } from 'vue';
 import { Head as InertiaHead, useForm, Link, usePage } from '@inertiajs/vue3';
-import HeaderLayout from '@/layouts/HeaderLayout.vue';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 import Container from '@/components/Container.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import Card from 'primevue/card';

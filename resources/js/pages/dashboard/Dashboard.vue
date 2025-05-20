@@ -1,5 +1,5 @@
 <template>
-    <HeaderLayout>
+    <AdminLayout>
         <InertiaHead title="Dashboard" />
         <Container>
             <PageTitleSection title="Dashboard" />
@@ -111,13 +111,14 @@
                 </div>
             </div>
         </Container>
-    </HeaderLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 import Container from '@/components/Container.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import DataTable from 'primevue/datatable';

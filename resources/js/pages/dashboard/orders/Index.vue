@@ -1,6 +1,6 @@
 // resources/js/Pages/Dashboard/Orders/Index.vue
 <template>
-    <HeaderLayout>
+    <AdminLayout :title="'Orders'">
         <InertiaHead title="Admin - Orders" />
         <Container>
             <PageTitleSection title="Manage Orders" breadcrumbs="Dashboard > Orders" />
@@ -106,13 +106,13 @@
                 </template>
             </Card>
         </Container>
-    </HeaderLayout>
+    </AdminLayout>
 </template>
 
 <script setup>
 import { defineProps, ref, computed } from 'vue';
 import { Head as InertiaHead, Link, router, useForm } from '@inertiajs/vue3';
-import HeaderLayout from '@/layouts/HeaderLayout.vue';
+import AdminLayout from '@/layouts/AdminLayout.vue';
 import Container from '@/components/Container.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
 import DataTable from 'primevue/datatable';
