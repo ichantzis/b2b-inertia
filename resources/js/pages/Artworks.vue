@@ -9,7 +9,7 @@
                             class="collection-cover-image" />
                     </div>
                     <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName
-                        }}</h1>
+                    }}</h1>
                     <p v-if="props.collectionDescription"
                         class="collection-description text-center text-gray-600 text-sm md:text-base max-w-3xl mx-auto">
                         {{ props.collectionDescription }}
@@ -232,11 +232,14 @@ const loadMoreArtworks = async () => {
 
     loading.value = true;
     try {
+        let baseRouteName = page.props.ziggy?.current_route_name || 'artworks'; // Default to 'artworks'
+
         const response = await axios.get(route('artworks.fetch'), {
             params: {
                 page: localNextPage.value,
                 per_page: 30, // Or your configured per_page
-                collection_id: props.collectionId,
+                collection_id: baseRouteName === 'collection.show' ? props.collectionId : null,
+                list_id: baseRouteName === 'list.filtered' ? props.collectionId : null,
                 filters: props.filters?.join('/'),
                 order: props.initialOrder, // or a reactive order ref
                 search: localCurrentSearchTerm.value || undefined, // Use the actual searched term

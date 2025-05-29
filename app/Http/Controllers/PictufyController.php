@@ -271,6 +271,7 @@ class PictufyController extends Controller
         $page = (int) $request->input('page', 1);
         $perPage = (int) $request->input('per_page', 30);
         $collectionId = $request->input('collection_id'); // Note: was 'collection_id ' with a space, ensure it's correct
+        $listId = $request->input('list_id'); // For lists, if applicable
         $filtersString = $request->input('filters', '');
         $order = $request->input('order', 'recommended');
         $searchTerm = $request->input('search'); // <-- GET SEARCH TERM
@@ -285,6 +286,10 @@ class PictufyController extends Controller
             $params['collection_id'] = $collectionId;
         }
 
+        if (!empty($listId)) {
+            $params['list_id'] = $listId; // For fetching artworks from a specific list
+        }
+
         if ($searchTerm) {
             $params['search'] = $searchTerm; // <-- ADD SEARCH TERM
         }
@@ -293,7 +298,23 @@ class PictufyController extends Controller
         if (!empty($filtersString)) {
             $filter_segments = explode('/', $filtersString);
             foreach ($filter_segments as $segment) {
-                // ... (existing logic) ...
+                if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
+                    $params['order'] = $segment; // Order from path segment overrides query param if both present
+                    continue;
+                }
+                if (str_starts_with($segment, 'cat_')) {
+                    $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
+                    if ($categoryId) $params['category'] = $categoryId;
+                    continue;
+                }
+                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
+                    $params['geometry'] = $segment;
+                    continue;
+                }
+                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
+                    $params['color'] = $segment;
+                    continue;
+                }
             }
         }
 
@@ -351,7 +372,7 @@ class PictufyController extends Controller
         $currentCollection = collect($lists['items'])->firstWhere('list_id', $listId);
         $collectionName = html_entity_decode($currentCollection['name'] ?? 'Artworks', ENT_QUOTES | ENT_HTML5);
         $searchTerm = $request->input('search'); // <-- GET SEARCH TERM FROM QUERY
-        
+
         if ($searchTerm) {
             $params['search'] = $searchTerm; // <-- ADD SEARCH TERM TO PARAMS
         }
