@@ -262,7 +262,7 @@ const loadMoreArtworks = async () => {
 
 const handleScroll = debounce(() => { // Also debounce scroll handler slightly
     const bottomOfWindow = window.innerHeight + window.pageYOffset;
-    const documentHeight = document.documentElement.offsetHeight;
+    const documentHeight = document.documentElement.offsetHeight; 
     if (bottomOfWindow >= documentHeight - 500 && localNextPage.value && !loading.value) {
         loadMoreArtworks();
     }

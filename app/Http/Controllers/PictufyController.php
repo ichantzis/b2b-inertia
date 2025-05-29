@@ -360,11 +360,16 @@ class PictufyController extends Controller
 
     public function filteredList($listId = null, Request $request, $filters = null)
     {
+
+        $page = (int) $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 30); // Default 30 artworks
+        $order = $request->input('order', 'recommended'); // Default order
+
         $params = [
             'list_id' => $listId,
-            'per_page' => 30,
-            'page' => 1,
-            'order' => 'recommended'
+            'per_page' => $perPage,
+            'page' => $page,
+            'order' => $order,
         ];
 
         // Get list details to access the name
@@ -418,7 +423,8 @@ class PictufyController extends Controller
             'collectionName' => $collectionName,
             'currentSearchTerm' => $searchTerm,
             'filters' => $filters ? explode('/', $filters) : [],
-            'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
+            'nextPage' => isset($artworks['items']) && count($artworks['items']) >= $perPage ? $page + 1 : null,
+            // 'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
         ]);
     }
 }
