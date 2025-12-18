@@ -516,6 +516,60 @@ function scrollThumbnails(direction) {
   }
 }
 
+// --- RECENTLY VIEWED LOGIC ---
+onMounted(() => {
+    if (props.artwork) {
+        addToRecentlyViewed(props.artwork);
+    }
+});
+
+const addToRecentlyViewed = (item) => {
+    // Console log to debug the actual structure if images still fail
+    console.log("Raw Artwork Item:", item); 
+
+    const key = 'recently_viewed_items';
+    let viewed = JSON.parse(localStorage.getItem(key) || '[]');
+
+    // 1. Fix ID: API usually returns 'id', not 'artwork_id'
+    const id = item.id || item.artwork_id;
+
+    if (!id) {
+        console.warn("Skipping recently viewed: No ID found on item");
+        return;
+    }
+
+    // 2. Fix Title: Handle { en: "Name" } object
+    let titleStr = item.title;
+    if (typeof titleStr === 'object' && titleStr !== null) {
+        titleStr = titleStr.en || Object.values(titleStr)[0] || 'Untitled';
+    }
+
+    // 3. Fix Image: Try multiple common API fields
+    // We try 'thumb', then 'medium_url', then 'url' (if it's an image link), then 'files'
+    const image = item.urls.img_thumb || 
+                  item.urls.img_medium || 
+                  item.urls.img_high || 
+                  '/images/placeholder.png'; // Fallback
+
+    // Remove if already exists to prevent duplicates
+    viewed = viewed.filter(i => i.artwork_id !== id);
+
+    // Add new item
+    viewed.unshift({
+        artwork_id: id,
+        title: titleStr,
+        artist: item.artist,
+        image: image
+    });
+
+    // Limit to 20 items
+    if (viewed.length > 20) {
+        viewed = viewed.slice(0, 20);
+    }
+
+    localStorage.setItem(key, JSON.stringify(viewed));
+};
+
 </script>
 
 <style scoped>

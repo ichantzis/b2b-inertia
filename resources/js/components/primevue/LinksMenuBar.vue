@@ -12,7 +12,7 @@ defineExpose({
 <template>
     <Menubar
         ref="child-ref"
-        breakpoint="1024px"
+        breakpoint="1300px"
     >
         <template
             v-if="$slots.start"

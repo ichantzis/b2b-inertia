@@ -81,7 +81,7 @@ const mainMenuItems = computed(() => {
 
     // Add collections with submenu
     items.push({
-        label: 'Collections',
+        label: 'Browse',
         icon: 'pi pi-fw pi-objects-column',
         route: route('collections.index'),
         command: () => {
@@ -92,12 +92,12 @@ const mainMenuItems = computed(() => {
 
     // Add collections with submenu
     items.push({
-        label: 'Our Lists',
-        icon: 'pi pi-fw pi-th-large',
+        label: 'Products Collection',
+        icon: 'pi pi-fw pi-images',
         expanded: true, // Add this to show submenu by default
         items: [
             {
-                label: 'All Lists',
+                label: 'All Collections',
                 // icon: 'pi pi-fw pi-images',
                 route: route('lists'),
                 command: () => {
@@ -117,10 +117,70 @@ const mainMenuItems = computed(() => {
 
     // Add other menu items
     items.push({
-        label: 'Browse',
+        label: 'Search',
         route: route('artworks'),
-        icon: 'pi pi-fw pi-images',
+        icon: 'pi pi-fw pi-search',
         active: currentRoute.value == 'artworks',
+        command: () => {
+            mobileMenuOpen.value = false;
+        }
+    });
+
+    items.push({
+        label: 'Artists',
+        // route: route('artworks'),
+        icon: 'pi pi-fw pi-palette',
+        // active: currentRoute.value == 'artworks',
+        command: () => {
+            mobileMenuOpen.value = false;
+        }
+    });
+
+    items.push({
+        label: 'Insights',
+        // route: route('artworks'),
+        icon: 'pi pi-fw pi-file-pdf',
+        // active: currentRoute.value == 'artworks',
+        command: () => {
+            mobileMenuOpen.value = false;
+        }
+    });
+
+    items.push({
+        label: 'About Us',
+        // route: route('artworks'),
+        icon: 'pi pi-fw pi-info-circle',
+        // active: currentRoute.value == 'artworks',
+        command: () => {
+            mobileMenuOpen.value = false;
+        }
+    });
+
+    items.push({
+        label: 'Projects',
+        // route: route('artworks'),
+        icon: 'pi pi-fw pi-briefcase',
+        // active: currentRoute.value == 'artworks',
+        command: () => {
+            mobileMenuOpen.value = false;
+        }
+    });
+
+    items.push({
+        label: 'B2B',
+        // route: route('artworks'),
+        icon: 'pi pi-fw pi-shop',
+        // active: currentRoute.value == 'artworks',
+        command: () => {
+            mobileMenuOpen.value = false;
+        }
+    });
+
+    items.push({
+        label: 'Contact Us',
+        // route: route('artworks'),
+        icon: 'pi pi-fw pi-envelope',
+        // active: currentRoute.value == 'artworks',
         command: () => {
             mobileMenuOpen.value = false;
         }

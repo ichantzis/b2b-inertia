@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\PictufyService;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 class PictufyController extends Controller
@@ -15,6 +16,18 @@ class PictufyController extends Controller
     public function __construct(PictufyService $pictufy)
     {
         $this->pictufy = $pictufy;
+    }
+
+    public function homepage(Request $request)
+    {
+        // Fetch lists from the service (cached by default in PictufyService)
+        $apiListsResponse = $this->pictufy->getLists(['per_page' => 15]);
+
+        return Inertia::render('Welcome', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'curatedLists' => $apiListsResponse['items'] ?? [], // Pass the 15 items to Vue
+        ]);
     }
 
     public function indexCollections()
