@@ -106,6 +106,17 @@
 
     <Dialog v-model:visible="previewVisible" modal :dismissableMask="true" class="image-preview-dialog"
       :closable="false" headerClass="p-dialog-custom-header" contentClass="p-dialog-custom-content" :pt="{
+        root: { 
+            style: {
+                justifyContent: 'center', 
+                width: '-webkit-fill-available',
+                height: '-webkit-fill-available',
+                maxHeight: 'none',
+                background: '#ffffff0f',
+                boxShadow: 'none',
+                border: 'none'
+            } 
+        },
         mask: { style: 'backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.85);' }
       }">
       <div class="dialog-container" @keydown="handleDialogKey" @touchstart="handleTouchStart" @touchend="handleTouchEnd"
@@ -120,7 +131,7 @@
 
           <template v-if="galleryImages.length > 0 && galleryImages[currentIndex]">
             <template v-if="galleryImages[currentIndex].isPrimaryArtwork">
-              <div class="canvas-frame-wrapper"> <img :src="selectedCanvas.url" alt="Canvas Frame"
+              <div class="canvas-frame-wrapper" :class="{ 'no-frame-mode': !selectedCanvas.url }"> <img v-if="selectedCanvas.url" :src="selectedCanvas.url" alt="Canvas Frame"
                   class="canvas-frame-image" />
                 <img :src="galleryImages[currentIndex].itemImageSrc" class="artwork-on-canvas"
                   :alt="galleryImages[currentIndex].alt"
@@ -145,7 +156,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { router, Head as InertiaHead } from '@inertiajs/vue3';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
@@ -158,17 +169,35 @@ import { slugify } from '@/composables/utils.js';
 // Αρχικές εικόνες πλαισίου (μπορεί να χρειαστεί να προσθέσετε κι άλλες)
 import defaultCanvasImg from '@/../../public/images/frames/CANVAS_2X3_VERTICAL_OLIVE.png'; // Παλιό προεπιλεγμένο, τώρα 'olive'
 import verticalCanvasImg from '@/../../public/images/frames/Canvas_VERTICAL.png'; // Για 'noframe' vertical
-import verticalWalnutImg from '@/../../public/images/frames/VERTICAL_WALNUT.jpg';
-import verticalNaturalImg from '@/../../public/images/frames/VERTICAL_NATURAL.jpg';
-import horizontalCanvasImg from '@/../../public/images/frames/HORIZONTAL_BLACK.jpg';
-import horizontalWhiteImg from '@/../../public/images/frames/HORIZONTAL_WHITE.jpg';
-import horizontalNaturalImg from '@/../../public/images/frames/HORIZONTAL_NATURAL.jpg';
-import horizontalWalnutImg from '@/../../public/images/frames/HORIZONTAL_WALNUT.jpg';
-import horizontalCremaImg from '@/../../public/images/frames/HORIZONTAL_CREMA.jpg';
-import squareCanvasImg from '@/../../public/images/frames/SQUARE_BLACK.jpg'; // Για 'white' square
-import squareWhiteImg from '@/../../public/images/frames/SQUARE_WHITE.png'; // Για 'white' square
-import squareNaturalImg from '@/../../public/images/frames/SQUARE_NATURAL.jpg'; // Για 'white' square
-import squareNoFrameImg from '@/../../public/images/frames/SQUARE_NO-FRAME.jpg'; // Για 'white' square
+import verticalWalnutImg from '@/../../public/images/frames/vertical/VERTICAL_WALNUT.webp';
+import verticalBlacklImg from '@/../../public/images/frames/vertical/VERTICAL_BLACK.webp';
+import verticalNaturalImg from '@/../../public/images/frames/vertical/VERTICAL_NATURAL.webp';
+import verticalCremaImg from '@/../../public/images/frames/vertical/VERTICAL_CREMA.webp';
+import verticalGoldImg from '@/../../public/images/frames/vertical/VERTICAL_GOLD.webp';
+import verticalMockaImg from '@/../../public/images/frames/vertical/VERTICAL_MOCKA.webp';
+import verticalOakImg from '@/../../public/images/frames/vertical/VERTICAL_OAK.webp';
+import verticalSilverImg from '@/../../public/images/frames/vertical/VERTICAL_SILVER.webp';
+import verticalWhiteImg from '@/../../public/images/frames/vertical/VERTICAL_WHITE.webp';
+import horizontalBlackImg from '@/../../public/images/frames/horizontal/HORIZONTAL_BLACK.webp';
+import horizontalWhiteImg from '@/../../public/images/frames/horizontal/HORIZONTAL_WHITE.webp';
+import horizontalNaturalImg from '@/../../public/images/frames/horizontal/HORIZONTAL_NATURAL.webp';
+import horizontalWalnutImg from '@/../../public/images/frames/horizontal/HORIZONTAL_WALNUT.webp';
+import horizontalCremaImg from '@/../../public/images/frames/horizontal/HORIZONTAL_CREMA.webp';
+import horizontalGoldImg from '@/../../public/images/frames/horizontal/HORIZONTAL_GOLD.webp';
+import horizontalMockaImg from '@/../../public/images/frames/horizontal/HORIZONTAL_MOCKA.webp';
+import horizontalOakImg from '@/../../public/images/frames/horizontal/HORIZONTAL_OAK.webp';
+import horizontalSilverImg from '@/../../public/images/frames/horizontal/HORIZONTAL_SILVER.webp';
+import squareCanvasImg from '@/../../public/images/frames/square/SQUARE_BLACK.webp'; 
+import squareBlackImg from '@/../../public/images/frames/square/SQUARE_BLACK.webp'; 
+import squareWhiteImg from '@/../../public/images/frames/square/SQUARE_WHITE.webp'; 
+import squareNaturalImg from '@/../../public/images/frames/square/SQUARE_NATURAL.webp'; 
+import squareCremaImg from '@/../../public/images/frames/square/SQUARE_CREMA.webp'; 
+import squareGoldImg from '@/../../public/images/frames/square/SQUARE_GOLD.webp'; 
+import squareMockaImg from '@/../../public/images/frames/square/SQUARE_MOCKA.webp'; 
+import squareOakImg from '@/../../public/images/frames/square/SQUARE_OAK.webp'; 
+import squareSilverImg from '@/../../public/images/frames/square/SQUARE_SILVER.webp'; 
+import squareWalnutImg from '@/../../public/images/frames/square/SQUARE_WALNUT.webp'; 
+import squareNoFrameImg from '@/../../public/images/frames/SQUARE_NO-FRAME.jpg'; 
 
 // --- ΝΕΕΣ ΕΙΣΑΓΩΓΕΣ ΓΙΑ ΑΛΛΑ ΧΡΩΜΑΤΑ/ΓΕΩΜΕΤΡΙΕΣ (ΠΡΟΣΘΕΣΤΕ ΤΙΣ ΔΙΚΕΣ ΣΑΣ ΕΔΩ) ---
 // Παραδείγματα (αντικαταστήστε με τις πραγματικές διαδρομές):
@@ -193,33 +222,41 @@ const currentFrameStyle = ref('black');
 // **ΣΗΜΑΝΤΙΚΟ**: Αντικαταστήστε τις placeholder διαδρομές ('path/to/...') με τις πραγματικές διαδρομές των εικόνων σας.
 const frameColorImagePaths = {
   vertical: {
-    olive: verticalCanvasImg, // Το παλιό σας default, τώρα είναι συγκεκριμένα το 'olive'
-    black: verticalCanvasImg, // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
-    white: verticalCanvasImg, // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
-    natural: verticalCanvasImg,
-    walnut: verticalCanvasImg,
-    oak: verticalCanvasImg,     // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
-    crema: verticalCanvasImg,  // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
-    noframe: null, // Αυτή είναι η Canvas_VERTICAL.png
+    black: verticalBlacklImg, 
+    white: verticalWhiteImg,
+    mocka: verticalMockaImg,
+    silver: verticalSilverImg, 
+    natural: verticalNaturalImg,
+    walnut: verticalWalnutImg,
+    oak: verticalOakImg,     
+    crema: verticalCremaImg,  
+    gold: verticalGoldImg,
+    noframe: null,
     default: defaultCanvasImg // Fallback για vertical (π.χ., olive)
   },
   horizontal: {
-    black: horizontalCanvasImg,
-    white: horizontalCremaImg,
+    black: horizontalBlackImg,
+    white: horizontalWhiteImg,
+    mocka: horizontalMockaImg,
+    silver: horizontalSilverImg,
+    gold: horizontalGoldImg,
     natural: horizontalNaturalImg,
     walnut: horizontalWalnutImg,
-    oak: horizontalWalnutImg,
+    oak: horizontalOakImg,
     crema: horizontalCremaImg,
-    noframe: null, // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ΓΙΑ NOFRAME HORIZONTAL ***
-    default: horizontalCanvasImg // Fallback για horizontal (π.χ., black)
+    noframe: null,
+    default: horizontalBlackImg // Fallback για horizontal (π.χ., black)
   },
   square: {
-    white: squareWhiteImg, // Αυτή είναι η 100X100_ANGLED_WHITE.png
-    black: squareCanvasImg,    // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
-    natural: squareNaturalImg,// *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
-    walnut: squareCanvasImg,  // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
-    oak: squareNaturalImg,       // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
-    crema: squareWhiteImg,    // *** ΠΡΟΣΘΕΣΤΕ ΠΡΑΓΜΑΤΙΚΗ ΔΙΑΔΡΟΜΗ ***
+    white: squareWhiteImg, 
+    black: squareBlackImg,
+    mocka: squareMockaImg,
+    silver: squareSilverImg,
+    gold: squareGoldImg,  
+    natural: squareNaturalImg,
+    walnut: squareWalnutImg,  
+    oak: squareOakImg,       
+    crema: squareCremaImg,    
     noframe: null,
     default: squareCanvasImg // Fallback για square (π.χ., white)
   }
@@ -282,14 +319,13 @@ const selectedCanvas = computed(() => {
       if (style === 'noframe') {
         details.url = frameColorImagePaths.vertical.noframe; // Εξασφάλιση σωστής εικόνας για noframe
         details.isAngled = false;
-        details.artworkContainerStyle = { top: '23%', left: '30.6%', width: '37.3%!important', height: '53.4%!important', };
+        details.artworkContainerStyle = { top: '11.5%', left: '23.85%', width: '50.5%', height: '76.3%!important', };
         details.artworkTransform = 'none';
         details.artworkShadow = '-5px 5px 10px rgba(0, 0, 0, 0.3), 5px -5px 10px rgba(0,0,0,0.1) inset, 0px 0px 30px rgba(0, 0, 0, 0.2)';
       } else {
         // Γενικές ρυθμίσεις για vertical πλαισία (π.χ. olive, walnut, natural, black, white)
-        // Βασισμένο στο αρχικό παράδειγμα του olive angled canvas
         details.isAngled = false;
-        details.artworkContainerStyle = { top: '23%', left: '30.6%', width: '37.3%!important', height: '53.4%!important' };
+        details.artworkContainerStyle = { top: '11.5%', left: '23.85%', width: '50.5%!important', height: '76.3%!important' };
         details.artworkTransform = 'perspective(1000px)';
         details.transformOrigin = 'center left';
       }
@@ -300,15 +336,15 @@ const selectedCanvas = computed(() => {
         details.url = frameColorImagePaths.horizontal.noframe;
         details.isAngled = false;
         // *** ΠΡΟΣΑΡΜΟΣΤΕ ΤΟ artworkContainerStyle ΓΙΑ HORIZONTAL NOFRAME ***
-        details.artworkContainerStyle = { top: '31%', left: '23.9%', width: '56.8%', height: '38.8%' }; // Placeholder
+        details.artworkContainerStyle = { top: '24.2%', left: '13.8%', width: '71.12%', height: '50%' }; // Placeholder
         details.artworkTransform = 'none';
         details.artworkShadow = '-5px 5px 10px rgba(0, 0, 0, 0.3), 5px -5px 10px rgba(0,0,0,0.1) inset, 0px 0px 30px rgba(0, 0, 0, 0.2)';
       } else {
         // Γενικές ρυθμίσεις για horizontal πλαισία (π.χ. black)
         // Βασισμένο στο αρχικό παράδειγμα του black angled canvas
         details.isAngled = false;
-        details.artworkContainerStyle = { top: '31%', left: '23.9%', width: '56.8%', height: '38.8%' };
-        details.artworkTransform = 'perspective(1000px) rotateY(17deg)';
+        details.artworkContainerStyle = { top: '24.2%', left: '13.8%', width: '71.12%', height: '50%' };
+        details.artworkTransform = 'perspective(1000px)';
       }
       break;
     case 'square':
@@ -317,15 +353,15 @@ const selectedCanvas = computed(() => {
         details.url = frameColorImagePaths.square.noframe;
         details.isAngled = false;
         // *** ΠΡΟΣΑΡΜΟΣΤΕ ΤΟ artworkContainerStyle ΓΙΑ SQUARE NOFRAME ***
-        details.artworkContainerStyle = { top: '23.7%', left: '28.9%', width: '49.8%', height: '51.6%' }; // Placeholder
+        details.artworkContainerStyle = { top: '13.65%', left: '14.68%', width: '69.7%', height: '69.7%' }; // Placeholder
         details.artworkTransform = 'none';
         details.artworkShadow = '-5px 5px 10px rgba(0, 0, 0, 0.3), 5px -5px 10px rgba(0,0,0,0.1) inset, 0px 0px 30px rgba(0, 0, 0, 0.2)';
       } else {
         // Γενικές ρυθμίσεις για square πλαισία (π.χ. white)
         // Βασισμένο στο αρχικό παράδειγμα του white angled canvas
         details.isAngled = false;
-        details.artworkContainerStyle = { top: '23.7%', left: '28.9%', width: '49.8%', height: '51.6%' };
-        details.artworkTransform = 'perspective(1000px) rotateY(18deg)';
+        details.artworkContainerStyle = { top: '13.65%', left: '14.68%', width: '69.7%', height: '69.7%' };
+        details.artworkTransform = 'perspective(1000px)';
       }
       break;
     default: // Fallback αν η γεωμετρία είναι άγνωστη
@@ -338,13 +374,11 @@ const selectedCanvas = computed(() => {
 
 
 const parsedKeywords = computed(() => {
-  // ... (η λογική παραμένει ίδια)
   const raw = currentArtwork.value?.keywords?.en || '';
   return raw.split(',').map(k => k.trim()).filter(Boolean).slice(0, 10);
 });
 
 const galleryImages = computed(() => {
-  // ... (η λογική παραμένει ίδια)
   const images = [];
   const art = currentArtwork.value;
   if (!art || !art.urls) return images;
@@ -388,7 +422,6 @@ function handleFrameStyleChange(newStyle) {
 }
 
 function goBack() {
-  // ... (η λογική παραμένει ίδια)
   const referrer = document.referrer;
   const currentOrigin = window.location.origin;
   if (referrer) {
@@ -419,7 +452,6 @@ function goBack() {
 }
 
 const generateCategorySlug = (categoryName) => {
-  // ... (η λογική παραμένει ίδια)
   if (!categoryName || typeof categoryName !== 'string') {
     return '';
   }
@@ -428,7 +460,6 @@ const generateCategorySlug = (categoryName) => {
 };
 
 const navigateToCategory = (categoryName) => {
-  // ... (η λογική παραμένει ίδια)
   const categorySlug = generateCategorySlug(categoryName);
   if (categorySlug && categoryName) {
     router.visit(route('artworks', { filters: categorySlug }));
@@ -450,36 +481,30 @@ const navigateToArtworksWithTag = (tag) => {
 };
 
 function openPreview(index) {
-  // ... (η λογική παραμένει ίδια)
   if (galleryImages.value[index]) {
     currentIndex.value = index;
     previewVisible.value = true;
   }
 }
 function updateCurrentImage() {
-  // ... (η λογική παραμένει ίδια)
   if (galleryImages.value.length > 0) {
     scrollThumbnailIntoView();
   }
 }
 function nextImage() {
-  // ... (η λογική παραμένει ίδια)
   if (galleryImages.value.length <= 1) return;
   currentIndex.value = (currentIndex.value + 1) % galleryImages.value.length;
   updateCurrentImage();
 }
 function prevImage() {
-  // ... (η λογική παραμένει ίδια)
   if (galleryImages.value.length <= 1) return;
   currentIndex.value = (currentIndex.value - 1 + galleryImages.value.length) % galleryImages.value.length;
   updateCurrentImage();
 }
 function handleTouchStart(e) {
-  // ... (η λογική παραμένει ίδια)
   touchStartX.value = e.changedTouches[0].screenX;
 }
 function handleTouchEnd(e) {
-  // ... (η λογική παραμένει ίδια)
   const touchEndX = e.changedTouches[0].screenX;
   if (touchStartX.value - touchEndX > 50) {
     nextImage();
@@ -488,25 +513,21 @@ function handleTouchEnd(e) {
   }
 }
 function handleDialogKey(e) {
-  // ... (η λογική παραμένει ίδια)
   if (e.key === 'ArrowLeft') prevImage();
   else if (e.key === 'ArrowRight') nextImage();
   else if (e.key === 'Escape') previewVisible.value = false;
 }
 function selectThumbnail(idx) {
-  // ... (η λογική παραμένει ίδια)
   currentIndex.value = idx;
   updateCurrentImage();
 }
 function scrollThumbnailIntoView() {
-  // ... (η λογική παραμένει ίδια)
   if (thumbnailRowRef.value && thumbnailRowRef.value.children[currentIndex.value]) {
     const activeThumbnail = thumbnailRowRef.value.children[currentIndex.value];
     activeThumbnail.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }
 }
 function scrollThumbnails(direction) {
-  // ... (η λογική παραμένει ίδια)
   if (thumbnailRowRef.value) {
     const scrollAmount = thumbnailRowRef.value.clientWidth * 0.7;
     thumbnailRowRef.value.scrollBy({
@@ -515,6 +536,28 @@ function scrollThumbnails(direction) {
     });
   }
 }
+
+// --- IMAGE PRELOADING LOGIC ---
+// This ensures that when a user clicks a color, the image is already cached
+const preloadFrameImages = (geometry) => {
+    const frames = frameColorImagePaths[geometry];
+    if (!frames) return;
+
+    Object.values(frames).forEach(src => {
+        if (src) {
+            const img = new Image();
+            img.src = src;
+        }
+    });
+};
+
+// Watch for geometry changes to preload relevant frames
+watch(primaryArtworkGeometryType, (newGeometry) => {
+    if (newGeometry) {
+        // Use setTimeout to not block the main thread during initial render
+        setTimeout(() => preloadFrameImages(newGeometry), 1000);
+    }
+}, { immediate: true });
 
 // --- RECENTLY VIEWED LOGIC ---
 onMounted(() => {
@@ -909,6 +952,12 @@ const addToRecentlyViewed = (item) => {
   background: transparent !important;
 }
 
+.p-dialog {
+  background: #ffffff61 !important;
+  height: -webkit-fill-available!important;
+  width: -webkit-fill-available!important;
+}
+
 /* This is the direct child of .p-dialog-custom-content (the one we bind to ref="dialogContainerRef") */
 .dialog-container {
   position: relative;
@@ -972,18 +1021,42 @@ const addToRecentlyViewed = (item) => {
   /* Let aspect-ratio and max-constraints determine size */
   height: auto;
   /* Let aspect-ratio and max-constraints determine size */
-  max-width: 400px;
+  max-width: -webkit-fill-available;
   /* Fit within .dialog-gallery-content */
-  max-height: 400px;
+  max-height: -webkit-fill-available;
   /* Fit within .dialog-gallery-content */
   /* Enforce a square container for the frame, consistent with main view's .main-image-container.canvas-mode */
   aspect-ratio: 1 / 1;
   perspective: 1000px;
   /* For 3D transforms */
   perspective-origin: center center;
-  overflow: auto;
+  overflow: hidden;
   /* Good practice */
   /* For debugging sizing: background-color: rgba(0, 255, 0, 0.1); */
+}
+
+/* Only applies when there is NO frame image */
+.dialog-gallery-content .canvas-frame-wrapper.no-frame-mode {
+  /* Force it to fill the flex parent (dialog-gallery-content) */
+  width: 100% !important;
+  height: 100% !important;
+  
+  /* Remove any size limits */
+  max-width: none !important;
+  max-height: none !important;
+  
+  /* Reset aspect ratio so it doesn't force a square */
+  /* aspect-ratio: unset !important; */
+  
+  /* Ensure it doesn't collapse */
+  display: flex!important;
+  align-items: center!important;
+  justify-content: center!important
+}
+
+.dialog-gallery-content .canvas-frame-wrapper.no-frame-mode img {
+  width: auto !important;
+  left: auto !important;
 }
 
 /* The actual frame image texture within the dialog's canvas-frame-wrapper */

@@ -253,22 +253,28 @@ watch([selectedType, selectedCanvas], () => {
         </div>
         <div class="canvas-wrapper" v-show="showCanvasFrames">
             <Button v-bind="getButtonProps('black', selectedCanvas)" @click="selectedCanvas = 'black'">
-                <img src="/images/frames/floatblack-frame.png" alt="Black Frame" class="frame-icon" />
+                <img src="/images/frames/floatblack-frame.webp" alt="Black Frame" class="frame-icon" />
             </Button>
             <Button v-bind="getButtonProps('white', selectedCanvas)" @click="selectedCanvas = 'white'">
-                <img src="/images/frames/floatwhite-frame.png" alt="White Frame" class="frame-icon" />
+                <img src="/images/frames/floatwhite-frame.webp" alt="White Frame" class="frame-icon" />
             </Button>
             <Button v-bind="getButtonProps('natural', selectedCanvas)" @click="selectedCanvas = 'natural'">
-                <img src="/images/frames/floatnatural-frame.png" alt="Natural Frame" class="frame-icon" />
+                <img src="/images/frames/floatnatural-frame.webp" alt="Natural Frame" class="frame-icon" />
             </Button>
             <Button v-bind="getButtonProps('walnut', selectedCanvas)" @click="selectedCanvas = 'walnut'">
-                <img src="/images/frames/floatwalnut-frame.png" alt="Walnut Frame" class="frame-icon" />
+                <img src="/images/frames/floatwalnut-frame.webp" alt="Walnut Frame" class="frame-icon" />
             </Button>
             <Button v-bind="getButtonProps('oak', selectedCanvas)" @click="selectedCanvas = 'oak'">
-                <img src="/images/frames/Oak_C-jpg.webp" alt="Oak Frame" class="frame-icon" />
+                <img src="/images/frames/floatoak-frame.webp" alt="Oak Frame" class="frame-icon" />
             </Button>
             <Button v-bind="getButtonProps('crema', selectedCanvas)" @click="selectedCanvas = 'crema'">
-                <img src="/images/frames/Crema_C-300x300.jpg" alt="Crema Frame" class="frame-icon" />
+                <img src="/images/frames/floatcrema-frame.webp" alt="Crema Frame" class="frame-icon" />
+            </Button>
+            <Button v-bind="getButtonProps('gold', selectedCanvas)" @click="selectedCanvas = 'gold'">
+                <img src="/images/frames/floatgold-frame.webp" alt="Gold Frame" class="frame-icon" />
+            </Button>
+            <Button v-bind="getButtonProps('silver', selectedCanvas)" @click="selectedCanvas = 'silver'">
+                <img src="/images/frames/floatsilver-frame.webp" alt="Silver Frame" class="frame-icon" />
             </Button>
             <Button v-bind="getButtonProps('noframe', selectedCanvas)" @click="selectedCanvas = 'noframe'">
                 <img src="/images/frames/floatnoframe.jpg" alt="No Frame" class="frame-icon" />
