@@ -440,4 +440,290 @@ class PictufyController extends Controller
             // 'nextPage' => isset($artworks['items']) && count($artworks['items']) > 0 ? 2 : null
         ]);
     }
+
+
+    /* =========================================================================
+       ARTIST METHODS
+       ========================================================================= */
+
+    /**
+     * Filter out artists with fewer than N artworks.
+     */
+    private function filterByMinArtworks($artists, $min = 10)
+    {
+        // The API returns the count in 'artworks' (or sometimes 'artwork_count' depending on endpoint version, 
+        // but based on your Vue code it is 'artworks').
+        return array_values(array_filter($artists, function ($artist) use ($min) {
+            $count = $artist['artworks'] ?? 0;
+            return $count >= $min;
+        }));
+    }
+
+    /**
+     * Group artists by their specific sub-category derived from artist_type.
+     */
+    private function groupArtistsBySubCategory($artists, $mainTypeKeyword)
+    {
+        $grouped = [];
+
+        foreach ($artists as $artist) {
+            $type = $artist['artist_type'] ?? '';
+            
+            if (Str::contains(strtolower($type), strtolower($mainTypeKeyword))) {
+                // Remove the keyword to get the sub-category
+                $subCategory = trim(str_ireplace($mainTypeKeyword, '', $type));
+                
+                if (empty($subCategory)) {
+                    $subCategory = 'General'; 
+                }
+
+                if (!isset($grouped[$subCategory])) {
+                    $grouped[$subCategory] = [];
+                }
+
+                $grouped[$subCategory][] = $artist;
+            }
+        }
+
+        ksort($grouped); 
+        
+        $rows = [];
+        foreach ($grouped as $category => $items) {
+            $rows[] = [
+                'title' => $category,
+                'items' => $items
+            ];
+        }
+
+        return $rows;
+    }
+
+    /* =========================================================================
+       ARTIST METHODS
+       ========================================================================= */
+
+    public function artistsOverview()
+    {
+        // Fetch slightly more items than needed to account for filtering
+        $trendingResponse = $this->pictufy->getArtists(['order' => 'trending', 'per_page' => 60]);
+        $trendingRaw = $trendingResponse['items'] ?? [];
+
+        $countResponse = $this->pictufy->getArtists(['order' => 'artwork_count', 'per_page' => 60]);
+        $biggestRaw = $countResponse['items'] ?? [];
+
+        // Apply Filtering (> 10 artworks)
+        $trending = $this->filterByMinArtworks($trendingRaw, 10);
+        $biggest = $this->filterByMinArtworks($biggestRaw, 10);
+
+        // Featured: Slice top 15 from the filtered trending list
+        $featured = array_slice($trending, 0, 15);
+
+        // Limit Trending and Biggest to 40 items
+        $trendingLimited = array_slice($trending, 0, 40);
+        $biggestLimited = array_slice($biggest, 0, 40);
+
+        $rows = [
+            [
+                'title' => 'Featured Artists',
+                'items' => $featured
+            ],
+            [
+                'title' => 'Trending Now',
+                'items' => $trendingLimited
+            ],
+            [
+                'title' => 'Biggest Collections',
+                'items' => $biggestLimited
+            ]
+        ];
+
+        return Inertia::render('artists/Overview', [
+            'activeTab' => 'overview',
+            'rows' => $rows,
+            'gridItems' => []
+        ]);
+    }
+
+    public function artistsIllustrators()
+    {
+        $response = $this->pictufy->getArtists(['order' => 'trending', 'per_page' => 150]);
+        $allArtists = $response['items'] ?? [];
+
+        // Filter first
+        $filteredArtists = $this->filterByMinArtworks($allArtists, 10);
+
+        // Then Group
+        $rows = $this->groupArtistsBySubCategory($filteredArtists, 'Illustrator');
+
+        return Inertia::render('artists/Overview', [
+            'activeTab' => 'illustrators',
+            'rows' => $rows,
+            'gridItems' => []
+        ]);
+    }
+
+    public function artistsPhotographers()
+    {
+        $response = $this->pictufy->getArtists(['order' => 'trending', 'per_page' => 150]);
+        $allArtists = $response['items'] ?? [];
+
+        // Filter first
+        $filteredArtists = $this->filterByMinArtworks($allArtists, 10);
+
+        // Then Group
+        $rows = $this->groupArtistsBySubCategory($filteredArtists, 'Photographer');
+
+        return Inertia::render('artists/Overview', [
+            'activeTab' => 'photographers',
+            'rows' => $rows,
+            'gridItems' => []
+        ]);
+    }
+
+    public function artistsByCountry()
+    {
+        $response = $this->pictufy->getArtists(['order' => 'alpha', 'per_page' => 300]);
+        $artists = $response['items'] ?? [];
+
+        // Filter first
+        $filteredArtists = $this->filterByMinArtworks($artists, 10);
+
+        // Group by 'country'
+        $grouped = collect($filteredArtists)->groupBy(function ($item) {
+            return !empty($item['country']) ? $item['country'] : 'International';
+        });
+
+        // Sort Keys (Countries) Alphabetically
+        $grouped = $grouped->sortKeys();
+
+        $rows = [];
+        foreach ($grouped as $country => $countryArtists) {
+            if (empty($country)) continue;
+            $rows[] = [
+                'title' => $country,
+                'items' => $countryArtists->values()->all()
+            ];
+        }
+
+        return Inertia::render('artists/Overview', [
+            'activeTab' => 'by-country',
+            'rows' => $rows,
+            'gridItems' => []
+        ]);
+    }
+
+    public function artistsAll(Request $request)
+    {
+        $order = $request->input('order', 'alpha');
+        
+        // Fetch a larger page size to ensure we populate the list after filtering
+        $response = $this->pictufy->getArtists(['order' => $order, 'per_page' => 100]);
+        $rawArtists = $response['items'] ?? [];
+
+        // Filter
+        $filteredArtists = $this->filterByMinArtworks($rawArtists, 10);
+        
+        return Inertia::render('artists/Index', [
+            'artists' => $filteredArtists,
+            'currentOrder' => $order
+        ]);
+    }
+
+    public function showArtist(Request $request, $artist_slug, $filters = null)
+    {
+        // 1. Resolve Artist Slug to ID
+        $artist_id = $this->pictufy->getArtistIdBySlug($artist_slug);
+
+        if (!$artist_id) {
+            abort(404, 'Artist not found.');
+        }
+
+        // 2. Fetch Artist Details
+        $artistResponse = $this->pictufy->getArtist($artist_id);
+        $artist = $artistResponse['items'][0] ?? null;
+
+        if (!$artist) {
+            abort(404, 'Artist details could not be retrieved.');
+        }
+
+        $collectionName = html_entity_decode($artist['name'] ?? 'Artist', ENT_QUOTES | ENT_HTML5);
+        $collectionCover = $artist['profile_picture'] ?? null;
+        $collectionDescription = html_entity_decode($artist['biography_text'] ?? ($artist['artist_type'] ?? ''), ENT_QUOTES | ENT_HTML5);
+
+        // 3. Initialize API Parameters
+        $params = [
+            'artist_id' => $artist_id,
+            'page' => (int) $request->input('page', 1),
+            'per_page' => (int) $request->input('per_page', 30),
+            'order' => $request->input('order', 'recommended'),
+        ];
+
+        if ($request->input('search')) {
+            $params['search'] = $request->input('search');
+        }
+
+        // 4. Parse URL Filters
+        if ($filters) {
+            $segments = explode('/', $filters);
+            
+            $validColors = ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'white', 'gray', 'black', 'brown', 'highkey', 'lowkey'];
+            $validGeometries = ['horizontal', 'vertical', 'square', 'panorama'];
+            $validOrders = ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'];
+
+            $collectedColors = [];
+            $collectedGeometries = [];
+
+            foreach ($segments as $segment) {
+                // A. Sort Order
+                if (in_array($segment, $validOrders)) {
+                    $params['order'] = $segment;
+                    continue;
+                }
+                
+                // B. Geometry
+                if (in_array($segment, $validGeometries)) {
+                    $collectedGeometries[] = $segment;
+                    continue;
+                }
+
+                // C. Colors
+                if (in_array($segment, $validColors)) {
+                    $collectedColors[] = $segment;
+                    continue;
+                }
+
+                // D. Categories
+                if (Str::startsWith($segment, 'cat_')) {
+                    $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
+                    if ($categoryId) {
+                        $params['category'] = $categoryId; 
+                    }
+                    continue;
+                }
+            }
+
+            if (!empty($collectedColors)) {
+                $params['color'] = implode(',', $collectedColors);
+            }
+            if (!empty($collectedGeometries)) {
+                $params['geometry'] = implode(',', $collectedGeometries);
+            }
+        }
+
+        // 5. Fetch Artworks
+        $artworksResponse = $this->pictufy->getArtworks($params);
+
+        return Inertia::render('Artworks', [
+            'artworks' => $artworksResponse['items'] ?? [],
+            'collectionId' => (string) $artist_id,
+            'collectionSlug' => $artist_slug,
+            'collectionName' => $collectionName,
+            'collectionCover' => $collectionCover,
+            'collectionDescription' => $collectionDescription,
+            'isArtistPage' => true,
+            'currentSearchTerm' => $request->input('search'),
+            'filters' => $filters ? explode('/', $filters) : [],
+            'nextPage' => isset($artworksResponse['items']) && count($artworksResponse['items']) >= $params['per_page'] ? $params['page'] + 1 : null,
+        ]);
+    }
 }

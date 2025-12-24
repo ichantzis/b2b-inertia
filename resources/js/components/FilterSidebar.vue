@@ -1,6 +1,5 @@
 <template>
     <aside class="filter-sidebar">
-        <!-- Sort Order Section -->
         <div class="filter-section">
             <h3 class="filter-title">Sort Order</h3>
             <div class="filter-items">
@@ -16,7 +15,6 @@
             </div>
         </div>
         
-        <!-- Categories Section -->
         <div class="filter-section">
             <h3 class="filter-title">Categories</h3>
             <div class="filter-items">
@@ -41,7 +39,6 @@
             </div>
         </div>
 
-        <!-- Formats Section -->
         <div class="filter-section">
             <h3 class="filter-title">Geometry</h3>
             <div class="filter-items">
@@ -55,7 +52,6 @@
             </div>
         </div>
 
-        <!-- Colors Section -->
         <div class="filter-section">
             <h3 class="filter-title">Colors</h3>
             <div class="color-grid">
@@ -207,6 +203,7 @@ const getActiveColor = () => {
     return props.activeFilters.find(f => colors.map(c => c.value).includes(f)) || '';
 };
 
+// Updated getBaseUrl to handle Artist route
 const getBaseUrl = () => {
     const currentPath = usePage().url;    
         
@@ -215,6 +212,10 @@ const getBaseUrl = () => {
     }
     if (currentPath.startsWith('/lists/') && props.listId) {
         return `/lists/${props.listId}`;
+    }
+    // Added check for artist page
+    if (currentPath.startsWith('/artist/') && props.collectionSlug) {
+        return `/artist/${props.collectionSlug}`;
     }
     return '/artworks';
 };
@@ -232,12 +233,6 @@ const updateUrl = (pathFiltersArray) => {
     if (props.currentSearchQuery) { // Use the passed-in search query
         queryParams.search = props.currentSearchQuery;
     }
-
-    // Preserve other existing query parameters not related to filters or search, if any
-    // This part can be tricky. For now, we'll focus on just adding the search.
-    // If you have other query params like 'page' or 'order' that are NOT part of path filters,
-    // you might need a more robust way to merge them.
-    // However, your sort order seems to be part of path filters.
 
     router.visit(targetUrl, {
         data: queryParams, // Send query parameters as 'data'

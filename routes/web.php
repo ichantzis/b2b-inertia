@@ -35,6 +35,19 @@ Route::get('/collection/{collection_slug}/{filters?}', [PictufyController::class
 Route::get('/collections/category/{category_collection_slug}', [PictufyController::class, 'showCollectionsByCategorySlug'])
     ->name('collections.category.show');
 
+// Add artists endpoint
+Route::prefix('artists')->group(function () {
+    Route::get('/', [PictufyController::class, 'artistsOverview'])->name('artists.overview');
+    Route::get('/illustrators', [PictufyController::class, 'artistsIllustrators'])->name('artists.illustrators');
+    Route::get('/photographers', [PictufyController::class, 'artistsPhotographers'])->name('artists.photographers');
+    Route::get('/by-country', [PictufyController::class, 'artistsByCountry'])->name('artists.by_country');
+    Route::get('/all', [PictufyController::class, 'artistsAll'])->name('artists.all');
+});
+// Route to handle individual artist pages
+Route::get('/artist/{artist_slug}/{filters?}', [PictufyController::class, 'showArtist'])
+    ->where('filters', '.*')
+    ->name('artist.show');
+
 // Add categories endpoint
 Route::get('/api/categories', [PictufyController::class, 'getCategories']);
 

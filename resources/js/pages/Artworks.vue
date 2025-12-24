@@ -4,12 +4,17 @@
         <main class="main-content">
             <div class="content-wrapper">
                 <div v-if="props.collectionId" class="collection-header mb-8">
-                    <div v-if="props.collectionCover" class="collection-cover-image-wrapper mb-4">
-                        <img :src="props.collectionCover" :alt="`Cover image for ${props.collectionName}`"
-                            class="collection-cover-image" />
+                    <div v-if="props.collectionCover" 
+                        :class="[
+                            'mb-4 mx-auto', 
+                            props.isArtistPage ? 'artist-cover-wrapper' : 'collection-cover-image-wrapper'
+                        ]">
+                        <img :src="props.collectionCover" 
+                            :alt="`Cover image for ${props.collectionName}`"
+                            :class="props.isArtistPage ? 'artist-cover-image' : 'collection-cover-image'" />
                     </div>
-                    <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName
-                    }}</h1>
+                    
+                    <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName }}</h1>
                     <p v-if="props.collectionDescription"
                         class="collection-description text-center text-gray-600 text-sm md:text-base max-w-3xl mx-auto">
                         {{ props.collectionDescription }}
@@ -85,7 +90,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, defineProps, watch, inject, computed } from "vue";
 import axios from "axios";
-import { debounce } from 'lodash-es'; // Import debounce from lodash-es
+import { debounce } from 'lodash-es';
 import DataView from "primevue/dataview";
 import Button from "primevue/button";
 import InputText from 'primevue/inputtext';
@@ -97,7 +102,6 @@ import ScrollTop from 'primevue/scrolltop';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 
-
 defineOptions({ layout: FilteredLayout });
 
 const props = defineProps({
@@ -108,9 +112,10 @@ const props = defineProps({
     collectionCover: { type: String, default: null },
     collectionDescription: { type: String, default: null },
     filters: { type: Array, default: () => [] },
-    currentSearchTerm: String, // From controller, reflecting URL query
+    currentSearchTerm: String,
     nextPage: { type: Number, default: null },
     initialOrder: { type: String, default: 'recommended' },
+    isArtistPage: { type: Boolean, default: false }, // Added prop
 });
 
 const page = usePage();
@@ -118,18 +123,16 @@ const layout = inject('layout');
 
 const localArtworks = ref([]);
 const localNextPage = ref(null);
-const loading = ref(false); // For "load more"
-const artworksLoading = ref(false); // For initial/filter/search main content load
+const loading = ref(false);
+const artworksLoading = ref(false);
 const localCurrentPageForLoadMore = ref(1);
 
-const searchQuery = ref(''); // Bound to the InputText
-const localCurrentSearchTerm = ref(''); // The term that was actually searched for
+const searchQuery = ref('');
+const localCurrentSearchTerm = ref('');
 
-// --- Inertia Event Handlers for global loading state ---
 const unregisterStartListener = router.on('start', () => artworksLoading.value = true);
 const unregisterFinishListener = router.on('finish', () => artworksLoading.value = false);
 const unregisterErrorListener = router.on('error', () => artworksLoading.value = false);
-
 
 const performSearchRequest = (searchVal) => {
     artworksLoading.value = true;
@@ -137,46 +140,39 @@ const performSearchRequest = (searchVal) => {
 
     const queryParams = {
         search: localCurrentSearchTerm.value || undefined,
-        // page: 1 // Reset to page 1 for a new search
     };
 
-    let baseRouteName = page.props.ziggy?.current_route_name || 'artworks'; // Default to 'artworks'
-    let routeParams = { ...page.props.ziggy?.parameters }; // Copy existing route parameters
+    let baseRouteName = page.props.ziggy?.current_route_name || 'artworks';
+    let routeParams = { ...page.props.ziggy?.parameters };
 
-    // If filters are part of path and not ziggy params, ensure they are included
     if (props.filters && props.filters.length > 0 && !routeParams.filters) {
         routeParams.filters = props.filters.join('/');
     }
-    // Ensure specific IDs are present if on specific pages
     if (baseRouteName === 'collection.show' && !routeParams.collection_slug && props.collectionSlug) {
         routeParams.collection_slug = props.collectionSlug;
     } else if (baseRouteName === 'list.filtered' && !routeParams.list_id && props.collectionId) {
-        routeParams.list_id = props.collectionId; // Assuming collectionId is list_id for this route
+        routeParams.list_id = props.collectionId;
+    } else if (baseRouteName === 'artist.show' && !routeParams.artist_id && props.collectionId) {
+         routeParams.artist_id = props.collectionId;
     }
-
 
     router.get(route(baseRouteName, routeParams), queryParams, {
         preserveState: true,
-        preserveScroll: true, // Let Inertia manage scroll on success, or handle manually
+        preserveScroll: true,
         replace: true,
         onSuccess: (newPage) => {
-            // Data (artworks, nextPage, currentSearchTerm) will be updated via props.
-            // Update local searchQuery to match the actual searched term from the backend response.
             searchQuery.value = newPage.props.currentSearchTerm || '';
             localCurrentSearchTerm.value = newPage.props.currentSearchTerm || '';
         },
         onFinish: () => {
-            // artworksLoading.value = false; // Already handled by global listener
         }
     });
 };
 
-// Create the debounced version of performSearchRequest
 const debouncedPerformSearch = debounce((newValue) => {
     performSearchRequest(newValue);
-}, 1000); // 1000ms = 1 second delay
+}, 1000);
 
-// Watch the searchQuery model for changes
 watch(searchQuery, (newValue, oldValue) => {
     if (newValue !== oldValue) {
         debouncedPerformSearch(newValue);
@@ -184,16 +180,14 @@ watch(searchQuery, (newValue, oldValue) => {
 });
 
 const clearSearch = () => {
-    searchQuery.value = ''; // This will trigger the watcher and then debouncedPerformSearch
-    // performSearchRequest(''); // Or call directly if immediate clearing is desired
+    searchQuery.value = '';
 };
 
-// --- Lifecycle and Data Handling ---
 onMounted(() => {
     localArtworks.value = Array.isArray(props.artworks) ? [...props.artworks] : [];
     localNextPage.value = props.nextPage;
     localCurrentPageForLoadMore.value = props.nextPage ? props.nextPage - 1 : (props.artworks.length > 0 ? 1 : null);
-    searchQuery.value = props.currentSearchTerm || ''; // Initialize from prop
+    searchQuery.value = props.currentSearchTerm || '';
     localCurrentSearchTerm.value = props.currentSearchTerm || '';
 
     window.addEventListener('scroll', handleScroll);
@@ -201,15 +195,13 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
-    // Unregister Inertia listeners
     unregisterStartListener();
     unregisterFinishListener();
     unregisterErrorListener();
 });
 
-// Watch props to update local state when Inertia navigates
 watch(() => props.artworks, (newArtworks) => {
-    if (!loading.value) { // Avoid race condition with loadMore
+    if (!loading.value) {
         localArtworks.value = Array.isArray(newArtworks) ? [...newArtworks] : [];
     }
 }, { deep: true });
@@ -220,31 +212,30 @@ watch(() => props.nextPage, (newNextPage) => {
 });
 
 watch(() => props.currentSearchTerm, (newSearchTerm) => {
-    // This ensures that if navigation changes the search term (e.g. back button, header search if implemented later)
-    // the local searchQuery and localCurrentSearchTerm reflect it.
     searchQuery.value = newSearchTerm || '';
     localCurrentSearchTerm.value = newSearchTerm || '';
 });
-
 
 const loadMoreArtworks = async () => {
     if (!localNextPage.value || loading.value) return;
 
     loading.value = true;
     try {
-        let baseRouteName = page.props.ziggy?.current_route_name || 'artworks'; // Default to 'artworks'
+        let baseRouteName = page.props.ziggy?.current_route_name || 'artworks';
 
-        const response = await axios.get(route('artworks.fetch'), {
-            params: {
-                page: localNextPage.value,
-                per_page: 30, // Or your configured per_page
-                collection_id: baseRouteName === 'collection.show' ? props.collectionId : null,
-                list_id: baseRouteName === 'list.filtered' ? props.collectionId : null,
-                filters: props.filters?.join('/'),
-                order: props.initialOrder, // or a reactive order ref
-                search: localCurrentSearchTerm.value || undefined, // Use the actual searched term
-            }
-        });
+        const params = {
+            page: localNextPage.value,
+            per_page: 30,
+            collection_id: baseRouteName === 'collection.show' ? props.collectionId : null,
+            list_id: baseRouteName === 'list.filtered' ? props.collectionId : null,
+            // Pass artist_id for artist pages to ensure pagination works correctly
+            artist_id: props.isArtistPage ? props.collectionId : null, 
+            filters: props.filters?.join('/'),
+            order: props.initialOrder,
+            search: localCurrentSearchTerm.value || undefined,
+        };
+
+        const response = await axios.get(route('artworks.fetch'), { params });
 
         if (response.data.artworks && response.data.artworks.length > 0) {
             localArtworks.value.push(...response.data.artworks);
@@ -260,7 +251,7 @@ const loadMoreArtworks = async () => {
     }
 };
 
-const handleScroll = debounce(() => { // Also debounce scroll handler slightly
+const handleScroll = debounce(() => {
     const bottomOfWindow = window.innerHeight + window.pageYOffset;
     const documentHeight = document.documentElement.offsetHeight; 
     if (bottomOfWindow >= documentHeight - 500 && localNextPage.value && !loading.value) {
@@ -272,7 +263,6 @@ const artworks = computed(() => localArtworks.value);
 
 </script>
 
-
 <style scoped>
 .layout-container {
     display: flex;
@@ -282,7 +272,6 @@ const artworks = computed(() => localArtworks.value);
 .main-content {
     flex: 1;
     padding: 2rem 2rem;
-    /* Adjusted padding */
     overflow-y: auto;
 }
 
@@ -292,65 +281,66 @@ const artworks = computed(() => localArtworks.value);
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 2rem;
-    /* Ensure padding for content */
 }
 
 /* Collection Header Styles */
 .collection-header {
     border-bottom: 1px solid #e5e7eb;
-    /* Subtle separator */
     padding-bottom: 2rem;
 }
 
+/* Standard Collection Banner Style */
 .collection-cover-image-wrapper {
     max-height: 400px;
-    /* Limit height of cover */
     width: 100%;
     overflow: hidden;
     border-radius: 8px;
-    /* Rounded corners for the image */
     display: flex;
-    /* Center image if it's not full width */
     justify-content: center;
     align-items: center;
     background-color: #f0f0f0;
-    /* Placeholder if image is smaller */
 }
 
 .collection-cover-image {
     width: 100%;
-    /* Make image responsive */
     height: 100%;
     object-fit: cover;
-    /* Cover the area, might crop */
 }
 
-.collection-title {
-    /* Tailwind classes used in template, specific styles if needed */
+/* Artist Profile Circular Style */
+.artist-cover-wrapper {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%; /* Circular mask */
+    overflow: hidden;
+    background-color: #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 4px solid white; /* White border to make it pop */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.artist-cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .collection-description {
-    /* Tailwind classes used in template */
     line-height: 1.6;
 }
 
-
 /* Filter button */
 .filter-button {
-    /* margin-bottom: 1rem; */
-    /* Original style */
 }
 
 /* Artworks Grid & Cards */
 .artwork-container {
     position: relative;
     overflow: hidden;
-    /* background: #f9f9f9; */
-    /* Light background for card area */
     padding: 0.5rem;
-    /* Small padding inside the container */
     border-radius: 6px;
-    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); */
 }
 
 .artwork-link {
@@ -360,12 +350,10 @@ const artworks = computed(() => localArtworks.value);
 }
 
 .artwork-container img {
-    /* Ensure images inside link are responsive */
     max-width: 100%;
     height: auto;
     margin: 0 auto;
     border-radius: 4px;
-    /* Slightly rounded images */
 }
 
 .artwork-overlay {
@@ -374,14 +362,11 @@ const artworks = computed(() => localArtworks.value);
     left: 0;
     right: 0;
     background: rgba(255, 255, 255, 0.95);
-    /* Slightly less transparent */
     padding: 0.75rem;
     transform: translateY(100%);
     transition: transform 0.3s ease, opacity 0.3s ease;
-    /* Added opacity transition */
     opacity: 0;
     border-top: 1px solid #eee;
-    /* Separator for overlay */
 }
 
 .artwork-container:hover .artwork-overlay {
@@ -393,16 +378,13 @@ const artworks = computed(() => localArtworks.value);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* Space out title and ID */
     gap: 0.5rem;
-    /* Reduced gap */
     color: #333;
 }
 
 .artwork-id,
 .artwork-title {
     font-size: 0.8rem;
-    /* Slightly smaller font */
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -411,22 +393,18 @@ const artworks = computed(() => localArtworks.value);
 
 .artwork-title {
     flex-grow: 1;
-    /* Allow title to take available space */
     text-align: left;
 }
 
 .artwork-id {
     flex-shrink: 0;
-    /* Prevent ID from shrinking too much */
     color: #555;
 }
-
 
 /* No results and loading states */
 .no-results {
     text-align: center;
     padding: 40px 20px;
-    /* Added horizontal padding */
     border-radius: 8px;
     margin: 20px 0;
 }
@@ -439,12 +417,10 @@ const artworks = computed(() => localArtworks.value);
     padding: 2rem;
     gap: 1rem;
     width: 100%;
-    /* Ensure it takes full width */
 }
 
 .loading-spinner {
     width: 40px;
-    /* Slightly smaller spinner */
     height: 40px;
 }
 
@@ -454,10 +430,8 @@ const artworks = computed(() => localArtworks.value);
 }
 
 .no-image {
-    /* Style for when artwork image is missing */
     width: 100%;
     aspect-ratio: 1/1;
-    /* Maintain square or defined aspect ratio */
     max-height: 300px;
     display: flex;
     align-items: center;
@@ -472,16 +446,8 @@ const artworks = computed(() => localArtworks.value);
     padding-left: 2.5rem;
 }
 
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-}
-
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
-
-    /* md breakpoint */
     .main-content {
         padding: 0rem 1rem;
     }
@@ -492,18 +458,14 @@ const artworks = computed(() => localArtworks.value);
 
     .collection-title {
         font-size: 2xl;
-        /* Tailwind equivalent for text-2xl */
     }
 
     .collection-description {
         font-size: sm;
-        /* Tailwind equivalent for text-sm */
     }
 }
 
 @media (max-width: 640px) {
-
-    /* sm breakpoint */
     .content-wrapper {
         padding: 1rem;
     }
@@ -515,7 +477,6 @@ const artworks = computed(() => localArtworks.value);
 
     .collection-title {
         font-size: xl;
-        /* Tailwind equivalent for text-xl */
     }
 
     .artwork-container {

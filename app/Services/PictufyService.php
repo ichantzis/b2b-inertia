@@ -234,6 +234,53 @@ class PictufyService
         return $this->request('artwork', ['artwork_id' => $artworkId]);
     }
 
+    /**
+     * Resolve artist ID from username (slug).
+     * Uses a large cached list to minimize API calls.
+     */
+    public function getArtistIdBySlug($slug)
+    {
+        // We fetch a large list of artists sorted alphabetically to create a lookup directory.
+        // Caching this response effectively creates our "Slug -> ID" database.
+        // Adjust per_page if your artist count exceeds 2000.
+        $params = ['order' => 'alpha', 'per_page' => 2000]; 
+        
+        $response = $this->getArtists($params);
+        $artists = $response['items'] ?? [];
+
+        // Case-insensitive search for the username
+        foreach ($artists as $artist) {
+            // Ensure we check if 'username' exists, fallback to name matching if strictly needed (optional)
+            if (isset($artist['username']) && strcasecmp($artist['username'], $slug) === 0) {
+                return $artist['artist_id'];
+            }
+        }
+
+        return null;
+    }
+
+    public function getArtists($params = [])
+    {
+        $cacheKey = 'pictufy_artists_' . md5(json_encode($params));
+        $cacheDuration = 60; // Cache for 60 minutes
+
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($params) {
+            Log::info("Fetching artists from API with params: " . json_encode($params));
+            return $this->request('artists', $params);
+        });
+    }
+
+    public function getArtist($artistId)
+    {
+        $cacheKey = 'pictufy_artist_' . $artistId;
+        $cacheDuration = 60;
+
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($artistId) {
+            Log::info("Fetching artist details for ID: " . $artistId);
+            return $this->request('artist', ['artist_id' => $artistId]);
+        });
+    }
+
     public function refreshListsCache()
     {
         $cacheKey = 'pictufy_lists'; // Example for one list type

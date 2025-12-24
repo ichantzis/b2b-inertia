@@ -128,9 +128,9 @@ const mainMenuItems = computed(() => {
 
     items.push({
         label: 'Artists',
-        // route: route('artworks'),
+        route: route('artists.overview'),
         icon: 'pi pi-fw pi-palette',
-        // active: currentRoute.value == 'artworks',
+        active: currentRoute.value == 'artists.overview' || currentRoute.value == 'artists.illustrators' || currentRoute.value == 'artists.photographers' || currentRoute.value == 'artists.by_country' || currentRoute.value == 'artists.all',
         command: () => {
             mobileMenuOpen.value = false;
         }
