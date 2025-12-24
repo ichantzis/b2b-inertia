@@ -207,7 +207,7 @@ const scrollToLetter = (letter) => {
 
 .content-wrapper {
     margin: 0 auto;
-    max-width: 1400px;
+    max-width: 100%;
     background: white;
     border-radius: 12px;
     padding: 3rem 2rem;

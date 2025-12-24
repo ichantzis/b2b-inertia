@@ -345,9 +345,20 @@ class PictufyController extends Controller
     public function artworkDetails($id)
     {
         try {
-            $artwork = $this->pictufy->getArtworkDetails($id);
+            $artworkResponse = $this->pictufy->getArtworkDetails($id);
+            $artwork = $artworkResponse['items'][0] ?? null;
+
+            if ($artwork && isset($artwork['artist_id'])) {
+                // Fetch artist details to get the 'username' (slug)
+                // This uses the getArtist method which you already cached in the Service
+                $artistResponse = $this->pictufy->getArtist($artwork['artist_id']);
+                if (!empty($artistResponse['items'][0]['username'])) {
+                    $artwork['artist_username'] = $artistResponse['items'][0]['username'];
+                }
+            }
+
             return Inertia::render('ArtworkDetails', [
-                'artwork' => $artwork['items'][0] ?? null, // API returns 'items' as an array
+                'artwork' => $artwork,
                 'error' => null
             ]);
         } catch (\Exception $e) {
@@ -468,13 +479,13 @@ class PictufyController extends Controller
 
         foreach ($artists as $artist) {
             $type = $artist['artist_type'] ?? '';
-            
+
             if (Str::contains(strtolower($type), strtolower($mainTypeKeyword))) {
                 // Remove the keyword to get the sub-category
                 $subCategory = trim(str_ireplace($mainTypeKeyword, '', $type));
-                
+
                 if (empty($subCategory)) {
-                    $subCategory = 'General'; 
+                    $subCategory = 'General';
                 }
 
                 if (!isset($grouped[$subCategory])) {
@@ -485,8 +496,8 @@ class PictufyController extends Controller
             }
         }
 
-        ksort($grouped); 
-        
+        ksort($grouped);
+
         $rows = [];
         foreach ($grouped as $category => $items) {
             $rows[] = [
@@ -615,14 +626,14 @@ class PictufyController extends Controller
     public function artistsAll(Request $request)
     {
         $order = $request->input('order', 'alpha');
-        
+
         // Fetch a larger page size to ensure we populate the list after filtering
         $response = $this->pictufy->getArtists(['order' => $order, 'per_page' => 100]);
         $rawArtists = $response['items'] ?? [];
 
         // Filter
         $filteredArtists = $this->filterByMinArtworks($rawArtists, 10);
-        
+
         return Inertia::render('artists/Index', [
             'artists' => $filteredArtists,
             'currentOrder' => $order
@@ -665,7 +676,7 @@ class PictufyController extends Controller
         // 4. Parse URL Filters
         if ($filters) {
             $segments = explode('/', $filters);
-            
+
             $validColors = ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'white', 'gray', 'black', 'brown', 'highkey', 'lowkey'];
             $validGeometries = ['horizontal', 'vertical', 'square', 'panorama'];
             $validOrders = ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'];
@@ -679,7 +690,7 @@ class PictufyController extends Controller
                     $params['order'] = $segment;
                     continue;
                 }
-                
+
                 // B. Geometry
                 if (in_array($segment, $validGeometries)) {
                     $collectedGeometries[] = $segment;
@@ -696,7 +707,7 @@ class PictufyController extends Controller
                 if (Str::startsWith($segment, 'cat_')) {
                     $categoryId = $this->pictufy->getCategoryIdBySlug($segment);
                     if ($categoryId) {
-                        $params['category'] = $categoryId; 
+                        $params['category'] = $categoryId;
                     }
                     continue;
                 }

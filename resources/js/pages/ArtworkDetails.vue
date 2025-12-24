@@ -61,7 +61,14 @@
       <div class="artwork-information">
         <div class="artwork-header">
           <h1 class="artwork-title-text">{{ currentArtwork.title?.en || 'Untitled' }}</h1>
-          <h2 class="artwork-artist-name">{{ currentArtwork.artist }}</h2>
+          <h2 class="artwork-artist-name">
+            <Tag v-if="currentArtwork.artist_username" :value="currentArtwork.artist" severity="info"
+              @click="navigateToArtist(currentArtwork.artist_username)" :pt="{
+                root: { class: 'text-lg md:text-xl cursor-pointer hover:brightness-95 transition-all' }
+              }" />
+
+            <span v-else>{{ currentArtwork.artist }}</span>
+          </h2>
         </div>
 
         <div class="artwork-details-grid">
@@ -71,27 +78,20 @@
           </div>
           <div class="detail-item">
             <span class="detail-label">Category</span>
-            <span class="detail-value clickable-category" >
-              <Tag :value="currentArtwork.category" severity="warn" @click="navigateToCategory(currentArtwork.category)" :pt="{
-                root: { class: 'text-sm md:text-base' }
-              }" />
+            <span class="detail-value clickable-category">
+              <Tag :value="currentArtwork.category" severity="warn" @click="navigateToCategory(currentArtwork.category)"
+                :pt="{
+                  root: { class: 'text-sm md:text-base' }
+                }" />
             </span>
           </div>
         </div>
         <div class="tags-wrapper" v-if="parsedKeywords.length > 0">
-          <Tag
-                v-for="(tag, index) in parsedKeywords"
-                :key="index"
-                :value="tag"
-                severity="secondary"
-                rounded
-                @click="navigateToArtworksWithTag(tag)"
-                class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150"
-                tabindex="0"
-                @keydown.enter="navigateToArtworksWithTag(tag)"
-                @keydown.space="navigateToArtworksWithTag(tag)"
-                role="link"
-            />
+          <Tag v-for="(tag, index) in parsedKeywords" :key="index" :value="tag" severity="secondary" rounded
+            @click="navigateToArtworksWithTag(tag)"
+            class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150" tabindex="0"
+            @keydown.enter="navigateToArtworksWithTag(tag)" @keydown.space="navigateToArtworksWithTag(tag)"
+            role="link" />
         </div>
 
         <Divider />
@@ -106,16 +106,16 @@
 
     <Dialog v-model:visible="previewVisible" modal :dismissableMask="true" class="image-preview-dialog"
       :closable="false" headerClass="p-dialog-custom-header" contentClass="p-dialog-custom-content" :pt="{
-        root: { 
-            style: {
-                justifyContent: 'center', 
-                width: '-webkit-fill-available',
-                height: '-webkit-fill-available',
-                maxHeight: 'none',
-                background: '#ffffff0f',
-                boxShadow: 'none',
-                border: 'none'
-            } 
+        root: {
+          style: {
+            justifyContent: 'center',
+            width: '-webkit-fill-available',
+            height: '-webkit-fill-available',
+            maxHeight: 'none',
+            background: '#ffffff0f',
+            boxShadow: 'none',
+            border: 'none'
+          }
         },
         mask: { style: 'backdrop-filter: blur(5px); background-color: rgba(0,0,0,0.85);' }
       }">
@@ -131,8 +131,8 @@
 
           <template v-if="galleryImages.length > 0 && galleryImages[currentIndex]">
             <template v-if="galleryImages[currentIndex].isPrimaryArtwork">
-              <div class="canvas-frame-wrapper" :class="{ 'no-frame-mode': !selectedCanvas.url }"> <img v-if="selectedCanvas.url" :src="selectedCanvas.url" alt="Canvas Frame"
-                  class="canvas-frame-image" />
+              <div class="canvas-frame-wrapper" :class="{ 'no-frame-mode': !selectedCanvas.url }"> <img
+                  v-if="selectedCanvas.url" :src="selectedCanvas.url" alt="Canvas Frame" class="canvas-frame-image" />
                 <img :src="galleryImages[currentIndex].itemImageSrc" class="artwork-on-canvas"
                   :alt="galleryImages[currentIndex].alt"
                   :style="{ top: selectedCanvas.artworkContainerStyle.top, left: selectedCanvas.artworkContainerStyle.left, width: selectedCanvas.artworkContainerStyle.width, height: selectedCanvas.artworkContainerStyle.height, transform: selectedCanvas.artworkTransform, transformOrigin: selectedCanvas.transformOrigin || 'center center', boxShadow: selectedCanvas.artworkShadow }" />
@@ -187,17 +187,17 @@ import horizontalGoldImg from '@/../../public/images/frames/horizontal/HORIZONTA
 import horizontalMockaImg from '@/../../public/images/frames/horizontal/HORIZONTAL_MOCKA.webp';
 import horizontalOakImg from '@/../../public/images/frames/horizontal/HORIZONTAL_OAK.webp';
 import horizontalSilverImg from '@/../../public/images/frames/horizontal/HORIZONTAL_SILVER.webp';
-import squareCanvasImg from '@/../../public/images/frames/square/SQUARE_BLACK.webp'; 
-import squareBlackImg from '@/../../public/images/frames/square/SQUARE_BLACK.webp'; 
-import squareWhiteImg from '@/../../public/images/frames/square/SQUARE_WHITE.webp'; 
-import squareNaturalImg from '@/../../public/images/frames/square/SQUARE_NATURAL.webp'; 
-import squareCremaImg from '@/../../public/images/frames/square/SQUARE_CREMA.webp'; 
-import squareGoldImg from '@/../../public/images/frames/square/SQUARE_GOLD.webp'; 
-import squareMockaImg from '@/../../public/images/frames/square/SQUARE_MOCKA.webp'; 
-import squareOakImg from '@/../../public/images/frames/square/SQUARE_OAK.webp'; 
-import squareSilverImg from '@/../../public/images/frames/square/SQUARE_SILVER.webp'; 
-import squareWalnutImg from '@/../../public/images/frames/square/SQUARE_WALNUT.webp'; 
-import squareNoFrameImg from '@/../../public/images/frames/SQUARE_NO-FRAME.jpg'; 
+import squareCanvasImg from '@/../../public/images/frames/square/SQUARE_BLACK.webp';
+import squareBlackImg from '@/../../public/images/frames/square/SQUARE_BLACK.webp';
+import squareWhiteImg from '@/../../public/images/frames/square/SQUARE_WHITE.webp';
+import squareNaturalImg from '@/../../public/images/frames/square/SQUARE_NATURAL.webp';
+import squareCremaImg from '@/../../public/images/frames/square/SQUARE_CREMA.webp';
+import squareGoldImg from '@/../../public/images/frames/square/SQUARE_GOLD.webp';
+import squareMockaImg from '@/../../public/images/frames/square/SQUARE_MOCKA.webp';
+import squareOakImg from '@/../../public/images/frames/square/SQUARE_OAK.webp';
+import squareSilverImg from '@/../../public/images/frames/square/SQUARE_SILVER.webp';
+import squareWalnutImg from '@/../../public/images/frames/square/SQUARE_WALNUT.webp';
+import squareNoFrameImg from '@/../../public/images/frames/SQUARE_NO-FRAME.jpg';
 
 // --- ΝΕΕΣ ΕΙΣΑΓΩΓΕΣ ΓΙΑ ΑΛΛΑ ΧΡΩΜΑΤΑ/ΓΕΩΜΕΤΡΙΕΣ (ΠΡΟΣΘΕΣΤΕ ΤΙΣ ΔΙΚΕΣ ΣΑΣ ΕΔΩ) ---
 // Παραδείγματα (αντικαταστήστε με τις πραγματικές διαδρομές):
@@ -222,14 +222,14 @@ const currentFrameStyle = ref('black');
 // **ΣΗΜΑΝΤΙΚΟ**: Αντικαταστήστε τις placeholder διαδρομές ('path/to/...') με τις πραγματικές διαδρομές των εικόνων σας.
 const frameColorImagePaths = {
   vertical: {
-    black: verticalBlacklImg, 
+    black: verticalBlacklImg,
     white: verticalWhiteImg,
     mocka: verticalMockaImg,
-    silver: verticalSilverImg, 
+    silver: verticalSilverImg,
     natural: verticalNaturalImg,
     walnut: verticalWalnutImg,
-    oak: verticalOakImg,     
-    crema: verticalCremaImg,  
+    oak: verticalOakImg,
+    crema: verticalCremaImg,
     gold: verticalGoldImg,
     noframe: null,
     default: defaultCanvasImg // Fallback για vertical (π.χ., olive)
@@ -248,15 +248,15 @@ const frameColorImagePaths = {
     default: horizontalBlackImg // Fallback για horizontal (π.χ., black)
   },
   square: {
-    white: squareWhiteImg, 
+    white: squareWhiteImg,
     black: squareBlackImg,
     mocka: squareMockaImg,
     silver: squareSilverImg,
-    gold: squareGoldImg,  
+    gold: squareGoldImg,
     natural: squareNaturalImg,
-    walnut: squareWalnutImg,  
-    oak: squareOakImg,       
-    crema: squareCremaImg,    
+    walnut: squareWalnutImg,
+    oak: squareOakImg,
+    crema: squareCremaImg,
     noframe: null,
     default: squareCanvasImg // Fallback για square (π.χ., white)
   }
@@ -459,6 +459,12 @@ const generateCategorySlug = (categoryName) => {
   return `cat_${currentArtwork.value.artwork_type}_${slug}`;
 };
 
+const navigateToArtist = (artistSlug) => {
+  if (artistSlug) {
+    router.visit(route('artist.show', { artist_slug: artistSlug }));
+  }
+};
+
 const navigateToCategory = (categoryName) => {
   const categorySlug = generateCategorySlug(categoryName);
   if (categorySlug && categoryName) {
@@ -467,17 +473,17 @@ const navigateToCategory = (categoryName) => {
 };
 
 const navigateToArtworksWithTag = (tag) => {
-    if (!tag) return;
+  if (!tag) return;
 
-    // We want to navigate to the general 'artworks' route
-    // without any existing collection or list filters from the current artwork details page.
-    // The 'filters' parameter for the 'artworks' route is for path-based filters (category, geometry etc.)
-    // The search term will be a query parameter.
-    router.visit(route('artworks'), { // Assuming 'artworks' is the name of your general artworks listing route
-        data: { search: tag.trim() }, // Pass the tag as the 'search' query parameter
-        preserveState: false, // Typically false for a new search context
-        preserveScroll: false, // Scroll to top of new page
-    });
+  // We want to navigate to the general 'artworks' route
+  // without any existing collection or list filters from the current artwork details page.
+  // The 'filters' parameter for the 'artworks' route is for path-based filters (category, geometry etc.)
+  // The search term will be a query parameter.
+  router.visit(route('artworks'), { // Assuming 'artworks' is the name of your general artworks listing route
+    data: { search: tag.trim() }, // Pass the tag as the 'search' query parameter
+    preserveState: false, // Typically false for a new search context
+    preserveScroll: false, // Scroll to top of new page
+  });
 };
 
 function openPreview(index) {
@@ -540,77 +546,77 @@ function scrollThumbnails(direction) {
 // --- IMAGE PRELOADING LOGIC ---
 // This ensures that when a user clicks a color, the image is already cached
 const preloadFrameImages = (geometry) => {
-    const frames = frameColorImagePaths[geometry];
-    if (!frames) return;
+  const frames = frameColorImagePaths[geometry];
+  if (!frames) return;
 
-    Object.values(frames).forEach(src => {
-        if (src) {
-            const img = new Image();
-            img.src = src;
-        }
-    });
+  Object.values(frames).forEach(src => {
+    if (src) {
+      const img = new Image();
+      img.src = src;
+    }
+  });
 };
 
 // Watch for geometry changes to preload relevant frames
 watch(primaryArtworkGeometryType, (newGeometry) => {
-    if (newGeometry) {
-        // Use setTimeout to not block the main thread during initial render
-        setTimeout(() => preloadFrameImages(newGeometry), 1000);
-    }
+  if (newGeometry) {
+    // Use setTimeout to not block the main thread during initial render
+    setTimeout(() => preloadFrameImages(newGeometry), 1000);
+  }
 }, { immediate: true });
 
 // --- RECENTLY VIEWED LOGIC ---
 onMounted(() => {
-    if (props.artwork) {
-        addToRecentlyViewed(props.artwork);
-    }
+  if (props.artwork) {
+    addToRecentlyViewed(props.artwork);
+  }
 });
 
 const addToRecentlyViewed = (item) => {
-    // Console log to debug the actual structure if images still fail
-    console.log("Raw Artwork Item:", item); 
+  // Console log to debug the actual structure if images still fail
+  console.log("Raw Artwork Item:", item);
 
-    const key = 'recently_viewed_items';
-    let viewed = JSON.parse(localStorage.getItem(key) || '[]');
+  const key = 'recently_viewed_items';
+  let viewed = JSON.parse(localStorage.getItem(key) || '[]');
 
-    // 1. Fix ID: API usually returns 'id', not 'artwork_id'
-    const id = item.id || item.artwork_id;
+  // 1. Fix ID: API usually returns 'id', not 'artwork_id'
+  const id = item.id || item.artwork_id;
 
-    if (!id) {
-        console.warn("Skipping recently viewed: No ID found on item");
-        return;
-    }
+  if (!id) {
+    console.warn("Skipping recently viewed: No ID found on item");
+    return;
+  }
 
-    // 2. Fix Title: Handle { en: "Name" } object
-    let titleStr = item.title;
-    if (typeof titleStr === 'object' && titleStr !== null) {
-        titleStr = titleStr.en || Object.values(titleStr)[0] || 'Untitled';
-    }
+  // 2. Fix Title: Handle { en: "Name" } object
+  let titleStr = item.title;
+  if (typeof titleStr === 'object' && titleStr !== null) {
+    titleStr = titleStr.en || Object.values(titleStr)[0] || 'Untitled';
+  }
 
-    // 3. Fix Image: Try multiple common API fields
-    // We try 'thumb', then 'medium_url', then 'url' (if it's an image link), then 'files'
-    const image = item.urls.img_thumb || 
-                  item.urls.img_medium || 
-                  item.urls.img_high || 
-                  '/images/placeholder.png'; // Fallback
+  // 3. Fix Image: Try multiple common API fields
+  // We try 'thumb', then 'medium_url', then 'url' (if it's an image link), then 'files'
+  const image = item.urls.img_thumb ||
+    item.urls.img_medium ||
+    item.urls.img_high ||
+    '/images/placeholder.png'; // Fallback
 
-    // Remove if already exists to prevent duplicates
-    viewed = viewed.filter(i => i.artwork_id !== id);
+  // Remove if already exists to prevent duplicates
+  viewed = viewed.filter(i => i.artwork_id !== id);
 
-    // Add new item
-    viewed.unshift({
-        artwork_id: id,
-        title: titleStr,
-        artist: item.artist,
-        image: image
-    });
+  // Add new item
+  viewed.unshift({
+    artwork_id: id,
+    title: titleStr,
+    artist: item.artist,
+    image: image
+  });
 
-    // Limit to 20 items
-    if (viewed.length > 20) {
-        viewed = viewed.slice(0, 20);
-    }
+  // Limit to 20 items
+  if (viewed.length > 20) {
+    viewed = viewed.slice(0, 20);
+  }
 
-    localStorage.setItem(key, JSON.stringify(viewed));
+  localStorage.setItem(key, JSON.stringify(viewed));
 };
 
 </script>
@@ -954,8 +960,8 @@ const addToRecentlyViewed = (item) => {
 
 .p-dialog {
   background: #ffffff61 !important;
-  height: -webkit-fill-available!important;
-  width: -webkit-fill-available!important;
+  height: -webkit-fill-available !important;
+  width: -webkit-fill-available !important;
 }
 
 /* This is the direct child of .p-dialog-custom-content (the one we bind to ref="dialogContainerRef") */
@@ -1040,18 +1046,18 @@ const addToRecentlyViewed = (item) => {
   /* Force it to fill the flex parent (dialog-gallery-content) */
   width: 100% !important;
   height: 100% !important;
-  
+
   /* Remove any size limits */
   max-width: none !important;
   max-height: none !important;
-  
+
   /* Reset aspect ratio so it doesn't force a square */
   /* aspect-ratio: unset !important; */
-  
+
   /* Ensure it doesn't collapse */
-  display: flex!important;
-  align-items: center!important;
-  justify-content: center!important
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important
 }
 
 .dialog-gallery-content .canvas-frame-wrapper.no-frame-mode img {
