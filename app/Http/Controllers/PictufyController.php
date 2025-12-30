@@ -35,39 +35,47 @@ class PictufyController extends Controller
         // Fetch collections from the API.
         // The API docs show collections can be nested under categories,
         // or flat if skip_categories=1. Decide on the structure you want.
-        // For a page similar to pictufy.com/collections, you might want categories.
-        $apiCollectionsResponse = $this->pictufy->getCollections(['skip_categories' => 0]); // 0 to get categories, 1 for flat list
+        $apiCollectionsResponse = $this->pictufy->getCollections(['skip_categories' => 0]);
 
         $collectionsData = [];
         if (isset($apiCollectionsResponse['items'])) {
-            // If skip_categories = 0, items are categories containing collections
-            if (isset($apiCollectionsResponse['items'][0]['collections'])) { // Check if categorized
+            // Check if the response seems to be categorized (looking at the first item)
+            // But we must handle cases where specific categories might be empty/malformed
+            if (isset($apiCollectionsResponse['items'][0]['collections']) || isset($apiCollectionsResponse['items'][0]['category_name'])) {
                 $collectionsData = array_map(function ($category) {
+                    // Safety check: ensure 'collections' exists and is an array
+                    $rawCollections = $category['collections'] ?? [];
+                    if (!is_array($rawCollections)) {
+                        $rawCollections = [];
+                    }
+
                     return [
                         'category_id' => $category['category_id'] ?? null,
                         'category_name' => html_entity_decode($category['category_name'] ?? 'Unknown Category', ENT_QUOTES | ENT_HTML5),
                         'collections' => array_map(function ($collection) {
-                            // Extract slug from URL
-                            $urlPath = parse_url($collection['url'], PHP_URL_PATH);
-                            $slug = basename($urlPath);
+                            $urlPath = !empty($collection['url']) ? parse_url($collection['url'], PHP_URL_PATH) : '';
+                            $slug = !empty($urlPath) ? basename($urlPath) : Str::slug($collection['name'] ?? 'collection');
+                            
                             return [
-                                'id' => $collection['id'],
-                                'name' => html_entity_decode($collection['name'], ENT_QUOTES | ENT_HTML5),
+                                'id' => $collection['id'] ?? null,
+                                'name' => html_entity_decode($collection['name'] ?? 'Untitled', ENT_QUOTES | ENT_HTML5),
                                 'slug' => $slug,
                                 'thumb' => $collection['thumb'] ?? null,
                                 'artworks_count' => $collection['artworks'] ?? 0,
                                 'description' => html_entity_decode($collection['description'] ?? '', ENT_QUOTES | ENT_HTML5),
                             ];
-                        }, $category['collections'])
+                        }, $rawCollections) 
                     ];
                 }, $apiCollectionsResponse['items']);
-            } else { // Flat list of collections (if skip_categories = 1)
+            } else { 
+                // Flat list fallback (if skip_categories=1 was used or structure differs)
                 $collectionsData = array_map(function ($collection) {
-                    $urlPath = parse_url($collection['url'], PHP_URL_PATH);
-                    $slug = basename($urlPath);
+                    $urlPath = !empty($collection['url']) ? parse_url($collection['url'], PHP_URL_PATH) : '';
+                    $slug = !empty($urlPath) ? basename($urlPath) : Str::slug($collection['name'] ?? 'collection');
+                    
                     return [
-                        'id' => $collection['id'],
-                        'name' => html_entity_decode($collection['name'], ENT_QUOTES | ENT_HTML5),
+                        'id' => $collection['id'] ?? null,
+                        'name' => html_entity_decode($collection['name'] ?? 'Untitled', ENT_QUOTES | ENT_HTML5),
                         'slug' => $slug,
                         'thumb' => $collection['thumb'] ?? null,
                         'artworks_count' => $collection['artworks'] ?? 0,
@@ -77,13 +85,8 @@ class PictufyController extends Controller
             }
         }
 
-
         return Inertia::render('Collections', [
-            // Pass either categorized_collections or flat_collections to Vue
-            // depending on how you want to structure it.
-            // For pictufy.com/collections look, categorized is better.
-            'categorized_collections' => $collectionsData, // if skip_categories = 0
-            // 'collections' => $collectionsData // if skip_categories = 1
+            'categorized_collections' => $collectionsData,
         ]);
     }
 
