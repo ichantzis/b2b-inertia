@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NewOrderAdminNotification;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Http\Controllers\CartController;
@@ -91,7 +93,8 @@ class CheckoutController extends Controller
             'items.*.artwork_data.img_thumb' => 'nullable|string|url',
             'items.*.artwork_data.title' => 'nullable|string',
             'totalAmount' => 'required|numeric|min:0',
-            'paymentMethod' => 'required|string|in:stripe,cod,bank_transfer',
+            // 'paymentMethod' => 'required|string|in:stripe,cod,bank_transfer', // Removed stripe for now
+            'paymentMethod' => 'required|string|in:cod,bank_transfer',
             'notes' => 'nullable|string|max:1000', // Max length for notes
         ];
 
@@ -106,7 +109,7 @@ class CheckoutController extends Controller
             $invoice = $validatedData['wantsInvoice'] ? $validatedData['invoiceDetails'] : null;
 
             $order = Order::create([
-                'user_id' => $user?->id,
+                'user_id' => $user->id,
                 'order_number' => 'ORD-' . strtoupper(uniqid()), // Make it uppercase
                 'total_amount' => $validatedData['totalAmount'],
                 'status' => 'pending', // Or 'processing' depending on payment method
@@ -161,6 +164,15 @@ class CheckoutController extends Controller
 
             app(CartController::class)->clearCart();
             DB::commit();
+
+            // SEND ADMIN NOTIFICATION
+            try {
+                // Replace with your actual admin email or use config('mail.from.address')
+                Mail::to('chantzis84@gmail.com')->send(new NewOrderAdminNotification($order));
+            } catch (\Exception $e) {
+                Log::error("Failed to send admin order notification: " . $e->getMessage());
+                // Don't fail the order just because email failed
+            }
 
             return Inertia::location(route('checkout.complete', ['orderId' => $order->id]));
         } catch (\Illuminate\Validation\ValidationException $e) {

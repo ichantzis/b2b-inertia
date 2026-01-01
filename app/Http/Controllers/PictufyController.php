@@ -286,11 +286,12 @@ class PictufyController extends Controller
         Log::info("Fetching more artworks with request: " . json_encode($request->all()));
         $page = (int) $request->input('page', 1);
         $perPage = (int) $request->input('per_page', 30);
-        $collectionId = $request->input('collection_id'); // Note: was 'collection_id ' with a space, ensure it's correct
-        $listId = $request->input('list_id'); // For lists, if applicable
+        $collectionId = $request->input('collection_id');
+        $listId = $request->input('list_id');
+        $artistId = $request->input('artist_id');
         $filtersString = $request->input('filters', '');
         $order = $request->input('order', 'recommended');
-        $searchTerm = $request->input('search'); // <-- GET SEARCH TERM
+        $searchTerm = $request->input('search');
 
         $params = [
             'page' => $page,
@@ -303,19 +304,23 @@ class PictufyController extends Controller
         }
 
         if (!empty($listId)) {
-            $params['list_id'] = $listId; // For fetching artworks from a specific list
+            $params['list_id'] = $listId;
+        }
+
+        if (!empty($artistId)) {
+            $params['artist_id'] = $artistId;
         }
 
         if ($searchTerm) {
-            $params['search'] = $searchTerm; // <-- ADD SEARCH TERM
+            $params['search'] = $searchTerm;
         }
 
-        // ... (your existing filter segment parsing logic for $filtersString) ...
         if (!empty($filtersString)) {
             $filter_segments = explode('/', $filtersString);
             foreach ($filter_segments as $segment) {
+                // ... (keep existing filter parsing) ...
                 if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
-                    $params['order'] = $segment; // Order from path segment overrides query param if both present
+                    $params['order'] = $segment;
                     continue;
                 }
                 if (str_starts_with($segment, 'cat_')) {
@@ -333,7 +338,6 @@ class PictufyController extends Controller
                 }
             }
         }
-
 
         Log::info("Fetching artworks (fetchData) with processed params: " . json_encode($params));
         $response = $this->pictufy->getArtworks($params);

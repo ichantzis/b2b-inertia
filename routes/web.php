@@ -78,10 +78,12 @@ Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
 Route::put('/cart/{cartItem}', [CartController::class, 'update'])->name('cart.update'); // Use PUT for updates
 Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('cart.destroy'); // Use DELETE for removals
 
-// Checkout Route (Example) - Protect with authentication middleware
-Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-Route::get('/checkout/complete/{orderId}', [CheckoutController::class, 'complete'])->name('checkout.complete');
+// Checkout Route - Protect with authentication middleware
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::get('/checkout/complete/{orderId}', [CheckoutController::class, 'complete'])->name('checkout.complete');
+});
 
 // You might need a POST route for processing the checkout form
 // Route::post('/checkout', [CheckoutController::class, 'store'])->middleware(['auth', 'verified'])->name('checkout.store');

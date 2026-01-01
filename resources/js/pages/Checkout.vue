@@ -354,11 +354,12 @@
                             <div class="space-y-3 mt-6">
                                 <label class="block font-medium">Payment Method</label>
                                 <div class="flex flex-col md:flex-row md:gap-6">
-                                    <div class="flex items-center">
+                                    <!-- Removed stripe payment method-->
+                                    <!-- <div class="flex items-center">
                                         <RadioButton inputId="pmStripe" name="paymentMethod" value="stripe"
                                             v-model="form.paymentMethod" />
                                         <label for="pmStripe" class="ml-2">Card (Stripe)</label>
-                                    </div>
+                                    </div> -->
                                     <div class="flex items-center">
                                         <RadioButton inputId="pmCod" name="paymentMethod" value="cod"
                                             v-model="form.paymentMethod" />
@@ -436,7 +437,7 @@ const form = useForm({
         country_object: null, // Temporary holder
         streetAddress: '', city: '', stateOrCounty: '', postalCode: '', phone: '',
     },
-    paymentMethod: 'stripe',
+    paymentMethod: 'bank_transfer',
     items: cartItems,
     totalAmount: cartTotal,
     notes: '',

@@ -223,19 +223,18 @@ const loadMoreArtworks = async () => {
     try {
         let baseRouteName = page.props.ziggy?.current_route_name || 'artworks';
 
-        const params = {
-            page: localNextPage.value,
-            per_page: 30,
-            collection_id: baseRouteName === 'collection.show' ? props.collectionId : null,
-            list_id: baseRouteName === 'list.filtered' ? props.collectionId : null,
-            // Pass artist_id for artist pages to ensure pagination works correctly
-            artist_id: props.isArtistPage ? props.collectionId : null, 
-            filters: props.filters?.join('/'),
-            order: props.initialOrder,
-            search: localCurrentSearchTerm.value || undefined,
-        };
-
-        const response = await axios.get(route('artworks.fetch'), { params });
+        const response = await axios.get(route('artworks.fetch'), {
+            params: {
+                page: localNextPage.value,
+                per_page: 30,
+                collection_id: baseRouteName === 'collection.show' ? props.collectionId : null,
+                list_id: baseRouteName === 'list.filtered' ? props.collectionId : null,
+                artist_id: baseRouteName === 'artist.show' ? props.collectionId : null, 
+                filters: props.filters?.join('/'),
+                order: props.initialOrder,
+                search: localCurrentSearchTerm.value || undefined,
+            }
+        });
 
         if (response.data.artworks && response.data.artworks.length > 0) {
             localArtworks.value.push(...response.data.artworks);
@@ -332,8 +331,8 @@ const artworks = computed(() => localArtworks.value);
 }
 
 /* Filter button */
-.filter-button {
-}
+/* .filter-button {
+} */
 
 /* Artworks Grid & Cards */
 .artwork-container {
