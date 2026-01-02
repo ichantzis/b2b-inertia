@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +46,7 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, SettingsService $settings)
     {
         $user = Auth::user();
 
@@ -165,13 +166,18 @@ class CheckoutController extends Controller
             app(CartController::class)->clearCart();
             DB::commit();
 
-            // SEND ADMIN NOTIFICATION
+            // SEND ADMIN NOTIFICATION DYNAMICALLY
             try {
-                // Replace with your actual admin email or use config('mail.from.address')
-                Mail::to('chantzis84@gmail.com')->send(new NewOrderAdminNotification($order));
+                // Get email from Settings DB, fallback to config if DB is empty
+                $adminEmail = $settings->get('admin_notification_email', config('mail.from.address'));
+                
+                if ($adminEmail) {
+                    Mail::to($adminEmail)->send(new NewOrderAdminNotification($order));
+                } else {
+                    Log::warning('No admin email configured in settings.');
+                }
             } catch (\Exception $e) {
                 Log::error("Failed to send admin order notification: " . $e->getMessage());
-                // Don't fail the order just because email failed
             }
 
             return Inertia::location(route('checkout.complete', ['orderId' => $order->id]));

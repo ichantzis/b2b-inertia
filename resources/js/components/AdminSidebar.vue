@@ -28,6 +28,12 @@ const adminMenuItems = computed(() => [
         route: route('dashboard.users.index'),
         active: currentRoute.value && currentRoute.value.startsWith('dashboard.users')
     },
+    {
+        label: 'Settings',
+        icon: 'pi pi-fw pi-cog',
+        route: route('dashboard.settings.index'),
+        active: currentRoute.value && currentRoute.value.startsWith('dashboard.settings')
+    },
     // {
     //     label: 'Management',
     //     icon: 'pi pi-fw pi-cog',
@@ -84,8 +90,9 @@ const panelMenuItems = computed(() => {
     <div class="admin-sidebar p-4 h-full bg-surface-100 dark:bg-surface-800 flex flex-col shadow-lg">
         <div class="mb-6 text-center">
             <Link :href="route('dashboard.index')" @click="handleNavigation" class="no-underline">
-            <ApplicationLogo class="h-10 sm:h-12 mx-auto" />
-            <h1 class="text-lg sm:text-xl font-semibold mt-2 text-primary-500 dark:text-primary-400">Admin Panel</h1>
+                <ApplicationLogo class="h-10 sm:h-12 mx-auto" />
+                <h1 class="text-lg sm:text-xl font-semibold mt-2 text-primary-500 dark:text-primary-400">Admin Panel
+                </h1>
             </Link>
         </div>
 
@@ -94,8 +101,8 @@ const panelMenuItems = computed(() => {
                 <Link v-if="item.route" :href="item.route" @click="handleNavigation"
                     class="p-menuitem-link flex items-center p-2 my-1 rounded-md transition-colors duration-150 text-sm sm:text-base"
                     :class="{ 'bg-primary-500 text-white hover:bg-primary-600 dark:bg-primary-700 dark:hover:bg-primary-600': item.active, 'text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-surface-700': !item.active }">
-                <span :class="[item.icon, 'mr-2 text-base sm:text-lg']"></span>
-                <span>{{ item.label }}</span>
+                    <span :class="[item.icon, 'mr-2 text-base sm:text-lg']"></span>
+                    <span>{{ item.label }}</span>
                 </Link>
                 <a v-else-if="!item.separator && item.items" tabindex="0"
                     class="p-menuitem-link flex items-center p-2 my-1 rounded-md transition-colors duration-150 text-sm sm:text-base text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-surface-700"

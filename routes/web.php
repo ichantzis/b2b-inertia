@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Auth\AccessRequestController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PictufyController;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', [App\Http\Controllers\PictufyController::class, 'homepage'])->name('welcome');
+
+Route::post('/request-access', [App\Http\Controllers\Auth\AccessRequestController::class, 'store'])->name('access.request');
 
 // Replace collections route with lists
 Route::get('/lists', [PictufyController::class, 'lists'])->name('lists');
@@ -64,6 +67,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     Route::resource('users', AdminUserController::class)->except(['show']); // We'll use edit for show
     // If you want a dedicated show route, remove except(['show']) and implement show method.
     // For simplicity, edit often serves as the show/detail page.
+
+    // Settings Routes
+    Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
 });
 
 Route::middleware('auth')->group(function () {

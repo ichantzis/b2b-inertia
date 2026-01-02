@@ -96,7 +96,8 @@
 
         <Divider />
 
-        <ArtworkCustomizer :artwork="currentArtwork" @frame-change="handleFrameStyleChange" />
+        <ArtworkCustomizer :artwork="currentArtwork" :pricing-config="pricingConfig" :can-view-price="canViewPrice"
+          :require-login-for-prices="requireLoginForPrices" @frame-change="handleFrameStyleChange" />
       </div>
     </div>
     <div v-else class="flex justify-center items-center h-64">
@@ -157,7 +158,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { router, Head as InertiaHead } from '@inertiajs/vue3';
+import { router, Head as InertiaHead, usePage } from '@inertiajs/vue3';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import Divider from 'primevue/divider';
@@ -209,7 +210,19 @@ import squareNoFrameImg from '@/../../public/images/frames/SQUARE_NO-FRAME.jpg';
 defineOptions({ layout: HeaderLayout });
 
 const props = defineProps({
-  artwork: Object
+  artwork: Object,
+  error: String,
+  requireLoginForPrices: Boolean,
+  pricingConfig: Object
+});
+
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+
+// Logic to determine if price/cart is visible
+const canViewPrice = computed(() => {
+    if (!props.requireLoginForPrices) return true; // If setting is off, everyone can see
+    return !!user.value; // If setting is on, only logged-in users can see
 });
 
 const currentArtwork = computed(() => props.artwork);

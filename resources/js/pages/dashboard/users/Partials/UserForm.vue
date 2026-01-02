@@ -116,7 +116,7 @@ const emit = defineEmits(['submit']);
 const form = useForm({
     name: props.user?.name || '',
     email: props.user?.email || '',
-    role: props.user?.role || props.userRoles.includes('customer') ? 'customer' : props.userRoles[0], // Default to 'user' or first role
+    role: props.user?.role || (props.userRoles.includes('customer') ? 'customer' : props.userRoles[0]), // Default to 'user' or first role
     password: '',
     password_confirmation: '',
     phone: props.user?.phone || '',

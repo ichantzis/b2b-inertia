@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AccessRequestNotification;
+use App\Services\SettingsService;
+
+class AccessRequestController extends Controller
+{
+    public function store(Request $request, SettingsService $settings)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
+            'country' => 'required|string|max:2',
+            'email' => 'required|email',
+            'phone' => 'required|string|max:50',
+            'message' => 'nullable|string'
+        ]);
+
+        $adminEmail = $settings->get('admin_notification_email', config('mail.from.address'));
+
+        Mail::to($adminEmail)->send(new AccessRequestNotification($validated));
+
+        return back()->with('success', 'Your request has been sent. We will contact you shortly.');
+    }
+}

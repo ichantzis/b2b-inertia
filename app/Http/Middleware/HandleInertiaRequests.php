@@ -6,6 +6,7 @@ use Illuminate\Http\Request; // Make sure Request is imported
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy; // Ensure Ziggy is imported
 use App\Services\PictufyService; // Your existing service
+use App\Services\SettingsService;
 use App\Http\Controllers\CartController; // Your existing controller
 use Illuminate\Support\Str; // Your existing Str usage
 
@@ -42,6 +43,7 @@ class HandleInertiaRequests extends Middleware
     {
         // Your existing shared data logic
         $pictufyService = app(PictufyService::class);
+        $settings = app(SettingsService::class);
         $listsData = $pictufyService->getLists();
         $cartData = CartController::getSharedCartData();
         $allCollectionCategoriesWithCollections = [];
@@ -96,6 +98,10 @@ class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                     'role' => $request->user()->role, // If you need to check role on frontend (use with caution)
                 ] : null,
+            ],
+            // Add Global Config
+            'config' => [
+                'allow_registration' => $settings->get('allow_public_registration', false),
             ],
             'allCollectionCategoriesWithCollections' => $allCollectionCategoriesWithCollections,
             'lists' => collect($listsData['items'] ?? [])->map(function ($list) {

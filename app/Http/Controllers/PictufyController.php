@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\PictufyService;
+use App\Services\SettingsService;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -12,10 +13,12 @@ use Illuminate\Support\Str;
 class PictufyController extends Controller
 {
     protected $pictufy;
+    protected $settings;
 
-    public function __construct(PictufyService $pictufy)
+    public function __construct(PictufyService $pictufy, SettingsService $settings)
     {
         $this->pictufy = $pictufy;
+        $this->settings = $settings;
     }
 
     public function homepage(Request $request)
@@ -364,15 +367,24 @@ class PictufyController extends Controller
                 }
             }
 
+            // Fetch Settings
+            $requireLogin = $this->settings->get('require_login_for_prices', false);
+            $pricingConfig = $this->settings->get('pricing_config', []);
+
             return Inertia::render('ArtworkDetails', [
                 'artwork' => $artwork,
-                'error' => null
+                'error' => null,
+                'requireLoginForPrices' => $requireLogin,
+                'pricingConfig' => $pricingConfig
             ]);
+
         } catch (\Exception $e) {
             Log::error("Error fetching artwork details for ID $id: " . $e->getMessage());
             return Inertia::render('ArtworkDetails', [
                 'artwork' => null,
-                'error' => 'Artwork not found or error fetching details.'
+                'error' => 'Artwork not found or error fetching details.',
+                'requireLoginForPrices' => false,
+                'pricingConfig' => []
             ]);
         }
     }
