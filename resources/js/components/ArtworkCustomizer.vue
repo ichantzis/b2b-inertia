@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, router } from '@inertiajs/vue3';
 import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
@@ -232,6 +232,10 @@ const addToCart = () => {
     });
 };
 
+const handleLogin = () => {
+    router.visit(route('login'));
+};
+
 watch(selectedCanvas, (newFrameColor) => {
     if (selectedType.value === 'canvas') {
         emit('frameChange', newFrameColor);
@@ -401,7 +405,7 @@ watch([selectedType, selectedCanvas], () => {
                     </div>
                     <Button v-if="canViewPrice" label="ADD TO CART" icon="pi pi-shopping-cart" severity="primary" raised @click="addToCart"
                         :disabled="addToCartForm.processing" class="add-to-cart-btn" />
-                    <Button v-else label="LOGIN TO ADD TO CART" icon="pi pi-shopping-cart" severity="primary" raised
+                    <Button v-else label="LOGIN TO ADD TO CART" icon="pi pi-shopping-cart" severity="primary" raised @click="handleLogin"
                         :disabled="addToCartForm.processing" class="add-to-cart-btn" />
                 </div>
             </div>
