@@ -1,15 +1,21 @@
 <template>
     <AdminLayout>
-        <template #header-title>Edit User: {{ user.name }}</template>
-        <InertiaHead :title="`Admin - Edit User ${user.name}`" />
+        <template #header-title>Edit User</template>
+        <InertiaHead :title="`Admin - Edit ${user.name}`" />
         <Container>
-             <div class="max-w-2xl mx-auto">
-                <h1 class="text-2xl font-semibold mb-6">Edit User: <span class="font-normal">{{ user.name }}</span></h1>
-                <Card>
-                    <template #content>
-                        <UserForm :user="user" :user-roles="userRoles" @submit="submitForm" :is-edit-mode="true" />
-                    </template>
-                </Card>
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="text-2xl font-semibold text-gray-800">Edit User: {{ user.name }}</h1>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <UserForm 
+                        :user="user"
+                        :user-roles="userRoles" 
+                        :action="route('dashboard.users.update', user.id)"
+                        method="put"
+                    />
+                </div>
             </div>
         </Container>
     </AdminLayout>
@@ -17,25 +23,13 @@
 
 <script setup>
 import { defineProps } from 'vue';
-import { Head as InertiaHead, router } from '@inertiajs/vue3';
+import { Head as InertiaHead } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Container from '@/components/Container.vue';
-import Card from 'primevue/card';
-import UserForm from './Partials/UserForm.vue'; // Reusable form component
+import UserForm from './Partials/UserForm.vue';
 
-const props = defineProps({
+defineProps({
     user: Object,
     userRoles: Array,
 });
-
-const submitForm = (formData) => {
-    router.put(route('dashboard.users.update', props.user.id), formData, {
-        onError: (errors) => {
-            console.error("Error updating user:", errors);
-        },
-        onSuccess: () => {
-            // Toast handled by AdminLayout
-        }
-    });
-};
 </script>

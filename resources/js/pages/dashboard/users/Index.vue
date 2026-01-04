@@ -30,7 +30,7 @@
                     </form>
 
                     <DataTable :value="users.data" responsiveLayout="scroll" paginator :rows="users.per_page"
-                        :totalRecords="users.total" lazy @page="onPage">
+                        :totalRecords="users.total" @page="onPage">
                         <Column field="name" header="Name" sortable />
                         <Column field="email" header="Email" sortable />
                         <Column field="role" header="Role" sortable>

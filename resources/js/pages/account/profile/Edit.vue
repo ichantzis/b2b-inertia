@@ -3,6 +3,7 @@ import UserLayout from '@/layouts/UserLayout.vue';
 import DeleteUserForm from './partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './partials/UpdateProfileInformationForm.vue';
+import UpdateAddressForm from './partials/UpdateAddressForm.vue';
 
 defineProps({
     mustVerifyEmail: {
@@ -10,6 +11,9 @@ defineProps({
     },
     status: {
         type: String,
+    },
+    user: {
+        type: Object,
     },
 });
 
@@ -45,6 +49,16 @@ defineOptions({ layout: UserLayout });
             </template>
             <template #content>
                 <UpdatePasswordForm />
+            </template>
+        </Card>
+
+        <Card pt:body:class="max-w-2xl space-y-3" pt:caption:class="space-y-1">
+            <template #title>Contact & Address Information</template>
+            <template #subtitle>
+                Update your company details and billing address.
+            </template>
+            <template #content>
+                <UpdateAddressForm :user="user" />
             </template>
         </Card>
 

@@ -403,33 +403,34 @@ import Checkbox from 'primevue/checkbox';
 import Fieldset from 'primevue/fieldset';
 
 // Props
-const { cartItems, cartTotal } = defineProps({
+const { cartItems, cartTotal, user } = defineProps({
     cartItems: Array,
     cartTotal: Number,
+    user: Object,
 });
 
 const page = usePage();
-const user = computed(() => page.props.auth.user);
+// const initialCountry = countries.value.find(c => c.code === user.country) || null;
 
 const form = useForm({
     billingInfo: {
-        firstName: user.value?.name?.split(' ')[0] || '',
-        lastName: user.value?.name?.split(' ').slice(1).join(' ') || '',
-        email: user.value?.email || '',
-        country: user.value?.country || '', // This will store the CODE (e.g., 'AT')
+        firstName: user.name?.split(' ')[0] || '',
+        lastName: user.name?.split(' ').slice(1).join(' ') || '',
+        email: user.email || '',
+        country: user.country || '', // This will store the CODE (e.g., 'AT')
         country_object: null, // Temporary holder for the selected country object from <Select>
-        streetAddress: user.value?.address || '',
-        city: user.value?.city || '',
-        stateOrCounty: user.value?.state_or_county || '',
-        postalCode: user.value?.postal_code || '',
-        phone: user.value?.phone || '',
+        streetAddress: user.address || '',
+        city: user.city || '',
+        stateOrCounty: user.state_or_county || '',
+        postalCode: user.postal_code || '',
+        phone: user.phone || '',
     },
     wantsInvoice: false, // New flag for requesting invoice details
     invoiceDetails: {    // New object for invoice specific fields
-        companyName: '',
-        vatNumber: '',
-        taxOffice: '',   // Optional
-        profession: '',
+        companyName: user.company_name || '',
+        vatNumber: user.vat_number || '',
+        taxOffice: user.tax_office || '',   // Optional
+        profession: user.profession || '',
     },
     shippingIsDifferent: false,
     shippingInfo: {
@@ -445,6 +446,7 @@ const form = useForm({
 
 // European countries list
 const countries = ref([
+    { name: 'Greece', code: 'GR' },
     { name: 'Austria', code: 'AT' },
     { name: 'Belgium', code: 'BE' },
     { name: 'Bulgaria', code: 'BG' },
@@ -456,7 +458,6 @@ const countries = ref([
     { name: 'Finland', code: 'FI' },
     { name: 'France', code: 'FR' },
     { name: 'Germany', code: 'DE' },
-    { name: 'Greece', code: 'GR' },
     { name: 'Hungary', code: 'HU' },
     { name: 'Ireland', code: 'IE' },
     { name: 'Italy', code: 'IT' },
@@ -548,13 +549,13 @@ watch(() => form.billingInfo, (newBillingInfo) => {
 }, { deep: true });
 
 // Clear invoice details if wantsInvoice is false
-watch(() => form.wantsInvoice, (wants) => {
-    if (!wants) {
-        form.invoiceDetails = {
-            companyName: '', vatNumber: '', taxOffice: '', profession: ''
-        };
-    }
-});
+// watch(() => form.wantsInvoice, (wants) => {
+//     if (!wants) {
+//         form.invoiceDetails = {
+//             companyName: '', vatNumber: '', taxOffice: '', profession: ''
+//         };
+//     }
+// });
 
 onMounted(() => {
     // ... your existing onMounted logic for pre-filling ...

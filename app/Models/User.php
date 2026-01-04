@@ -27,6 +27,11 @@ class User extends Authenticatable
         'city',
         'country',
         'postal_code',
+        // Company/B2B fields
+        'company_name',
+        'vat_number',
+        'tax_office',
+        'profession',
     ];
 
     /**

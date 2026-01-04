@@ -41,13 +41,12 @@ class UserController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
                 'created_at' => $user->created_at->format('Y-m-d H:i:s'),
-                // Add other fields if needed for the index page
             ]);
 
         return Inertia::render('dashboard/users/Index', [
             'users' => $users,
             'filters' => $request->only(['search', 'role']),
-            'userRoles' => config('app.user_roles', ['user', 'admin']) // Define available roles in config/app.php or directly here
+            'userRoles' => config('app.user_roles', ['user', 'admin'])
         ]);
     }
 
@@ -71,12 +70,19 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Password::defaults()],
             'role' => ['required', Rule::in(config('app.user_roles', ['user', 'admin']))],
-            // Add other fields from User model like phone, address if needed
+            
+            // Contact & Address
             'phone' => 'nullable|string|max:30',
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100', // Ensure this stores the code (e.g. GR)
             'postal_code' => 'nullable|string|max:20',
+
+            // New Billing Fields
+            'company_name' => 'nullable|string|max:255',
+            'profession'   => 'nullable|string|max:255',
+            'vat_number'   => 'nullable|string|max:50',
+            'tax_office'   => 'nullable|string|max:50',
         ]);
 
         User::create([
@@ -89,6 +95,12 @@ class UserController extends Controller
             'city' => $validatedData['city'],
             'country' => $validatedData['country'],
             'postal_code' => $validatedData['postal_code'],
+            
+            // New Billing Fields
+            'company_name' => $validatedData['company_name'],
+            'profession'   => $validatedData['profession'],
+            'vat_number'   => $validatedData['vat_number'],
+            'tax_office'   => $validatedData['tax_office'],
         ]);
 
         return redirect()->route('dashboard.users.index')->with('success', 'User created successfully.');
@@ -100,7 +112,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         return Inertia::render('dashboard/users/Edit', [
-            'user' => [ // Pass only necessary data
+            'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -110,6 +122,13 @@ class UserController extends Controller
                 'city' => $user->city,
                 'country' => $user->country,
                 'postal_code' => $user->postal_code,
+                
+                // Pass New Billing Fields to Frontend
+                'company_name' => $user->company_name,
+                'profession'   => $user->profession,
+                'vat_number'   => $user->vat_number,
+                'tax_office'   => $user->tax_office, // Ensure this matches DB column (was doy/tax_office)
+
                 'created_at' => $user->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $user->updated_at->format('Y-m-d H:i:s'),
             ],
@@ -125,13 +144,21 @@ class UserController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'confirmed', Password::defaults()], // Password is optional on update
+            'password' => ['nullable', 'confirmed', Password::defaults()],
             'role' => ['required', Rule::in(config('app.user_roles', ['user', 'admin']))],
+            
+            // Contact & Address
             'phone' => 'nullable|string|max:30',
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
             'postal_code' => 'nullable|string|max:20',
+
+            // New Billing Fields
+            'company_name' => 'nullable|string|max:255',
+            'profession'   => 'nullable|string|max:255',
+            'vat_number'   => 'nullable|string|max:50',
+            'tax_office'   => 'nullable|string|max:50',
         ]);
 
         // Prevent self-demotion if user is the only admin
@@ -150,7 +177,12 @@ class UserController extends Controller
         $user->city = $validatedData['city'];
         $user->country = $validatedData['country'];
         $user->postal_code = $validatedData['postal_code'];
-
+        
+        // Update New Fields
+        $user->company_name = $validatedData['company_name'];
+        $user->profession = $validatedData['profession'];
+        $user->vat_number = $validatedData['vat_number'];
+        $user->tax_office = $validatedData['tax_office'];
 
         if (!empty($validatedData['password'])) {
             $user->password = Hash::make($validatedData['password']);
@@ -166,12 +198,10 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        // Prevent deleting oneself
         if ($user->id === auth()->id()) {
             return redirect()->route('dashboard.users.index')->with('error', 'You cannot delete your own account.');
         }
 
-        // Prevent deleting the only admin
         if ($user->role === 'admin') {
             $adminCount = User::where('role', 'admin')->count();
             if ($adminCount <= 1) {
