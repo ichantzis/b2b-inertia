@@ -194,8 +194,24 @@ const userMenu = useTemplateRef('user-menu');
 const logoutForm = useForm({});
 const userMenuItems = [
     {
+        label: 'My Orders',
+        route: route('account.orders.index'),
+        icon: 'pi pi-fw pi-shopping-bag',
+        command: () => {
+            op.value.hide();
+        },
+    },
+    {
+        label: 'Addresses',
+        route: route('account.addresses.index'),
+        icon: 'pi pi-fw pi-map-marker',
+        command: () => {
+            op.value.hide();
+        },
+    },
+    {
         label: 'Profile',
-        route: route('profile.edit'),
+        route: route('account.profile.edit'),
         icon: 'pi pi-fw pi-user',
         command: () => {
             op.value.hide();

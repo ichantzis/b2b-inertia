@@ -64,4 +64,13 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    /**
+     * Get the route key for the model.
+     * This tells Laravel to look for 'order_number' in URLs instead of 'id'.
+     */
+    public function getRouteKeyName()
+    {
+        return 'order_number';
+    }
 }

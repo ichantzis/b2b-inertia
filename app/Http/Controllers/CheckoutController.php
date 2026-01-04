@@ -159,7 +159,7 @@ class CheckoutController extends Controller
                     'price' => $itemData['artwork_data']['price'],
                     'quantity' => $itemData['quantity'],
                     'artwork_data' => $itemData['artwork_data'],
-                    
+
                 ]);
             }
 
@@ -170,7 +170,7 @@ class CheckoutController extends Controller
             try {
                 // Get email from Settings DB, fallback to config if DB is empty
                 $adminEmail = $settings->get('admin_notification_email', config('mail.from.address'));
-                
+
                 if ($adminEmail) {
                     Mail::to($adminEmail)->send(new NewOrderAdminNotification($order));
                 } else {
@@ -180,7 +180,7 @@ class CheckoutController extends Controller
                 Log::error("Failed to send admin order notification: " . $e->getMessage());
             }
 
-            return Inertia::location(route('checkout.complete', ['orderId' => $order->id]));
+            return Inertia::location(route('checkout.complete', $order));
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             // Validation errors are automatically handled by Inertia by returning them.
@@ -197,17 +197,17 @@ class CheckoutController extends Controller
     }
 
 
-    public function complete($orderId)
+    public function complete(Request $request, Order $order)
     {
-        $order = Order::with('items')->find($orderId);
-
-        if (!$order) {
-            // Handle the case where the order doesn't exist (e.g., show an error)
-            abort(404, 'Order not found');
+        // Security check: Ensure the order actually belongs to the user
+        // (Or checking session ID if it's a guest checkout)
+        if ($request->user() && $request->user()->id !== $order->user_id) {
+            abort(403);
         }
 
+        // Now you have the full $order object loaded
         return Inertia::render('CheckoutComplete', [
-            'order' => $order,
+            'order' => $order->load('items'), // Load items if needed for display
         ]);
     }
 

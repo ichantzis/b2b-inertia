@@ -10,7 +10,7 @@ const form = useForm({
 });
 
 const deleteUser = () => {
-    form.delete(route('profile.destroy'), {
+    form.delete(route('account.profile.destroy'), {
         preserveScroll: true,
         onSuccess: () => (modalOpen.value = false),
         onError: () => passwordInput.value.$el.focus(),

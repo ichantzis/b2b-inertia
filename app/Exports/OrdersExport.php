@@ -103,8 +103,8 @@ class OrdersExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             // Columns shift left after removing two columns
             // Old H (Total Amount) is now F
             // Old I (Print on Material) is now G
-            'F' => $explicitEuroFormatCommaDecimal, // Total Amount
-            'G' => $explicitEuroFormatCommaDecimal, // Print on Material
+            'F' => NumberFormat::FORMAT_NUMBER_00, // Total Amount
+            'G' => NumberFormat::FORMAT_NUMBER_00, // Print on Material
         ];
     }
 
@@ -137,8 +137,8 @@ class OrdersExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
                 // Adjust style range for totals row
                 $sheet->getStyle("A{$footerRow}:G{$footerRow}")->applyFromArray(['font' => ['bold' => true, 'size' => 11]]);
 
-                $sheet->getStyle("F{$footerRow}")->getNumberFormat()->setFormatCode($explicitEuroFormatCommaDecimal);
-                $sheet->getStyle("G{$footerRow}")->getNumberFormat()->setFormatCode($explicitEuroFormatCommaDecimal);
+                $sheet->getStyle("F{$footerRow}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
+                $sheet->getStyle("G{$footerRow}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
             },
         ];
     }

@@ -60,8 +60,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     // Order Management Routes for Admin using new controller
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/export', [AdminOrderController::class, 'exportOrders'])->name('orders.export'); // New export route
-    Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
-    Route::put('/orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
+    Route::get('/orders/{order:id}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::put('/orders/{order:id}', [AdminOrderController::class, 'update'])->name('orders.update');
 
     // User Management Routes
     Route::resource('users', AdminUserController::class)->except(['show']); // We'll use edit for show
@@ -74,9 +74,14 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::prefix('account')->name('account.')->group(function () {
+        Route::get('/orders', [App\Http\Controllers\AccountController::class, 'orders'])->name('orders.index');
+        Route::get('/orders/{order}', [App\Http\Controllers\AccountController::class, 'show'])->name('orders.show');
+        Route::get('/addresses', [App\Http\Controllers\AccountController::class, 'addresses'])->name('addresses.index');
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    });
 });
 
 // Cart Routes
@@ -89,7 +94,7 @@ Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('car
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-    Route::get('/checkout/complete/{orderId}', [CheckoutController::class, 'complete'])->name('checkout.complete');
+    Route::get('/checkout/complete/{order}', [CheckoutController::class, 'complete'])->name('checkout.complete');
 });
 
 // You might need a POST route for processing the checkout form

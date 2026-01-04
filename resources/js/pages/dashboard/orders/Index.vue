@@ -36,12 +36,12 @@
                             }}</small>
                     </form>
                     <DataTable :value="orders.data" responsiveLayout="scroll" paginator :rows="15"
-                        :totalRecords="orders.total" lazy @page="onPage">
-                        <Column field="order_number" header="Order #" sortable>
+                        :totalRecords="orders.total" @page="onPage">
+                        <Column field="id" header="Order #" sortable>
                             <template #body="slotProps">
                                 <Link :href="route('dashboard.orders.show', slotProps.data.id)"
-                                    class="text-primary-500 hover:underline">
-                                {{ slotProps.data.order_number }}
+                                    class="text-primary-500 no-underline hover:underline">
+                                {{ slotProps.data.id }} (<span class="text-gray-500 text-xs">{{ slotProps.data.order_number }}</span>)
                                 </Link>
                             </template>
                         </Column>

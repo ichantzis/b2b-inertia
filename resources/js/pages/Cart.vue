@@ -42,7 +42,7 @@ const cartSubtotal = computed(() => {
     }, 0);
 });
 
-const shippingCost = computed(() => cartSubtotal.value > 0 ? 5.00 : 0); // Example cost
+const shippingCost = computed(() => cartSubtotal.value > 100 ? 0 : 5.00); // Example cost
 const cartTotal = computed(() => cartSubtotal.value + shippingCost.value);
 
 const updateQuantity = (itemId) => {

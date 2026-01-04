@@ -25,6 +25,6 @@ class AccessRequestController extends Controller
 
         Mail::to($adminEmail)->send(new AccessRequestNotification($validated));
 
-        return back()->with('success', 'Your request has been sent. We will contact you shortly.');
+        return back()->with('status', 'Your request has been sent. We will contact you shortly.');
     }
 }
