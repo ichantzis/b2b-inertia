@@ -12,7 +12,7 @@ class AccountController extends Controller
     public function orders(Request $request)
     {
         $orders = Order::where('user_id', $request->user()->id)
-            ->with('items') 
+            ->with('items')
             ->latest()
             ->paginate(10)
             ->through(function ($order) {
@@ -23,7 +23,9 @@ class AccountController extends Controller
                     'total_formatted' => number_format($order->total_amount, 2) . ' €',
                     'date' => $order->created_at->format('d M Y'),
                     'item_count' => $order->items->count(),
-                    'preview_items' => $order->items->take(3)->map(function($item) {
+                    'coupon_code' => $order->coupon_code ?? null,
+                    'discount_amount' => $order->discount_amount ?? 0,
+                    'preview_items' => $order->items->take(3)->map(function ($item) {
                         return [
                             'title' => $item->artwork_title ?? 'Artwork',
                             // Handle thumbnail path or fallback
@@ -58,7 +60,7 @@ class AccountController extends Controller
                 'payment_method' => $order->payment_method ?? 'Credit Card', // Example field
                 'payment_status' => $order->payment_status ?? 'Pending', // Example field'
                 'notes' => $order->notes ?? '',
-                
+
                 // Financials
                 'subtotal' => $order->subtotal ?? $order->items->sum('total'), // Fallback if column missing
                 'shipping_cost' => $order->shipping_cost ?? 0,
@@ -68,7 +70,7 @@ class AccountController extends Controller
                 // Addresses (Assuming JSON columns 'billing_address'/'shipping_address' or relationships)
                 'billing_first_name' => $order->billing_first_name,
                 'billing_last_name' => $order->billing_last_name,
-                'billing_address' => $order->billing_address, 
+                'billing_address' => $order->billing_address,
                 'billing_city' => $order->billing_city,
                 'billing_state_or_county' => $order->billing_state_or_county,
                 'billing_postal_code' => $order->billing_postal_code,
@@ -84,6 +86,8 @@ class AccountController extends Controller
                 'shipping_country' => $order->shipping_country,
                 'shipping_phone' => $order->shipping_phone,
                 'shipping_email' => $order->shipping_email,
+                'coupon_code' => $order->coupon_code ?? null,
+                'discount_amount' => $order->discount_amount ?? 0,
                 'wants_invoice' => $order->wants_invoice,
                 'invoice_company_name' => $order->invoice_company_name,
                 'invoice_vat_number' => $order->invoice_vat_number,

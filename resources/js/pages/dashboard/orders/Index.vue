@@ -31,17 +31,19 @@
                             </div>
                         </div>
                         <small v-if="filterForm.errors.start_date" class="p-error">{{ filterForm.errors.start_date
-                            }}</small>
+                        }}</small>
                         <small v-if="filterForm.errors.end_date" class="p-error mt-1">{{ filterForm.errors.end_date
-                            }}</small>
+                        }}</small>
                     </form>
-                    <DataTable :value="orders.data" responsiveLayout="scroll" paginator :rows="15"
-                        :totalRecords="orders.total" @page="onPage">
+                    <DataTable :value="orders.data" responsiveLayout="scroll" stripedRows lazy :first="first" paginator
+                        :rows="15" :totalRecords="orders.total" @page="onPage" :sortField="filters.sort"
+                        :sortOrder="filters.direction === 'asc' ? 1 : -1" @sort="onSort">
                         <Column field="id" header="Order #" sortable>
                             <template #body="slotProps">
                                 <Link :href="route('dashboard.orders.show', slotProps.data.id)"
                                     class="text-primary-500 no-underline hover:underline">
-                                {{ slotProps.data.id }} (<span class="text-gray-500 text-xs">{{ slotProps.data.order_number }}</span>)
+                                    {{ slotProps.data.id }} (<span class="text-gray-500 text-xs">{{
+                                        slotProps.data.order_number }}</span>)
                                 </Link>
                             </template>
                         </Column>
@@ -76,7 +78,7 @@
                         <Column header="Actions">
                             <template #body="slotProps">
                                 <Link :href="route('dashboard.orders.show', slotProps.data.id)">
-                                <Button icon="pi pi-eye" class="p-button-sm p-button-text" />
+                                    <Button icon="pi pi-eye" class="p-button-sm p-button-text" />
                                 </Link>
                             </template>
                         </Column>
@@ -97,12 +99,6 @@
                             </div>
                         </template> -->
                     </DataTable>
-                    <div v-if="orders.links.length > 3" class="mt-4 flex justify-center space-x-1">
-                        <Link v-for="(link, k) in orders.links" :key="k" class="px-3 py-2 text-sm rounded-md"
-                            :class="{ 'bg-primary-500 text-white': link.active, 'hover:bg-gray-200 dark:hover:bg-gray-700': !link.active, 'text-gray-500 cursor-not-allowed': !link.url }"
-                            :href="link.url || '#'" v-html="link.label" :as="link.url ? 'a' : 'span'" preserve-scroll
-                            preserve-state />
-                    </div>
                 </template>
             </Card>
         </Container>
@@ -255,6 +251,10 @@ const pageTotalPrintOnMaterial = computed(() => {
     return props.orders.data.reduce((sum, order) => sum + parseFloat(order.print_on_material_value), 0);
 });
 
+const first = computed(() => {
+    return (props.orders.current_page - 1) * props.orders.per_page;
+});
+
 // Handle lazy loading pagination with DataTable
 const onPage = (event) => {
     router.get(route('dashboard.orders.index'), {
@@ -265,6 +265,31 @@ const onPage = (event) => {
         preserveState: true,
         preserveScroll: false, // Usually scroll to top on page change
         replace: true,
+    });
+};
+
+const onSort = (event) => {
+    // 1. PrimeVue sends: 
+    //    event.sortField (e.g., 'total_amount')
+    //    event.sortOrder (1 for ASC, -1 for DESC)
+
+    // 2. Map 1/-1 to 'asc'/'desc' for Laravel
+    const newDirection = event.sortOrder === 1 ? 'asc' : 'desc';
+
+    // 3. Reload page with new params
+    router.get(route('dashboard.orders.index'), {
+        // Keep existing search
+        search: props.filters.search,
+
+        // Apply new sort
+        sort: event.sortField,
+        direction: newDirection,
+
+        // Reset to page 1 (Important! Sorting changes the order, so page 5 might not exist or be relevant anymore)
+        page: 1,
+    }, {
+        preserveState: true,
+        preserveScroll: true, // Feels like an instant table update
     });
 };
 

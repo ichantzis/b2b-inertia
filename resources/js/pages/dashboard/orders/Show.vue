@@ -17,10 +17,36 @@
                                 </template>
                                 <template #content>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div class="mb-2"><strong>Order Date:</strong> {{ formatDate(order.created_at) }}</div>
-                                        <div class="mb-2"><strong>Last Updated:</strong> {{ formatDate(order.updated_at) }}</div>
-                                        <div class="mb-2"><strong>Total Amount:</strong> {{
-                                            formatCurrency(order.total_amount) }}</div>
+                                        <div class="mb-2"><strong>Order Date:</strong> {{ formatDate(order.created_at)
+                                            }}</div>
+                                        <div class="mb-2"><strong>Last Updated:</strong> {{ formatDate(order.updated_at)
+                                            }}</div>
+                                        <div class="border-t border-gray-100 pt-4 mt-4 space-y-3">
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-500">Subtotal</span>
+                                                <span class="font-medium text-gray-900">
+                                                    {{ formatCurrency(parseFloat(order.total_amount) +
+                                                    parseFloat(order.discount_amount)) }}
+                                                </span>
+                                            </div>
+
+                                            <div v-if="Number(order.discount_amount) > 0"
+                                                class="flex justify-between text-sm">
+                                                <span class="text-green-600 flex items-center">
+                                                    <i class="pi pi-tag mr-2 text-xs"></i>
+                                                    Discount ({{ order.coupon_code }})
+                                                </span>
+                                                <span class="font-medium text-green-600">
+                                                    -{{ formatCurrency(order.discount_amount) }}
+                                                </span>
+                                            </div>
+
+                                            <div
+                                                class="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
+                                                <span>Total Amount</span>
+                                                <span>{{ formatCurrency(order.total_amount) }}</span>
+                                            </div>
+                                        </div>
                                         <div class="mb-2"><strong>Payment Method:</strong> {{ order.payment_method }}
                                         </div>
                                         <div>
@@ -392,7 +418,7 @@
                                         placeholder="Admin notes for this order..."
                                         :class="{ 'p-invalid': orderForm.errors.notes }" />
                                     <small v-if="orderForm.errors.notes" class="p-error">{{ orderForm.errors.notes
-                                    }}</small>
+                                        }}</small>
                                 </template>
                             </Card>
                         </div>
@@ -426,7 +452,7 @@
 
                     <div class="mt-8 flex justify-end space-x-3">
                         <Link :href="route('dashboard.orders.index')">
-                        <Button label="Back to Orders" severity="secondary" outlined icon="pi pi-arrow-left" />
+                            <Button label="Back to Orders" severity="secondary" outlined icon="pi pi-arrow-left" />
                         </Link>
                         <Button type="submit" label="Save All Changes" icon="pi pi-check"
                             :loading="orderForm.processing" />
@@ -647,7 +673,7 @@ const updateOrderDetails = () => {
     // The orderForm already contains all fields.
     // The controller's validation will determine what's actually updatable.
     console.log("Updating order details:", orderForm.data());
-    
+
     orderForm.put(route('dashboard.orders.update', props.order.id), {
         preserveScroll: true,
         onSuccess: () => {

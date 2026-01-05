@@ -42,6 +42,9 @@ class Order extends Model
         'shipping_postal_code',
         'shipping_phone',
 
+        'coupon_code',
+        'discount_amount',
+
         'payment_method',
         'payment_status',
         'transaction_id',

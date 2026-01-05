@@ -20,23 +20,38 @@ class OrderController extends Controller
     /**
      * Display a listing of the orders.
      */
-    public function index(Request $request) // Renamed from listOrders to index
+    public function index(Request $request)
     {
-        $query = Order::with('customer')->latest();
+        // 1. Capture Sort Parameters (Default to 'created_at' descending)
+        $sortField = $request->input('sort', 'created_at');
+        $sortDirection = $request->input('direction', 'desc');
 
-        // Date Range Filtering
+        // 2. Security: Whitelist allowed columns to prevent SQL errors
+        $allowedSorts = ['id', 'order_number', 'total_amount', 'status', 'payment_status', 'created_at'];
+
+        if (!in_array($sortField, $allowedSorts)) {
+            $sortField = 'created_at';
+        }
+
+        // 3. Start Query (Removed 'latest()')
+        $query = Order::with('customer');
+
+        // 4. Apply Dynamic Sorting
+        $query->orderBy($sortField, $sortDirection);
+
+        // 5. Date Range Filtering (Existing Logic)
         if ($request->filled('start_date') && $request->filled('end_date')) {
             try {
                 $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
                 $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
                 $query->whereBetween('created_at', [$startDate, $endDate]);
             } catch (\Exception $e) {
-                // Handle invalid date format, maybe ignore or return error
+                // Handle invalid date format
             }
         }
 
         $orders = $query->paginate(15)
-            ->withQueryString() // Appends filter query params to pagination links
+            ->withQueryString()
             ->through(fn($order) => [
                 'id' => $order->id,
                 'order_number' => $order->order_number,
@@ -46,12 +61,13 @@ class OrderController extends Controller
                 'status' => $order->status,
                 'payment_status' => $order->payment_status,
                 'created_at' => $order->created_at->format('Y-m-d H:i:s'),
-                'print_on_material_value' => $order->total_amount * 0.15, // Calculate 15%
+                'print_on_material_value' => $order->total_amount * 0.15,
             ]);
 
         return Inertia::render('dashboard/orders/Index', [
             'orders' => $orders,
-            'filters' => $request->only(['start_date', 'end_date']) // Pass current filters back to view
+            // 6. Pass 'sort' and 'direction' back to Vue so the arrows highlight correctly
+            'filters' => $request->only(['start_date', 'end_date', 'sort', 'direction']),
         ]);
     }
 
@@ -92,6 +108,8 @@ class OrderController extends Controller
                 'shipping_country' => $order->shipping_country,
                 'shipping_postal_code' => $order->shipping_postal_code,
                 'shipping_phone' => $order->shipping_phone,
+                'coupon_code' => $order->coupon_code,
+                'discount_amount' => $order->discount_amount,
                 'payment_method' => $order->payment_method,
                 'payment_status' => $order->payment_status,
                 'transaction_id' => $order->transaction_id,

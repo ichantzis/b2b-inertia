@@ -68,6 +68,11 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     // If you want a dedicated show route, remove except(['show']) and implement show method.
     // For simplicity, edit often serves as the show/detail page.
 
+    // Coupon Management Routes
+    Route::patch('/coupons/{coupon}/toggle', [App\Http\Controllers\Admin\CouponController::class, 'toggleStatus'])
+    ->name('coupons.toggle');
+    Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->names('coupons');
+
     // Settings Routes
     Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
@@ -95,6 +100,7 @@ Route::delete('/cart/{cartItem}', [CartController::class, 'destroy'])->name('car
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::post('/checkout/validate-coupon', [App\Http\Controllers\CheckoutController::class, 'validateCoupon'])->name('checkout.validate.coupon');
     Route::get('/checkout/complete/{order}', [CheckoutController::class, 'complete'])->name('checkout.complete');
 });
 

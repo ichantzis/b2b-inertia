@@ -147,6 +147,15 @@
                                                 class="text-surface-700 dark:text-surface-200 font-medium text-base">{{
                                                 formatCurrency(shippingCost) }}</span>
                                         </li>
+                                        <li v-if="order.discount_amount > 0" class="flex justify-between text-green-600 font-medium">
+                                            <span>
+                                            Discount 
+                                            <span v-if="order.coupon_code" class="text-xs ml-1 bg-green-100 px-2 py-0.5 rounded text-green-700">
+                                                {{ order.coupon_code }}
+                                            </span>
+                                            </span>
+                                            <span>-{{ formatCurrency(order.discount_amount) }}</span>
+                                        </li>
                                         <li
                                             class="flex justify-between border-t border-surface-200 dark:border-surface-700 pt-3 mt-2">
                                             <span

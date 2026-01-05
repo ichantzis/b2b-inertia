@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Coupon;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -100,6 +101,9 @@ class CheckoutController extends Controller
             'notes' => 'nullable|string|max:1000',
         ];
 
+        // Add coupon_code to validation
+        $validationRules['coupon_code'] = 'nullable|exists:coupons,code';
+
         $validatedData = $request->validate($validationRules);
 
         try {
@@ -110,6 +114,35 @@ class CheckoutController extends Controller
             // FIX: If they don't want an invoice, force this to an empty array [].
             // This ensures we don't save data, and prevents PHP errors when accessing keys later.
             $invoice = $validatedData['wantsInvoice'] ? ($validatedData['invoiceDetails'] ?? []) : [];
+
+            // --- COUPON LOGIC START ---
+            $discountAmount = 0;
+            $couponCode = null;
+
+            if (!empty($validatedData['coupon_code'])) {
+                $coupon = \App\Models\Coupon::where('code', $validatedData['coupon_code'])->first();
+
+                if ($coupon && $coupon->isValid()) {
+                    $couponCode = $coupon->code;
+                    $subtotal = $validatedData['totalAmount']; // Be careful: ensure this is the raw subtotal from frontend or recalculate from items
+
+                    if ($coupon->type === 'fixed') {
+                        $discountAmount = $coupon->value;
+                    } else {
+                        $discountAmount = ($subtotal * $coupon->value) / 100;
+                    }
+
+                    // Increment usage
+                    $coupon->increment('used_count');
+                }
+            }
+            Log::info("Discount amount calculated: $discountAmount");
+
+            // Recalculate Final Total
+            // Ensure total doesn't go below 0
+            $finalTotal = max(0, $validatedData['totalAmount'] - $discountAmount);
+            Log::info("Final total after coupon applied: $finalTotal");
+            // --- COUPON LOGIC END ---
 
             // ---------------------------------------------------------
             // 1. UPDATE USER PROFILE LOGIC (New Addition)
@@ -139,7 +172,7 @@ class CheckoutController extends Controller
             $order = Order::create([
                 'user_id' => $user->id,
                 'order_number' => 'ORD-' . strtoupper(uniqid()),
-                'total_amount' => $validatedData['totalAmount'],
+                'total_amount' => $finalTotal,
                 'status' => 'pending',
 
                 'billing_first_name' => $billing['firstName'],
@@ -173,6 +206,9 @@ class CheckoutController extends Controller
                 'payment_method' => $validatedData['paymentMethod'],
                 'payment_status' => 'pending',
                 'notes' => $validatedData['notes'] ?? null,
+
+                'coupon_code' => $couponCode,
+                'discount_amount' => $discountAmount,
             ]);
 
             foreach ($validatedData['items'] as $itemData) {
@@ -228,6 +264,24 @@ class CheckoutController extends Controller
         // Now you have the full $order object loaded
         return Inertia::render('CheckoutComplete', [
             'order' => $order->load('items'), // Load items if needed for display
+        ]);
+    }
+
+    public function validateCoupon(Request $request)
+    {
+        $request->validate(['code' => 'required|string']);
+
+        $coupon = Coupon::where('code', $request->code)->first();
+
+        if (!$coupon || !$coupon->isValid()) {
+            return response()->json(['message' => 'Invalid or expired coupon.'], 422);
+        }
+
+        return response()->json([
+            'code' => $coupon->code,
+            'type' => $coupon->type,
+            'value' => $coupon->value,
+            'message' => 'Coupon applied successfully!'
         ]);
     }
 

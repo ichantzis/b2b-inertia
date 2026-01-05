@@ -346,9 +346,35 @@
                                 </div>
                             </div>
                             <Divider />
-                            <div class="flex justify-between font-semibold">
-                                <span>Subtotal</span>
-                                <span>{{ formatCurrency(cartTotal) }}</span>
+                            <div class="mt-4 pt-4">
+                                <div class="flex gap-2">
+                                    <InputText v-model="couponCode" placeholder="Coupon"
+                                        class="w-full p-inputtext-sm" :disabled="!!appliedCoupon" />
+                                    <Button v-if="!appliedCoupon" label="Apply" size="small" :loading="isCheckingCoupon"
+                                        @click="applyCoupon" :disabled="!couponCode" />
+                                    <Button v-else icon="pi pi-times" severity="danger" outlined size="small"
+                                        @click="removeCoupon" />
+                                </div>
+                                <small class="text-red-500 block mt-1" v-if="couponError">{{ couponError }}</small>
+                                <small class="text-green-600 block mt-1" v-if="appliedCoupon">Code {{ appliedCoupon.code
+                                    }} applied!</small>
+
+                                <div class="space-y-2 mt-4 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Subtotal</span>
+                                        <span>{{ formatCurrency(cartTotal) }}</span>
+                                    </div>
+
+                                    <div v-if="appliedCoupon" class="flex justify-between text-green-600 font-medium">
+                                        <span>Discount ({{ appliedCoupon.code }})</span>
+                                        <span>-{{ formatCurrency(discountAmount) }}</span>
+                                    </div>
+
+                                    <div class="flex justify-between font-bold text-lg pt-2 border-t">
+                                        <span>Total</span>
+                                        <span>{{ formatCurrency(finalTotal) }}</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="space-y-3 mt-6">
@@ -438,6 +464,7 @@ const form = useForm({
         country_object: null, // Temporary holder
         streetAddress: '', city: '', stateOrCounty: '', postalCode: '', phone: '',
     },
+    coupon_code: null,
     paymentMethod: 'bank_transfer',
     items: cartItems,
     totalAmount: cartTotal,
@@ -476,8 +503,90 @@ const countries = ref([
     // Add other countries as needed
 ]);
 
+// Coupon code
+// Script Section
+import axios from 'axios';
+
+const couponCode = ref('');
+const couponError = ref('');
+const appliedCoupon = ref(null); // Stores object { code, type, value }
+const isCheckingCoupon = ref(false);
+
+const applyCoupon = async () => {
+    if (!couponCode.value) return;
+
+    isCheckingCoupon.value = true;
+    couponError.value = '';
+
+    try {
+        const response = await axios.post(route('checkout.validate.coupon'), {
+            code: couponCode.value
+        });
+
+        appliedCoupon.value = response.data; // { code: 'SUMMER', value: 10, type: 'fixed' ...}
+
+        // Update the form so it sends the code to the backend logic
+        form.coupon_code = response.data.code;
+
+    } catch (error) {
+        couponError.value = error.response?.data?.message || 'Invalid coupon';
+        appliedCoupon.value = null;
+        form.coupon_code = null;
+    } finally {
+        isCheckingCoupon.value = false;
+    }
+};
+
+const removeCoupon = () => {
+    // 1. Reset the input field
+    couponCode.value = '';
+    
+    // 2. Clear error messages
+    couponError.value = '';
+    
+    // 3. Clear the applied coupon object (hides the green success text & discount line)
+    appliedCoupon.value = null;
+    
+    // 4. IMPORTANT: Clear the value in the form object so it doesn't get sent to the backend
+    form.coupon_code = null;
+};
+
+// Computed property for the Final Total display
+const discountAmount = computed(() => {
+    if (!appliedCoupon.value) return 0;
+
+    // Assuming you have a 'cartTotal' ref or prop
+    if (appliedCoupon.value.type === 'fixed') {
+        return Number(appliedCoupon.value.value);
+    } else {
+        return (cartTotal * Number(appliedCoupon.value.value)) / 100;
+    }
+});
+
+const finalTotal = computed(() => {
+    return Math.max(0, cartTotal - discountAmount.value);
+});
+
+const formatPrice = (value) => {
+    let val = (value / 1).toFixed(2).replace('.', ',')
+    return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + ' €'
+};
+
+// Alternative: Using the browser's built-in Intl API (Cleaner & localized)
+/*
+const formatPrice = (value) => {
+    return new Intl.NumberFormat('el-GR', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 2
+    }).format(value);
+};
+*/
+
 // Submit handler
 function submit() {
+    console.log('Submitting form:', form);
+    
     form.post(route('checkout.store'));
 }
 
