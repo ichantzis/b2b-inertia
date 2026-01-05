@@ -201,14 +201,14 @@ const userMenuItems = [
             op.value.hide();
         },
     },
-    {
-        label: 'Addresses',
-        route: route('account.addresses.index'),
-        icon: 'pi pi-fw pi-map-marker',
-        command: () => {
-            op.value.hide();
-        },
-    },
+    // {
+    //     label: 'Addresses',
+    //     route: route('account.addresses.index'),
+    //     icon: 'pi pi-fw pi-map-marker',
+    //     command: () => {
+    //         op.value.hide();
+    //     },
+    // },
     {
         label: 'Profile',
         route: route('account.profile.edit'),

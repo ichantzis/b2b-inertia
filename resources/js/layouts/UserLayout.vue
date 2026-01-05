@@ -26,12 +26,12 @@
                                     My Orders
                                 </Link>
 
-                                <Link :href="route('account.addresses.index')" 
+                                <!-- <Link :href="route('account.addresses.index')" 
                                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all no-underline"
                                       :class="$page.url.startsWith('/account/addresses') ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'">
                                     <i class="pi pi-map-marker mr-3 text-lg" :class="$page.url.startsWith('/account/addresses') ? 'text-indigo-600' : 'text-gray-400'"></i>
                                     Addresses
-                                </Link>
+                                </Link> -->
 
                                 <Link :href="route('account.profile.edit')" 
                                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all no-underline"
