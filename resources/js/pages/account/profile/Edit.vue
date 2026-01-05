@@ -62,7 +62,7 @@ defineOptions({ layout: UserLayout });
             </template>
         </Card>
 
-        <Card pt:body:class="max-w-2xl space-y-3" pt:caption:class="space-y-1">
+        <!-- <Card pt:body:class="max-w-2xl space-y-3" pt:caption:class="space-y-1">
             <template #title>Delete Account</template>
             <template #subtitle>
                 Once your account is deleted, all of its resources
@@ -73,6 +73,6 @@ defineOptions({ layout: UserLayout });
             <template #content>
                 <DeleteUserForm />
             </template>
-        </Card>
+        </Card> -->
     </Container>
 </template>
