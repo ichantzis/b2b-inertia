@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NewOrderAdminNotification;
+use App\Mail\OrderConfirmation;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Http\Controllers\CartController;
@@ -136,12 +137,10 @@ class CheckoutController extends Controller
                     $coupon->increment('used_count');
                 }
             }
-            Log::info("Discount amount calculated: $discountAmount");
 
             // Recalculate Final Total
             // Ensure total doesn't go below 0
             $finalTotal = max(0, $validatedData['totalAmount'] - $discountAmount);
-            Log::info("Final total after coupon applied: $finalTotal");
             // --- COUPON LOGIC END ---
 
             // ---------------------------------------------------------
@@ -239,6 +238,14 @@ class CheckoutController extends Controller
                 }
             } catch (\Exception $e) {
                 Log::error("Failed to send admin order notification: " . $e->getMessage());
+            }
+
+            // 2. Send Customer Confirmation
+            try {
+                // We use the billing email provided in the form
+                Mail::to($order->billing_email)->send(new OrderConfirmation($order));
+            } catch (\Exception $e) {
+                Log::error("Failed to send customer order confirmation: " . $e->getMessage());
             }
 
             return Inertia::location(route('checkout.complete', $order));
