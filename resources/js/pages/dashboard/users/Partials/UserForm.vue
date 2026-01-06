@@ -38,7 +38,7 @@
                 <Divider />
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ isEditMode ? 'Leave password fields blank to keep current password.' : 'Set a password for the new user.' }}
+                        {{ isEditMode ? 'Leave password fields blank to keep current password.' : 'Set a password for the new user. A password reset link will be sent to the user' }}
                     </p>
                     <label for="password" class="block text-sm font-medium mb-1">
                         {{ isEditMode ? 'New Password (Optional)' : 'Password' }}

@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Mail\WelcomeUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+
 use Inertia\Inertia;
 
 class UserController extends Controller
@@ -65,12 +70,13 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        // 1. Validation (Password is optional/random if admin creates it)
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required','confirmed', Password::defaults()],
             'role' => ['required', Rule::in(config('app.user_roles', ['user', 'admin']))],
-            
+
             // Contact & Address
             'phone' => 'nullable|string|max:30',
             'address' => 'nullable|string|max:255',
@@ -85,23 +91,35 @@ class UserController extends Controller
             'tax_office'   => 'nullable|string|max:50',
         ]);
 
-        User::create([
+        // 2. Create User with Random Password
+        $user = User::create([
             'name' => $validatedData['name'],
             'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
+            'password' => Hash::make($validatedData['password'] || Str::random(10)),
             'role' => $validatedData['role'],
             'phone' => $validatedData['phone'],
             'address' => $validatedData['address'],
             'city' => $validatedData['city'],
             'country' => $validatedData['country'],
             'postal_code' => $validatedData['postal_code'],
-            
+
             // New Billing Fields
             'company_name' => $validatedData['company_name'],
             'profession'   => $validatedData['profession'],
             'vat_number'   => $validatedData['vat_number'],
             'tax_office'   => $validatedData['tax_office'],
         ]);
+
+        // 3. Generate Password Reset Token & URL
+        $token = Password::createToken($user);
+        $resetUrl = route('password.reset', ['token' => $token, 'email' => $user->email]);
+
+        // 4. Send Email with Link
+        try {
+            Mail::to($user->email)->send(new WelcomeUser($user, $resetUrl));
+        } catch (\Exception $e) {
+            Log::error("Failed to send welcome email: " . $e->getMessage());
+        }
 
         return redirect()->route('dashboard.users.index')->with('success', 'User created successfully.');
     }
@@ -122,7 +140,7 @@ class UserController extends Controller
                 'city' => $user->city,
                 'country' => $user->country,
                 'postal_code' => $user->postal_code,
-                
+
                 // Pass New Billing Fields to Frontend
                 'company_name' => $user->company_name,
                 'profession'   => $user->profession,
@@ -146,7 +164,7 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'role' => ['required', Rule::in(config('app.user_roles', ['user', 'admin']))],
-            
+
             // Contact & Address
             'phone' => 'nullable|string|max:30',
             'address' => 'nullable|string|max:255',
@@ -177,7 +195,7 @@ class UserController extends Controller
         $user->city = $validatedData['city'];
         $user->country = $validatedData['country'];
         $user->postal_code = $validatedData['postal_code'];
-        
+
         // Update New Fields
         $user->company_name = $validatedData['company_name'];
         $user->profession = $validatedData['profession'];
