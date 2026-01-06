@@ -1,31 +1,125 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f6f6f6; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 8px; margin-top: 20px; }
-        .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-        .order-info { margin-top: 20px; margin-bottom: 20px; }
-        .order-info h2 { color: #333; margin: 0; }
-        .order-info p { color: #666; font-size: 14px; margin: 5px 0 0; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 10px; background: #f8f9fa; color: #555; font-size: 12px; text-transform: uppercase; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; vertical-align: top; }
-        
-        .totals { margin-top: 20px; text-align: right; }
-        .totals-row { margin-bottom: 5px; color: #666; font-size: 14px; }
-        .totals-row.final { font-size: 18px; font-weight: bold; color: #333; margin-top: 10px; }
-        .discount { color: #16a34a; } /* Green */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f6f6f6;
+            margin: 0;
+            padding: 0;
+        }
 
-        .addresses { margin-top: 30px; display: flex; justify-content: space-between; }
-        .address-block { width: 48%; font-size: 14px; color: #555; background: #f9f9f9; padding: 15px; border-radius: 6px; box-sizing: border-box;}
-        .address-block h3 { margin-top: 0; font-size: 16px; color: #333; }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
 
-        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #999; }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-info {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .order-info h2 {
+            color: #333;
+            margin: 0;
+        }
+
+        .order-info p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px;
+            background: #f8f9fa;
+            color: #555;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            color: #333;
+            vertical-align: top;
+        }
+
+        .totals {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .totals-row {
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .totals-row.final {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .discount {
+            color: #16a34a;
+        }
+
+        /* Green */
+
+        .addresses {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .address-block {
+            width: 48%;
+            font-size: 14px;
+            color: #555;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .address-block h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #999;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -102,8 +196,15 @@
         </table>
 
         <div class="footer">
-            <p>If you have any questions, reply to this email or contact us at support@example.com</p>
+            <p>Do not reply to this email</p>
+            <p>
+                If you have any questions, contact us at
+                <a href="mailto:{{ $supportEmail }}" style="color: #3b82f6; text-decoration: none;">
+                    {{ $supportEmail }}
+                </a>
+            </p>
         </div>
     </div>
 </body>
+
 </html>

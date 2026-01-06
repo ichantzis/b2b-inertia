@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Order;
+use App\Services\SettingsService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -45,8 +46,17 @@ class OrderConfirmation extends Mailable
      */
     public function content(): Content
     {
+        // 1. Fetch the setting (using the app helper to resolve the service)
+        $settings = app(\App\Services\SettingsService::class);
+        $supportEmail = $settings->get('admin_notification_email', config('mail.from.address'));
+
         return new Content(
             view: 'emails.orders.confirmation',
+
+            // 2. Pass the data to the view here
+            with: [
+                'supportEmail' => $supportEmail,
+            ],
         );
     }
 
