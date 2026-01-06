@@ -8,7 +8,8 @@ use App\Mail\WelcomeUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\Rules\Password as PasswordRules;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -74,7 +75,7 @@ class UserController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required','confirmed', Password::defaults()],
+            'password' => ['required','confirmed', PasswordRules::defaults()],
             'role' => ['required', Rule::in(config('app.user_roles', ['user', 'admin']))],
 
             // Contact & Address
@@ -162,7 +163,7 @@ class UserController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'confirmed', Password::defaults()],
+            'password' => ['nullable', 'confirmed', PasswordRules::defaults()],
             'role' => ['required', Rule::in(config('app.user_roles', ['user', 'admin']))],
 
             // Contact & Address
