@@ -30,15 +30,15 @@ class OrderConfirmation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Order Confirmation',
+            subject: 'Order Confirmation #' . $this->order->order_number,
         );
     }
 
-    public function build()
-    {
-        return $this->subject('Order Confirmation #' . $this->order->order_number)
-                    ->view('emails.orders.confirmation');
-    }
+    // public function build()
+    // {
+    //     return $this->subject('Order Confirmation #' . $this->order->order_number)
+    //                 ->view('emails.orders.confirmation');
+    // }
 
     /**
      * Get the message content definition.
@@ -46,7 +46,7 @@ class OrderConfirmation extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'emails.orders.confirmation',
         );
     }
 
