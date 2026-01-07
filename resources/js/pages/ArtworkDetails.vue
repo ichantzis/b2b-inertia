@@ -61,14 +61,6 @@
       <div class="artwork-information">
         <div class="artwork-header">
           <h1 class="artwork-title-text">{{ currentArtwork.title?.en || 'Untitled' }}</h1>
-          <h2 class="artwork-artist-name">
-            <Tag v-if="currentArtwork.artist_username" :value="currentArtwork.artist" severity="info"
-              @click="navigateToArtist(currentArtwork.artist_username)" :pt="{
-                root: { class: 'text-lg md:text-xl cursor-pointer hover:brightness-95 transition-all' }
-              }" />
-
-            <span v-else>{{ currentArtwork.artist }}</span>
-          </h2>
         </div>
 
         <div class="artwork-details-grid">
@@ -86,18 +78,79 @@
             </span>
           </div>
         </div>
-        <div class="tags-wrapper" v-if="parsedKeywords.length > 0">
-          <Tag v-for="(tag, index) in parsedKeywords" :key="index" :value="tag" severity="secondary" rounded
-            @click="navigateToArtworksWithTag(tag)"
-            class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150" tabindex="0"
-            @keydown.enter="navigateToArtworksWithTag(tag)" @keydown.space="navigateToArtworksWithTag(tag)"
-            role="link" />
-        </div>
 
         <Divider />
 
         <ArtworkCustomizer :artwork="currentArtwork" :pricing-config="pricingConfig" :can-view-price="canViewPrice"
           :require-login-for-prices="requireLoginForPrices" @frame-change="handleFrameStyleChange" />
+
+        <Divider class="my-8" />
+
+        <div class="product-info-section">
+            <h2 class="artwork-option">Product Information</h2>
+            
+            <table class="w-full text-left border-collapse">
+                <tbody>
+                    <tr class="border-b border-gray-100 last:border-0">
+                        <td class="py-3 pr-4 font-semibold text-gray-500 align-middle w-24 md:w-32">
+                            Artist
+                        </td>
+                        <td class="py-3 align-middle">
+                            <Tag 
+                                v-if="currentArtwork.artist_username" 
+                                :value="currentArtwork.artist" 
+                                severity="info"
+                                @click="navigateToArtist(currentArtwork.artist_username)" 
+                                :pt="{ root: { class: 'text-base cursor-pointer hover:brightness-95 transition-all' } }" 
+                            />
+                            <span v-else class="text-gray-900 font-medium">{{ currentArtwork.artist }}</span>
+                        </td>
+                    </tr>
+
+                    <tr v-if="parsedKeywords.length > 0" class="border-b border-gray-100 last:border-0">
+                        <td class="py-3 pr-4 font-semibold text-gray-500 align-middle">
+                            Keywords
+                        </td>
+                        <td class="py-3 align-middle">
+                            <div class="flex flex-wrap gap-2">
+                                <Tag 
+                                    v-for="(tag, index) in parsedKeywords" 
+                                    :key="index" 
+                                    :value="tag" 
+                                    severity="secondary" 
+                                    rounded
+                                    @click="navigateToArtworksWithTag(tag)"
+                                    class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 px-3" 
+                                    role="link" 
+                                />
+                            </div>
+                        </td>
+                    </tr>
+
+                      <tr v-if="artworkColors.length > 0" class="border-b border-gray-100 last:border-0">
+                        <td class="py-3 pr-4 font-semibold text-gray-500 align-middle">
+                            Colors
+                        </td>
+                        <td class="py-3 align-middle">
+                            <div class="flex flex-wrap gap-2 items-center">
+                                <div 
+                                    v-for="color in artworkColors" 
+                                    :key="color.value"
+                                    class="w-6 h-6 rounded border border-gray-200 cursor-pointer shadow-sm hover:scale-110 transition-transform relative group"
+                                    :style="{ backgroundColor: color.hex }"
+                                    @click="navigateToArtworksWithColor(color.value)"
+                                >
+                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                        {{ color.label }}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
       </div>
     </div>
     <div v-else class="flex justify-center items-center h-64">
@@ -202,64 +255,6 @@
         </div>
       </div>
 
-      <div class="py-12" v-if="youMayAlsoLike.length">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-serif text-gray-900">You may also like</h3>
-                    <div class="h-px bg-gray-200 flex-1 ml-6"></div>
-                </div>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <Link 
-                        v-for="item in youMayAlsoLike" 
-                        :key="item.id" 
-                        :href="route('artwork.show', item.slug)"
-                        class="group block"
-                    >
-                        <div class="relative overflow-hidden bg-gray-100 mb-3 aspect-[3/4]">
-                            <img 
-                                :src="item.image_url" 
-                                :alt="item.title"
-                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            >
-                            <div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <span class="bg-white text-black px-4 py-2 text-sm font-medium shadow-sm">View</span>
-                            </div>
-                        </div>
-                        <h4 class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                            {{ item.title }}
-                        </h4>
-                        <p class="text-xs text-gray-500 mt-1">From {{ formatPrice(item.min_price) }}</p>
-                    </Link>
-                </div>
-            </div>
-
-            <div class="py-12 border-t border-gray-100" v-if="relatedProducts.length">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-serif text-gray-900">Related products</h3>
-                    <div class="h-px bg-gray-200 flex-1 ml-6"></div>
-                </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <Link 
-                        v-for="item in relatedProducts" 
-                        :key="item.id" 
-                        :href="route('artwork.show', item.slug)"
-                        class="group block"
-                    >
-                        <div class="relative overflow-hidden bg-gray-100 mb-3 aspect-[3/4]">
-                            <img 
-                                :src="item.image_url" 
-                                :alt="item.title"
-                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            >
-                        </div>
-                        <h4 class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                            {{ item.title }}
-                        </h4>
-                        <p class="text-xs text-gray-500 mt-1">From {{ formatPrice(item.min_price) }}</p>
-                    </Link>
-                </div>
-            </div>
     </Container>
   </section>
 </template>
@@ -323,14 +318,6 @@ const props = defineProps({
   error: String,
   requireLoginForPrices: Boolean,
   pricingConfig: Object,
-  relatedProducts: {
-        type: Array,
-        default: () => [] 
-    },
-    youMayAlsoLike: {
-        type: Array,
-        default: () => []
-    }
 });
 
 const page = usePage();
@@ -536,6 +523,91 @@ const galleryImages = computed(() => {
   }
   return images;
 });
+
+// 1. Define the exact colors from FilterSideBar
+const availableColors = [
+    { label: 'Red', value: 'red', hex: '#FF0000' },
+    { label: 'Orange', value: 'orange', hex: '#FFA500' },
+    { label: 'Yellow', value: 'yellow', hex: '#FFFF00' },
+    { label: 'Green', value: 'green', hex: '#008000' },
+    { label: 'Turquoise', value: 'turquoise', hex: '#40E0D0' },
+    { label: 'Blue', value: 'blue', hex: '#0000FF' },
+    { label: 'Lilac', value: 'lilac', hex: '#C8A2C8' },
+    { label: 'Pink', value: 'pink', hex: '#FFC0CB' },
+    { label: 'High Key', value: 'highkey', hex: '#FFFFFF' },
+    { label: 'Low Key', value: 'lowkey', hex: '#000000' }
+];
+
+// 2. Helper to find hex by name/value
+const getColorHex = (name) => {
+    if (!name) return '#cccccc';
+    const lowerName = name.toLowerCase();
+
+    // Map common API variances to our fixed values
+    if (lowerName === 'white') return '#FFFFFF'; // Map White -> High Key hex
+    if (lowerName === 'black') return '#000000'; // Map Black -> Low Key hex
+    
+    const found = availableColors.find(c => c.value === lowerName || c.label.toLowerCase() === lowerName);
+    return found ? found.hex : '#cccccc'; // Default gray if unknown
+};
+
+// 3. Helper to get the correct filter value for URL
+const getColorValue = (name) => {
+    if (!name) return '';
+    const lowerName = name.toLowerCase();
+    
+    if (lowerName === 'white') return 'highkey';
+    if (lowerName === 'black') return 'lowkey';
+
+    const found = availableColors.find(c => c.value === lowerName || c.label.toLowerCase() === lowerName);
+    return found ? found.value : lowerName;
+};
+
+const artworkColors = computed(() => {
+    // 1. Get the color object (e.g., { red: false, green: true ... })
+    const colorObj = currentArtwork.value?.color;
+
+    // Safety check: ensure it exists and is an object
+    if (!colorObj || typeof colorObj !== 'object') {
+        return [];
+    }
+
+    // 2. Filter keys where the value is TRUE
+    // Object.entries returns [['red', false], ['green', true], ...]
+    const activeKeys = Object.entries(colorObj)
+        .filter(([key, isActive]) => isActive === true)
+        .map(([key]) => key);
+
+    // 3. Map these keys to our availableColors configuration to get Hex/Labels
+    return activeKeys.map(key => {
+        // Find the matching color config (key 'highkey' matches value 'highkey')
+        const found = availableColors.find(c => c.value === key);
+
+        if (found) {
+            return {
+                label: found.label,
+                value: found.value,
+                hex: found.hex
+            };
+        }
+        
+        // Fallback (just in case API returns a color we don't have defined)
+        return {
+            label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize
+            value: key,
+            hex: '#cccccc' // Default gray
+        };
+    });
+});
+
+const navigateToArtworksWithColor = (colorValue) => {
+    if (!colorValue) return;
+    
+    router.visit(route('artworks', { filters: colorValue }), {
+        preserveState: false,
+        preserveScroll: false
+    });
+};
 
 const previewVisible = ref(false);
 const currentIndex = ref(0);
@@ -749,6 +821,10 @@ const addToRecentlyViewed = (item) => {
   localStorage.setItem(key, JSON.stringify(viewed));
 };
 
+const logColor = (color) => {
+  console.log("Selected color:", artworkColors.value);
+};
+
 </script>
 
 <style scoped>
@@ -767,7 +843,7 @@ const addToRecentlyViewed = (item) => {
   gap: 1.5rem;
   max-width: 100%;
   /* Full width within its parent */
-  overflow-x: hidden;
+  /* overflow-x: hidden; */
   /* Prevent horizontal scroll on this container */
   background: #ffffff;
   border-radius: 8px;
@@ -808,7 +884,7 @@ const addToRecentlyViewed = (item) => {
     /* Optional: max-width for display area */
     position: sticky;
     /* Make image area sticky on large screens */
-    top: 1rem;
+    top: 5rem;
     /* Adjust top offset as needed for sticky position */
     align-self: flex-start;
     /* Ensure it aligns with the top of info column */
@@ -1293,6 +1369,13 @@ const addToRecentlyViewed = (item) => {
   margin: 1.5rem 0;
 }
 
+.artwork-option {
+    font-size: 1.25rem;
+    color: #666;
+    font-weight: 500;
+    margin-block: 1rem;
+}
+
 .detail-item {
   display: flex;
   flex-direction: column;
@@ -1317,5 +1400,43 @@ const addToRecentlyViewed = (item) => {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin: 1.5rem 0;
+}
+
+/* --- NEW PRODUCT INFO STYLES --- */
+.product-info-section {
+    width: 100%;
+}
+
+.info-row {
+    display: grid;
+    grid-template-columns: 100px 1fr; /* Label takes 100px, content takes rest */
+    align-items: center; /* Align vertically center */
+    gap: 1rem;
+}
+
+/* On mobile, stack them if needed, or keep side-by-side */
+@media (max-width: 640px) {
+    .info-row {
+        grid-template-columns: 1fr; /* Stack vertically on very small screens */
+        gap: 0.25rem;
+    }
+}
+
+.info-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #6b7280; /* Gray-500 */
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.info-content {
+    font-size: 1rem;
+    color: #111827; /* Gray-900 */
+}
+
+/* Ensure white swatches are visible */
+.w-6.h-6.border-gray-200 {
+    background-color: #fff; /* Default for white */
 }
 </style>
