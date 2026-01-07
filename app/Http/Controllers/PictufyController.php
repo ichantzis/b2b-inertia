@@ -471,6 +471,84 @@ class PictufyController extends Controller
         ]);
     }
 
+    /**
+     * Fetch related and recommended artworks for a specific artwork ID.
+     * Called via AJAX to defer loading.
+     */
+    public function getRelatedContent(Request $request, $id)
+    {
+        try {
+            // 1. Fetch the main artwork details first to get context
+            $artworkResponse = $this->pictufy->getArtworkDetails($id);
+            $artwork = $artworkResponse['items'][0] ?? null;
+
+            if (!$artwork) {
+                return response()->json(['related' => [], 'youMayLike' => []]);
+            }
+
+            // Extract Category ID
+            $categoryId = $artwork['category_id'] ?? null;
+
+            // Extract First Keyword (Tag)
+            $firstTag = null;
+            if (!empty($artwork['keywords']['en'])) {
+                // Split by comma and take the first one
+                $keywords = explode(',', $artwork['keywords']['en']);
+                $firstTag = trim($keywords[0] ?? '');
+            }
+
+            // 2. Fetch "Related Products" (Same Category + First Tag)
+            $relatedArtworks = [];
+            if ($categoryId) {
+                $relatedParams = [
+                    'category' => $categoryId,
+                    'per_page' => 12, // Fetch a few more to filter out the current ID safely
+                    'order' => 'recommended' 
+                ];
+                
+                // Add search param if tag exists
+                if ($firstTag) {
+                    $relatedParams['search'] = $firstTag;
+                }
+
+                // Create a unique cache tag
+                $cacheTag = 'related_cat_' . $categoryId . ($firstTag ? '_tag_' . Str::slug($firstTag) : '');
+                
+                $response = $this->pictufy->getArtworksCached($relatedParams, $cacheTag);
+                
+                $relatedArtworks = collect($response['items'] ?? [])
+                    ->filter(fn($item) => $item['id'] != $id) // Exclude current
+                    ->take(8) // Limit to 8
+                    ->values()
+                    ->all();
+            }
+
+            // 3. Fetch "You May Also Like" (Trending fallback - Optional, kept for variety)
+            $youMayLikeArtworks = [];
+            // Strategy: Fallback to general trending
+             $likeParams = [
+                'order' => 'trending',
+                'per_page' => 6,
+            ];
+            $response = $this->pictufy->getArtworksCached($likeParams, 'trending');
+            $youMayLikeArtworks = collect($response['items'] ?? [])
+                ->filter(fn($item) => $item['id'] != $id)
+                ->take(4)
+                ->values()
+                ->all();
+            
+
+            return response()->json([
+                'related' => $relatedArtworks,
+                'youMayLike' => $youMayLikeArtworks
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Error fetching related content for artwork $id: " . $e->getMessage());
+            return response()->json(['related' => [], 'youMayLike' => []]);
+        }
+    }
+
 
     /* =========================================================================
        ARTIST METHODS

@@ -228,6 +228,22 @@ class PictufyService
         return $this->request('artworks', $requestParams);
     }
 
+    /**
+     * Get Cached Artworks for sections like "You May Also Like"
+     * Caches for 60 minutes.
+     */
+    public function getArtworksCached($params = [], $cacheTag = 'general')
+    {
+        // Unique cache key based on params
+        $cacheKey = 'pictufy_artworks_' . $cacheTag . '_' . md5(json_encode($params));
+        $cacheDuration = 60; // 1 hour
+
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($params, $cacheTag) {
+            Log::info("Fetching cached artworks ($cacheTag) from API");
+            return $this->getArtworks($params);
+        });
+    }
+
     public function getArtworkDetails($artworkId)
     {
         // API params: artwork_id, translate, languages

@@ -29,6 +29,7 @@ Route::get('/artworks/{filters?}', [PictufyController::class, 'filteredArtworks'
     ->name('artworks');
 Route::get('/fetch-artworks', [PictufyController::class, 'fetchData'])->name('artworks.fetch');
 Route::get('/artwork/{id}', [PictufyController::class, 'artworkDetails'])->name('artwork.details');
+Route::get('/artwork/{id}/related', [PictufyController::class, 'getRelatedContent'])->name('artwork.related');
 
 // Update collection route to use list_id
 Route::get('/collections', [PictufyController::class, 'indexCollections'])->name('collections.index'); // Page to display all collections

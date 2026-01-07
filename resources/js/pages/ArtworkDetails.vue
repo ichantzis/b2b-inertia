@@ -87,68 +87,55 @@
         <Divider class="my-8" />
 
         <div class="product-info-section">
-            <h2 class="artwork-option">Product Information</h2>
-            
-            <table class="w-full text-left border-collapse">
-                <tbody>
-                    <tr class="border-b border-gray-100 last:border-0">
-                        <td class="py-3 pr-4 font-semibold text-gray-500 align-middle w-24 md:w-32">
-                            Artist
-                        </td>
-                        <td class="py-3 align-middle">
-                            <Tag 
-                                v-if="currentArtwork.artist_username" 
-                                :value="currentArtwork.artist" 
-                                severity="info"
-                                @click="navigateToArtist(currentArtwork.artist_username)" 
-                                :pt="{ root: { class: 'text-base cursor-pointer hover:brightness-95 transition-all' } }" 
-                            />
-                            <span v-else class="text-gray-900 font-medium">{{ currentArtwork.artist }}</span>
-                        </td>
-                    </tr>
+          <h2 class="artwork-option">Product Information</h2>
 
-                    <tr v-if="parsedKeywords.length > 0" class="border-b border-gray-100 last:border-0">
-                        <td class="py-3 pr-4 font-semibold text-gray-500 align-middle">
-                            Keywords
-                        </td>
-                        <td class="py-3 align-middle">
-                            <div class="flex flex-wrap gap-2">
-                                <Tag 
-                                    v-for="(tag, index) in parsedKeywords" 
-                                    :key="index" 
-                                    :value="tag" 
-                                    severity="secondary" 
-                                    rounded
-                                    @click="navigateToArtworksWithTag(tag)"
-                                    class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 px-3" 
-                                    role="link" 
-                                />
-                            </div>
-                        </td>
-                    </tr>
+          <table class="w-full text-left border-collapse">
+            <tbody>
+              <tr class="border-b border-gray-100 last:border-0">
+                <td class="py-3 pr-4 font-semibold text-gray-500 align-middle w-24 md:w-32">
+                  Artist
+                </td>
+                <td class="py-3 align-middle">
+                  <Tag v-if="currentArtwork.artist_username" :value="currentArtwork.artist" severity="info"
+                    @click="navigateToArtist(currentArtwork.artist_username)"
+                    :pt="{ root: { class: 'text-base cursor-pointer hover:brightness-95 transition-all' } }" />
+                  <span v-else class="text-gray-900 font-medium">{{ currentArtwork.artist }}</span>
+                </td>
+              </tr>
 
-                      <tr v-if="artworkColors.length > 0" class="border-b border-gray-100 last:border-0">
-                        <td class="py-3 pr-4 font-semibold text-gray-500 align-middle">
-                            Colors
-                        </td>
-                        <td class="py-3 align-middle">
-                            <div class="flex flex-wrap gap-2 items-center">
-                                <div 
-                                    v-for="color in artworkColors" 
-                                    :key="color.value"
-                                    class="w-6 h-6 rounded border border-gray-200 cursor-pointer shadow-sm hover:scale-110 transition-transform relative group"
-                                    :style="{ backgroundColor: color.hex }"
-                                    @click="navigateToArtworksWithColor(color.value)"
-                                >
-                                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                        {{ color.label }}
-                                    </span>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+              <tr v-if="parsedKeywords.length > 0" class="border-b border-gray-100 last:border-0">
+                <td class="py-3 pr-4 font-semibold text-gray-500 align-middle">
+                  Keywords
+                </td>
+                <td class="py-3 align-middle">
+                  <div class="flex flex-wrap gap-2">
+                    <Tag v-for="(tag, index) in parsedKeywords" :key="index" :value="tag" severity="secondary" rounded
+                      @click="navigateToArtworksWithTag(tag)"
+                      class="cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 px-3"
+                      role="link" />
+                  </div>
+                </td>
+              </tr>
+
+              <tr v-if="artworkColors.length > 0" class="border-b border-gray-100 last:border-0">
+                <td class="py-3 pr-4 font-semibold text-gray-500 align-middle">
+                  Colors
+                </td>
+                <td class="py-3 align-middle">
+                  <div class="flex flex-wrap gap-2 items-center">
+                    <div v-for="color in artworkColors" :key="color.value"
+                      class="w-6 h-6 rounded border border-gray-200 cursor-pointer shadow-sm hover:scale-110 transition-transform relative group"
+                      :style="{ backgroundColor: color.hex }" @click="navigateToArtworksWithColor(color.value)">
+                      <span
+                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                        {{ color.label }}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
       </div>
@@ -257,16 +244,86 @@
 
     </Container>
   </section>
+
+  <section class="mt-16 mb-8 content-wrapper" v-if="relatedArtworks.length > 0 || youMayLikeArtworks.length > 0">
+    <div v-if="relatedArtworks.length > 0" class="mb-12">
+      <h3 class="text-2xl text-center font-bold mb-6 text-gray-800">Related Products</h3>
+      <DataView :value="relatedArtworks" layout="grid">
+        <template #grid="slotProps">
+          <div class="grid grid-cols-12 gap-4 md:gap-8">
+            <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
+              class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
+              <div class="rounded flex flex-col artwork-container">
+                <Link :href="route('artwork.details', artwork.id)" class="artwork-link">
+                  <div class="relative">
+                    <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
+                      :alt="artwork.title?.en || 'Untitled'"
+                      class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]" />
+                    <div v-else class="no-image">No Image Available</div>
+                    <div class="artwork-overlay">
+                      <div class="overlay-content">
+                        <span class="artwork-title">{{ artwork.title?.en || 'Untitled' }}</span>
+                        <Divider layout="vertical" />
+                        <span class="artwork-id">ID: {{ artwork.id }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </template>
+      </DataView>
+    </div>
+
+    <Divider />
+
+    <div v-if="youMayLikeArtworks.length > 0">
+      <h3 class="text-2xl text-center font-bold mb-6 text-gray-800">You May Also Like</h3>
+      <DataView :value="youMayLikeArtworks" layout="grid">
+        <template #grid="slotProps">
+          <div class="grid grid-cols-12 gap-4 md:gap-8">
+            <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
+              class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
+              <div class="rounded flex flex-col artwork-container">
+                <Link :href="route('artwork.details', artwork.id)" class="artwork-link">
+                  <div class="relative">
+                    <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
+                      :alt="artwork.title?.en || 'Untitled'"
+                      class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]" />
+                    <div v-else class="no-image">No Image Available</div>
+                    <div class="artwork-overlay">
+                      <div class="overlay-content">
+                        <span class="artwork-title">{{ artwork.title?.en || 'Untitled' }}</span>
+                        <Divider layout="vertical" />
+                        <span class="artwork-id">ID: {{ artwork.id }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </template>
+      </DataView>
+    </div>
+  </section>
+  <div v-else-if="isLoadingRelated" class="flex justify-center mt-12 mb-8">
+    <ProgressSpinner style="width: 40px; height: 40px" strokeWidth="4" />
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { router, Head as InertiaHead, usePage } from '@inertiajs/vue3';
+import { router, Head as InertiaHead, usePage, Link } from '@inertiajs/vue3';
+import axios from 'axios';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import Divider from 'primevue/divider';
 import Container from '@/components/Container.vue';
 import Dialog from 'primevue/dialog';
+import DataView from 'primevue/dataview';
+import ProgressSpinner from 'primevue/progressspinner';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import ArtworkCustomizer from '@/components/ArtworkCustomizer.vue';
 import { slugify } from '@/composables/utils.js';
@@ -330,6 +387,30 @@ const canViewPrice = computed(() => {
 });
 
 const currentArtwork = computed(() => props.artwork);
+
+// --- RELATED PRODUCTS LOGIC ---
+const relatedArtworks = ref([]);
+const youMayLikeArtworks = ref([]);
+const isLoadingRelated = ref(false);
+
+const fetchRelatedContent = async () => {
+  if (!currentArtwork.value || !currentArtwork.value.id) return;
+
+  isLoadingRelated.value = true;
+  try {
+    // Call our new internal API endpoint
+    const response = await axios.get(route('artwork.related', currentArtwork.value.id));
+
+    if (response.data) {
+      relatedArtworks.value = response.data.related || [];
+      youMayLikeArtworks.value = response.data.youMayLike || [];
+    }
+  } catch (error) {
+    console.error("Failed to fetch related artworks", error);
+  } finally {
+    isLoadingRelated.value = false;
+  }
+};
 
 // Νέα ref για το τρέχον επιλεγμένο στυλ πλαισίου από το Customizer
 // Αρχικοποιείται σε 'black' για να ταιριάζει με την αρχική τιμή του selectedCanvas στο ArtworkCustomizer
@@ -526,87 +607,87 @@ const galleryImages = computed(() => {
 
 // 1. Define the exact colors from FilterSideBar
 const availableColors = [
-    { label: 'Red', value: 'red', hex: '#FF0000' },
-    { label: 'Orange', value: 'orange', hex: '#FFA500' },
-    { label: 'Yellow', value: 'yellow', hex: '#FFFF00' },
-    { label: 'Green', value: 'green', hex: '#008000' },
-    { label: 'Turquoise', value: 'turquoise', hex: '#40E0D0' },
-    { label: 'Blue', value: 'blue', hex: '#0000FF' },
-    { label: 'Lilac', value: 'lilac', hex: '#C8A2C8' },
-    { label: 'Pink', value: 'pink', hex: '#FFC0CB' },
-    { label: 'High Key', value: 'highkey', hex: '#FFFFFF' },
-    { label: 'Low Key', value: 'lowkey', hex: '#000000' }
+  { label: 'Red', value: 'red', hex: '#FF0000' },
+  { label: 'Orange', value: 'orange', hex: '#FFA500' },
+  { label: 'Yellow', value: 'yellow', hex: '#FFFF00' },
+  { label: 'Green', value: 'green', hex: '#008000' },
+  { label: 'Turquoise', value: 'turquoise', hex: '#40E0D0' },
+  { label: 'Blue', value: 'blue', hex: '#0000FF' },
+  { label: 'Lilac', value: 'lilac', hex: '#C8A2C8' },
+  { label: 'Pink', value: 'pink', hex: '#FFC0CB' },
+  { label: 'High Key', value: 'highkey', hex: '#FFFFFF' },
+  { label: 'Low Key', value: 'lowkey', hex: '#000000' }
 ];
 
 // 2. Helper to find hex by name/value
 const getColorHex = (name) => {
-    if (!name) return '#cccccc';
-    const lowerName = name.toLowerCase();
+  if (!name) return '#cccccc';
+  const lowerName = name.toLowerCase();
 
-    // Map common API variances to our fixed values
-    if (lowerName === 'white') return '#FFFFFF'; // Map White -> High Key hex
-    if (lowerName === 'black') return '#000000'; // Map Black -> Low Key hex
-    
-    const found = availableColors.find(c => c.value === lowerName || c.label.toLowerCase() === lowerName);
-    return found ? found.hex : '#cccccc'; // Default gray if unknown
+  // Map common API variances to our fixed values
+  if (lowerName === 'white') return '#FFFFFF'; // Map White -> High Key hex
+  if (lowerName === 'black') return '#000000'; // Map Black -> Low Key hex
+
+  const found = availableColors.find(c => c.value === lowerName || c.label.toLowerCase() === lowerName);
+  return found ? found.hex : '#cccccc'; // Default gray if unknown
 };
 
 // 3. Helper to get the correct filter value for URL
 const getColorValue = (name) => {
-    if (!name) return '';
-    const lowerName = name.toLowerCase();
-    
-    if (lowerName === 'white') return 'highkey';
-    if (lowerName === 'black') return 'lowkey';
+  if (!name) return '';
+  const lowerName = name.toLowerCase();
 
-    const found = availableColors.find(c => c.value === lowerName || c.label.toLowerCase() === lowerName);
-    return found ? found.value : lowerName;
+  if (lowerName === 'white') return 'highkey';
+  if (lowerName === 'black') return 'lowkey';
+
+  const found = availableColors.find(c => c.value === lowerName || c.label.toLowerCase() === lowerName);
+  return found ? found.value : lowerName;
 };
 
 const artworkColors = computed(() => {
-    // 1. Get the color object (e.g., { red: false, green: true ... })
-    const colorObj = currentArtwork.value?.color;
+  // 1. Get the color object (e.g., { red: false, green: true ... })
+  const colorObj = currentArtwork.value?.color;
 
-    // Safety check: ensure it exists and is an object
-    if (!colorObj || typeof colorObj !== 'object') {
-        return [];
+  // Safety check: ensure it exists and is an object
+  if (!colorObj || typeof colorObj !== 'object') {
+    return [];
+  }
+
+  // 2. Filter keys where the value is TRUE
+  // Object.entries returns [['red', false], ['green', true], ...]
+  const activeKeys = Object.entries(colorObj)
+    .filter(([key, isActive]) => isActive === true)
+    .map(([key]) => key);
+
+  // 3. Map these keys to our availableColors configuration to get Hex/Labels
+  return activeKeys.map(key => {
+    // Find the matching color config (key 'highkey' matches value 'highkey')
+    const found = availableColors.find(c => c.value === key);
+
+    if (found) {
+      return {
+        label: found.label,
+        value: found.value,
+        hex: found.hex
+      };
     }
 
-    // 2. Filter keys where the value is TRUE
-    // Object.entries returns [['red', false], ['green', true], ...]
-    const activeKeys = Object.entries(colorObj)
-        .filter(([key, isActive]) => isActive === true)
-        .map(([key]) => key);
-
-    // 3. Map these keys to our availableColors configuration to get Hex/Labels
-    return activeKeys.map(key => {
-        // Find the matching color config (key 'highkey' matches value 'highkey')
-        const found = availableColors.find(c => c.value === key);
-
-        if (found) {
-            return {
-                label: found.label,
-                value: found.value,
-                hex: found.hex
-            };
-        }
-        
-        // Fallback (just in case API returns a color we don't have defined)
-        return {
-            label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize
-            value: key,
-            hex: '#cccccc' // Default gray
-        };
-    });
+    // Fallback (just in case API returns a color we don't have defined)
+    return {
+      label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize
+      value: key,
+      hex: '#cccccc' // Default gray
+    };
+  });
 });
 
 const navigateToArtworksWithColor = (colorValue) => {
-    if (!colorValue) return;
-    
-    router.visit(route('artworks', { filters: colorValue }), {
-        preserveState: false,
-        preserveScroll: false
-    });
+  if (!colorValue) return;
+
+  router.visit(route('artworks', { filters: colorValue }), {
+    preserveState: false,
+    preserveScroll: false
+  });
 };
 
 const previewVisible = ref(false);
@@ -772,6 +853,9 @@ onMounted(() => {
   if (props.artwork) {
     addToRecentlyViewed(props.artwork);
   }
+
+  // FETCH RELATED ARTWORKS (Deferred)
+  fetchRelatedContent();
 });
 
 const addToRecentlyViewed = (item) => {
@@ -819,10 +903,6 @@ const addToRecentlyViewed = (item) => {
   }
 
   localStorage.setItem(key, JSON.stringify(viewed));
-};
-
-const logColor = (color) => {
-  console.log("Selected color:", artworkColors.value);
 };
 
 </script>
@@ -1370,10 +1450,10 @@ const logColor = (color) => {
 }
 
 .artwork-option {
-    font-size: 1.25rem;
-    color: #666;
-    font-weight: 500;
-    margin-block: 1rem;
+  font-size: 1.25rem;
+  color: #666;
+  font-weight: 500;
+  margin-block: 1rem;
 }
 
 .detail-item {
@@ -1404,39 +1484,139 @@ const logColor = (color) => {
 
 /* --- NEW PRODUCT INFO STYLES --- */
 .product-info-section {
-    width: 100%;
+  width: 100%;
 }
 
 .info-row {
-    display: grid;
-    grid-template-columns: 100px 1fr; /* Label takes 100px, content takes rest */
-    align-items: center; /* Align vertically center */
-    gap: 1rem;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  /* Label takes 100px, content takes rest */
+  align-items: center;
+  /* Align vertically center */
+  gap: 1rem;
 }
 
 /* On mobile, stack them if needed, or keep side-by-side */
 @media (max-width: 640px) {
-    .info-row {
-        grid-template-columns: 1fr; /* Stack vertically on very small screens */
-        gap: 0.25rem;
-    }
+  .info-row {
+    grid-template-columns: 1fr;
+    /* Stack vertically on very small screens */
+    gap: 0.25rem;
+  }
 }
 
 .info-label {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    color: #6b7280; /* Gray-500 */
-    font-weight: 600;
-    letter-spacing: 0.05em;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #6b7280;
+  /* Gray-500 */
+  font-weight: 600;
+  letter-spacing: 0.05em;
 }
 
 .info-content {
-    font-size: 1rem;
-    color: #111827; /* Gray-900 */
+  font-size: 1rem;
+  color: #111827;
+  /* Gray-900 */
 }
 
 /* Ensure white swatches are visible */
 .w-6.h-6.border-gray-200 {
-    background-color: #fff; /* Default for white */
+  background-color: #fff;
+  /* Default for white */
+}
+
+/* Artwork Card Styles */
+.content-wrapper {
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.artwork-container {
+  position: relative;
+  overflow: hidden;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.artwork-link {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.artwork-container img {
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 4px;
+}
+
+.artwork-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.75rem;
+  transform: translateY(100%);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  border-top: 1px solid #eee;
+}
+
+.artwork-container:hover .artwork-overlay {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.overlay-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #333;
+}
+
+.artwork-id,
+.artwork-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artwork-title {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.artwork-id {
+  flex-shrink: 0;
+  color: #555;
+}
+
+.card-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-image {
+  width: 100%;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  color: #888;
+  font-size: 14px;
+  border-radius: 4px;
 }
 </style>
