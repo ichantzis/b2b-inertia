@@ -4,16 +4,16 @@
         <Container>
             <PageTitleSection title="Settings" />
 
-            <div class="grid gap-6">
-                <Card>
-                    <template #title>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <Card class="h-full"> <template #title>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-cog text-xl"></i>
                             <span>General Configuration</span>
                         </div>
                     </template>
                     <template #content>
-                        <div class="field max-w-2xl">
+                        <div class="field">
                             <label for="admin_email" class="block font-medium mb-2 text-gray-700">
                                 Admin Notification Email
                             </label>
@@ -27,7 +27,7 @@
                     </template>
                 </Card>
 
-                <Card>
+                <Card class="h-full">
                     <template #title>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-lock text-xl"></i>
@@ -35,21 +35,21 @@
                         </div>
                     </template>
                     <template #content>
-                        <div class="flex items-center justify-between max-w-2xl p-4 rounded">
-                            <div>
+                        <div class="flex items-center justify-between p-2 rounded">
+                            <div class="mr-4">
                                 <div class="font-medium text-gray-800">Hide Prices for Guests</div>
                                 <div class="text-sm text-gray-500">
-                                    If enabled, users must log in to view prices and add items to cart.
+                                    Users must log in to view prices/cart.
                                 </div>
                             </div>
                             <ToggleSwitch v-model="form.require_login_for_prices" />
                         </div>
                         <Divider />
-                        <div class="flex items-center justify-between max-w-2xl p-4 rounded">
-                            <div>
+                        <div class="flex items-center justify-between p-2 rounded">
+                            <div class="mr-4">
                                 <div class="font-medium text-gray-800">Open Public Registration</div>
                                 <div class="text-sm text-gray-500">
-                                    If disabled, guests must request access via a contact form.
+                                    If disabled, guests request access.
                                 </div>
                             </div>
                             <ToggleSwitch v-model="form.allow_public_registration" />
@@ -57,7 +57,7 @@
                     </template>
                 </Card>
 
-                <Card>
+                <Card class="lg:col-span-2 overflow-hidden"> 
                     <template #title>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-tags text-xl"></i>
@@ -65,36 +65,36 @@
                         </div>
                     </template>
                     <template #content>
-                        <Tabs value="canvas_framed">
-                            <TabList>
-                                <Tab value="canvas_framed">Canvas (Framed)</Tab>
-                                <Tab value="canvas_noframe">Canvas (No Frame)</Tab>
-                                <Tab value="poster_framed">Poster (Framed)</Tab>
-                            </TabList>
-                            <TabPanels>
-                                <TabPanel value="canvas_framed">
-                                    <PricingListEditor v-model="form.pricing_config.canvas_framed" />
-                                </TabPanel>
-                                <TabPanel value="canvas_noframe">
-                                    <PricingListEditor v-model="form.pricing_config.canvas_noframe" />
-                                </TabPanel>
-                                <TabPanel value="poster_framed">
-                                    <PricingListEditor v-model="form.pricing_config.poster_framed" />
-                                </TabPanel>
-                            </TabPanels>
-                        </Tabs>
+                        <div class="overflow-x-auto">
+                            <Tabs value="canvas_framed">
+                                <TabList>
+                                    <Tab value="canvas_framed">Canvas (Framed)</Tab>
+                                    <Tab value="canvas_noframe">Canvas (No Frame)</Tab>
+                                    <Tab value="poster_framed">Poster (Framed)</Tab>
+                                </TabList>
+                                <TabPanels>
+                                    <TabPanel value="canvas_framed">
+                                        <PricingListEditor v-model="form.pricing_config.canvas_framed" />
+                                    </TabPanel>
+                                    <TabPanel value="canvas_noframe">
+                                        <PricingListEditor v-model="form.pricing_config.canvas_noframe" />
+                                    </TabPanel>
+                                    <TabPanel value="poster_framed">
+                                        <PricingListEditor v-model="form.pricing_config.poster_framed" />
+                                    </TabPanel>
+                                </TabPanels>
+                            </Tabs>
+                        </div>
                     </template>
                 </Card>
 
-                <div class="mt-8 flex justify-end space-x-3">
+                <div class="lg:col-span-2 mt-4 flex justify-end">
                     <Button @click="submitAll" label="Save All Changes" icon="pi pi-check" :loading="form.processing"
                         size="large" />
                 </div>
 
             </div>
         </Container>
-
-
     </AdminLayout>
 </template>
 

@@ -154,6 +154,114 @@
       </div>
     </Dialog>
   </div>
+  <section class="bg-black text-white py-16 md:py-24">
+    <Container>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div class="order-2 md:order-1 relative overflow-hidden rounded-sm my-8">
+          <img src="/images/artwork-1.webp" alt="Interior Decoration" class="w-full h-full object-cover shadow-lg">
+        </div>
+        <div class="order-1 md:order-2 px-4 md:px-12 text-center md:text-left">
+          <p class="text-lg leading-relaxed font-light text-gray-200">
+            In our craft, we take great care to manufacture all paintings with high quality here in Greece. By using
+            only
+            100% solid wood for the frames, we ensure both their durability and natural beauty. Enhancing the aesthetics
+            of the works, we use only high quality cotton canvas.
+            <br />
+
+            In addition, you can choose the shade and dimensions that suit you after personal communication. Leave your
+            signature in your space with unique paintings that reflect your quality and taste.
+          </p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center my-8 md:mb-24">
+        <div class="px-4 md:px-12 text-center md:text-left">
+          <p class="text-lg leading-relaxed font-light text-gray-200">
+            Bring museum-quality art to your space with an oil print or framed poster that will stand the test of time.
+            All our products are made from excellent quality raw materials which give a solid and compact construction
+            of
+            high aesthetics.
+          </p>
+        </div>
+        <div class="relative overflow-hidden rounded-sm">
+          <img src="/images/artwork-2.webp" alt="Quality Craftsmanship" class="w-full h-full object-cover shadow-lg">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center  my-8">
+        <div class="order-2 md:order-1 relative overflow-hidden rounded-sm">
+          <img src="/images/artwork-3.webp" alt="Interior Decoration" class="w-full h-full object-cover shadow-lg">
+        </div>
+        <div class="order-1 md:order-2 px-4 md:px-12 text-center md:text-left">
+          <p class="text-lg leading-relaxed font-light text-gray-200">
+            Decorating your space couldn't be easier and more inspiring. Stand out by choosing from the timeless variety
+            of works in our collection, whether on cotton canvas or Poster*
+          </p>
+          <p class="text-xs text-gray-500 mt-4 italic">
+            *They are characterized mainly by the white border.
+          </p>
+        </div>
+      </div>
+
+      <div class="py-12" v-if="youMayAlsoLike.length">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-xl font-serif text-gray-900">You may also like</h3>
+                    <div class="h-px bg-gray-200 flex-1 ml-6"></div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <Link 
+                        v-for="item in youMayAlsoLike" 
+                        :key="item.id" 
+                        :href="route('artwork.show', item.slug)"
+                        class="group block"
+                    >
+                        <div class="relative overflow-hidden bg-gray-100 mb-3 aspect-[3/4]">
+                            <img 
+                                :src="item.image_url" 
+                                :alt="item.title"
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            >
+                            <div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <span class="bg-white text-black px-4 py-2 text-sm font-medium shadow-sm">View</span>
+                            </div>
+                        </div>
+                        <h4 class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                            {{ item.title }}
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">From {{ formatPrice(item.min_price) }}</p>
+                    </Link>
+                </div>
+            </div>
+
+            <div class="py-12 border-t border-gray-100" v-if="relatedProducts.length">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-xl font-serif text-gray-900">Related products</h3>
+                    <div class="h-px bg-gray-200 flex-1 ml-6"></div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <Link 
+                        v-for="item in relatedProducts" 
+                        :key="item.id" 
+                        :href="route('artwork.show', item.slug)"
+                        class="group block"
+                    >
+                        <div class="relative overflow-hidden bg-gray-100 mb-3 aspect-[3/4]">
+                            <img 
+                                :src="item.image_url" 
+                                :alt="item.title"
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            >
+                        </div>
+                        <h4 class="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                            {{ item.title }}
+                        </h4>
+                        <p class="text-xs text-gray-500 mt-1">From {{ formatPrice(item.min_price) }}</p>
+                    </Link>
+                </div>
+            </div>
+    </Container>
+  </section>
 </template>
 
 <script setup>
@@ -162,6 +270,7 @@ import { router, Head as InertiaHead, usePage } from '@inertiajs/vue3';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import Divider from 'primevue/divider';
+import Container from '@/components/Container.vue';
 import Dialog from 'primevue/dialog';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import ArtworkCustomizer from '@/components/ArtworkCustomizer.vue';
@@ -213,7 +322,15 @@ const props = defineProps({
   artwork: Object,
   error: String,
   requireLoginForPrices: Boolean,
-  pricingConfig: Object
+  pricingConfig: Object,
+  relatedProducts: {
+        type: Array,
+        default: () => [] 
+    },
+    youMayAlsoLike: {
+        type: Array,
+        default: () => []
+    }
 });
 
 const page = usePage();
@@ -221,8 +338,8 @@ const user = computed(() => page.props.auth.user);
 
 // Logic to determine if price/cart is visible
 const canViewPrice = computed(() => {
-    if (!props.requireLoginForPrices) return true; // If setting is off, everyone can see
-    return !!user.value; // If setting is on, only logged-in users can see
+  if (!props.requireLoginForPrices) return true; // If setting is off, everyone can see
+  return !!user.value; // If setting is on, only logged-in users can see
 });
 
 const currentArtwork = computed(() => props.artwork);
