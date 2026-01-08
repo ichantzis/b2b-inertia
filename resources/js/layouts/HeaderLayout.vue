@@ -8,6 +8,7 @@ import LinksPanelMenu from '@/components/primevue/LinksPanelMenu.vue';
 import Popover from 'primevue/popover';
 import { useToast } from 'primevue/usetoast';
 import { Menu } from 'primevue';
+import Footer from '@/components/Footer.vue';
 
 const page = usePage();
 
@@ -506,6 +507,8 @@ onUnmounted(() => {
             <main>
                 <slot />
             </main>
+
+            <Footer />
         </div>
     </div>
 </template>
