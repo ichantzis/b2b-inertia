@@ -29,6 +29,18 @@ const selectedCanvas = ref('black');
 const selectedSize = ref('50x70');
 const selectedSquareSize = ref('50x50');
 
+const frames = [
+    { id: 'black', label: 'Black', img: '/images/frames/floatblack-frame.webp' },
+    { id: 'white', label: 'White', img: '/images/frames/floatwhite-frame.webp' },
+    { id: 'natural', label: 'Natural', img: '/images/frames/floatnatural-frame.webp' },
+    { id: 'walnut', label: 'Walnut', img: '/images/frames/floatwalnut-frame.webp' },
+    { id: 'oak', label: 'Oak', img: '/images/frames/floatoak-frame.webp' },
+    { id: 'crema', label: 'Crema', img: '/images/frames/floatcrema-frame.webp' },
+    { id: 'gold', label: 'Gold', img: '/images/frames/floatgold-frame.webp' },
+    { id: 'silver', label: 'Silver', img: '/images/frames/floatsilver-frame.webp' },
+    { id: 'noframe', label: 'No Frame', img: '/images/frames/floatnoframe.jpg' },
+];
+
 // TRANSFORM DB CONFIG TO COMPONENT FORMAT
 const prices = computed(() => {
     const arrayToObject = (arr) => {
@@ -51,52 +63,6 @@ const prices = computed(() => {
         }
     };
 });
-
-// const prices = {
-//     frame: {
-//         canvas: {
-//             '40x60': 144,
-//             '50x70': 180,
-//             '60x90': 264,
-//             '70x100': 288,
-//             '80x120': 348,
-//             '100x140': 408,
-//             '100x150': 504,
-//             '120x160': 588,
-//             '120x180': 624,
-//             '50x50': 150,
-//             '70x70': 276,
-//             '100x100': 372,
-//             '120x120': 504
-//         },
-//         noframe: {
-//             '40x60': 96,
-//             '50x70': 120,
-//             '60x90': 180,
-//             '70x100': 198,
-//             '80x120': 228,
-//             '100x140': 276,
-//             '100x150': 324,
-//             '50x50': 96,
-//             '70x70': 180,
-//             '100x100': 240
-//         },
-//         poster: {
-//             '30x40': 72,
-//             '40x60': 96,
-//             '50x70': 132,
-//             '60x80': 156,
-//             '70x100': 204,
-//             '80x120': 288,
-//             '100x140': 432,
-//             '50x50': 102,
-//             '60x60': 132,
-//             '70x70': 168,
-//             '100x100': 288,
-//             '120x120': 396
-//         }
-//     }
-// };
 
 // Helper to sort sizes naturally (e.g. 30x40 < 40x60)
 const sortSizes = (sizes) => {
@@ -325,33 +291,20 @@ watch([selectedType, selectedCanvas], () => {
             <span class="detail-label">Frame</span>
         </div>
         <div class="canvas-wrapper" v-show="showCanvasFrames">
-            <Button v-bind="getButtonProps('black', selectedCanvas)" @click="selectedCanvas = 'black'">
-                <img src="/images/frames/floatblack-frame.webp" alt="Black Frame" class="frame-icon" />
-            </Button>
-            <Button v-bind="getButtonProps('white', selectedCanvas)" @click="selectedCanvas = 'white'">
-                <img src="/images/frames/floatwhite-frame.webp" alt="White Frame" class="frame-icon" />
-            </Button>
-            <Button v-bind="getButtonProps('natural', selectedCanvas)" @click="selectedCanvas = 'natural'">
-                <img src="/images/frames/floatnatural-frame.webp" alt="Natural Frame" class="frame-icon" />
-            </Button>
-            <Button v-bind="getButtonProps('walnut', selectedCanvas)" @click="selectedCanvas = 'walnut'">
-                <img src="/images/frames/floatwalnut-frame.webp" alt="Walnut Frame" class="frame-icon" />
-            </Button>
-            <Button v-bind="getButtonProps('oak', selectedCanvas)" @click="selectedCanvas = 'oak'">
-                <img src="/images/frames/floatoak-frame.webp" alt="Oak Frame" class="frame-icon" />
-            </Button>
-            <Button v-bind="getButtonProps('crema', selectedCanvas)" @click="selectedCanvas = 'crema'">
-                <img src="/images/frames/floatcrema-frame.webp" alt="Crema Frame" class="frame-icon" />
-            </Button>
-            <Button v-bind="getButtonProps('gold', selectedCanvas)" @click="selectedCanvas = 'gold'">
-                <img src="/images/frames/floatgold-frame.webp" alt="Gold Frame" class="frame-icon" />
-            </Button>
-            <Button v-bind="getButtonProps('silver', selectedCanvas)" @click="selectedCanvas = 'silver'">
-                <img src="/images/frames/floatsilver-frame.webp" alt="Silver Frame" class="frame-icon" />
-            </Button>
-            <Button v-bind="getButtonProps('noframe', selectedCanvas)" @click="selectedCanvas = 'noframe'">
-                <img src="/images/frames/floatnoframe.jpg" alt="No Frame" class="frame-icon" />
-            </Button>
+            <div v-for="frame in frames" :key="frame.id" class="relative group">
+                <Button 
+                    v-bind="getButtonProps(frame.id, selectedCanvas)" 
+                    @click="selectedCanvas = frame.id"
+                >
+                    <img :src="frame.img" :alt="frame.label + ' Frame'" class="frame-icon" />
+                </Button>
+                
+                <span 
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10"
+                >
+                    {{ frame.label }}
+                </span>
+            </div>
         </div>
 
         <div class="detail-item">

@@ -122,7 +122,7 @@ const panelMenuItems = computed(() => {
             </template>
         </PanelMenu>
         <div class="mt-auto text-center p-2 text-xs sm:text-sm text-surface-500 dark:text-surface-400">
-            <p>&copy; {{ new Date().getFullYear() }} YourApp</p>
+            <p>&copy; {{ new Date().getFullYear() }} Pinakothiki</p>
         </div>
     </div>
 </template>

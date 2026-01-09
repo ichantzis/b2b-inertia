@@ -15,9 +15,13 @@ class AccessRequestController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'company_name' => 'required|string|max:255',
+            'vat_number' => 'required|string|max:50',
             'country' => 'required|string|max:2',
             'email' => 'required|email',
             'phone' => 'required|string|max:50',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'postal_code' => 'required|string|max:20',
             'message' => 'nullable|string'
         ]);
 

@@ -155,6 +155,22 @@
                 </div>
                 @endif
 
+                <div class="info-row">
+                    <span class="label">Address</span>
+                    <span class="value">
+                        {{ $data['address'] }}<br>
+                        {{ $data['city'] }}, {{ $data['postal_code'] }}<br>
+                        {{ $data['country'] }}
+                    </span>
+                </div>
+
+                @if(!empty($data['vat_number']))
+                <div class="info-row">
+                    <span class="label">VAT Number</span>
+                    <span class="value">{{ $data['vat_number'] }}</span>
+                </div>
+                @endif
+
                 @if(!empty($data['phone']))
                 <div class="info-row">
                     <span class="label">Phone</span>

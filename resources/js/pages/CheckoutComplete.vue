@@ -13,7 +13,7 @@
                         <div class="text-surface-900 dark:text-surface-0 font-bold text-4xl my-2">Successful Order!
                         </div>
                         <p class="text-surface-700 dark:text-surface-100 text-xl mt-0 mb-6 p-0">
-                            Your order is being processed. We'll keep you updated.
+                            Your order is being processed. We'll contact you soon for further payment details.
                         </p>
                         <div
                             style="height: 3px; background: linear-gradient(90deg, var(--p-primary-color) 0%, rgba(var(--p-primary-rgb), 0) 50%);">
@@ -211,7 +211,7 @@ const orderItems = computed(() => {
 });
 
 // Helper to convert country code to country name (you'll need a more comprehensive list or a library)
-const europeanCountries = { AT: 'Austria', BE: 'Belgium', BG: 'Bulgaria', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czech Republic', DK: 'Denmark', EE: 'Estonia', FI: 'Finland', FR: 'France', DE: 'Germany', GR: 'Greece', HU: 'Hungary', IE: 'Ireland', IT: 'Italy', LV: 'Latvia', LT: 'Lithuania', LU: 'Luxembourg', MT: 'Malta', NL: 'Netherlands', PL: 'Poland', PT: 'Portugal', RO: 'Romania', SK: 'Slovakia', SI: 'Slovenia', ES: 'Spain', SE: 'Sweden', /* Add other relevant countries */ };
+const europeanCountries = { AT: 'Austria', BE: 'Belgium', BG: 'Bulgaria', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czech Republic', DK: 'Denmark', EE: 'Estonia', FI: 'Finland', FR: 'France', DE: 'Germany', GB: 'United Kingdom', GR: 'Greece', HU: 'Hungary', IE: 'Ireland', IT: 'Italy', LV: 'Latvia', LT: 'Lithuania', LU: 'Luxembourg', MT: 'Malta', NL: 'Netherlands', PL: 'Poland', PT: 'Portugal', RO: 'Romania', SK: 'Slovakia', SI: 'Slovenia', ES: 'Spain', SE: 'Sweden', /* Add other relevant countries */ };
 
 const getCountryName = (code) => {
     return europeanCountries[code] || code; // Fallback to code if name not found

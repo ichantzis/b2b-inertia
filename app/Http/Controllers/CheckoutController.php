@@ -170,7 +170,7 @@ class CheckoutController extends Controller
 
             $order = Order::create([
                 'user_id' => $user->id,
-                'order_number' => 'ORD-' . strtoupper(uniqid()),
+                'order_number' => 'ORD-TEMP-' . uniqid(), // Temporary order number
                 'total_amount' => $finalTotal,
                 'status' => 'pending',
 
@@ -208,6 +208,14 @@ class CheckoutController extends Controller
 
                 'coupon_code' => $couponCode,
                 'discount_amount' => $discountAmount,
+            ]);
+
+            /** Now that we have the order ID, we can set a proper order number
+             *  If the ID exceeds 5 digits (e.g. 100500), 
+             *  the number will automatically increase (ORD-100500) without any problem.
+            */
+            $order->update([
+                'order_number' => 'ORD-' . str_pad($order->id, 5, '0', STR_PAD_LEFT)
             ]);
 
             foreach ($validatedData['items'] as $itemData) {

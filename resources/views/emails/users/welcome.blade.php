@@ -26,7 +26,7 @@
                 Hello <strong>{{ $user->name }}</strong>,<br>
                 
                 @if($resetUrl)
-                    Your account has been created by our administrator. 
+                    Your account has been created by our team. 
                     Please click the button below to set your password and access your account.
                 @else
                     Thank you for registering! We are excited to have you on board.
@@ -37,7 +37,7 @@
             @if($resetUrl)
                 <a href="{{ $resetUrl }}" class="btn">Set Your Password</a>
                 <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-                    This link will expire in 60 minutes.
+                    This link will expire in 24 hours.
                 </p>
             @else
                 <a href="{{ route('welcome') }}" class="btn">Start Shopping</a>

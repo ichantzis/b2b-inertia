@@ -18,9 +18,21 @@
         .label { font-size: 11px; text-transform: uppercase; color: #9ca3af; letter-spacing: 0.5px; margin-bottom: 4px; }
         .value { font-size: 15px; color: #1f2937; font-weight: 500; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
-        th { text-align: left; padding: 12px 10px; background: #f9fafb; color: #6b7280; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
-        td { padding: 12px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #374151; vertical-align: top; }
+        /* Styles for Address & Invoice Sections */
+        .details-section { margin-bottom: 25px; padding-top: 15px; border-top: 1px solid #f3f4f6; }
+        .address-table { width: 100%; border-collapse: collapse; border: none; margin: 0; }
+        .address-td { width: 50%; vertical-align: top; border: none; padding: 0; }
+        .address-text { font-size: 13px; line-height: 1.5; color: #374151; }
+        
+        .invoice-box { margin-bottom: 25px; background-color: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; }
+        .invoice-table td { padding: 3px 0; border: none; font-size: 13px; vertical-align: top; }
+        .invoice-label { color: #6b7280; width: 110px; }
+        .invoice-val { font-weight: 600; color: #1f2937; }
+
+        /* Items Table */
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
+        .items-table th { text-align: left; padding: 12px 10px; background: #f9fafb; color: #6b7280; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
+        .items-table td { padding: 12px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #374151; vertical-align: top; }
         
         .totals { margin-top: 20px; text-align: right; }
         .totals-row { margin-bottom: 5px; color: #6b7280; font-size: 14px; }
@@ -62,7 +74,86 @@
                 </div>
             </div>
 
-            <table>
+            <div class="details-section">
+                <table class="address-table">
+                    <tr>
+                        <td class="address-td" style="padding-right: 15px;">
+                            <div class="label">Billing Address</div>
+                            <div class="address-text">
+                                <strong>{{ $order->billing_first_name }} {{ $order->billing_last_name }}</strong><br>
+                                {{ $order->billing_address }}<br>
+                                {{ $order->billing_city }}
+                                @if(!empty($order->billing_state_or_county))
+                                    , {{ $order->billing_state_or_county }}
+                                @endif
+                                , {{ $order->billing_postal_code }}<br>
+                                {{ $order->billing_country }}<br>
+                                <div style="margin-top: 5px; color: #6b7280;">
+                                    {{ $order->billing_email }}<br>
+                                    {{ $order->billing_phone }}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="address-td" style="padding-left: 15px;">
+                            <div class="label">
+                                {{ $order->shipping_is_different ? 'Shipping Address' : 'Shipping (Same as Billing)' }}
+                            </div>
+                            @if($order->shipping_is_different)
+                            <div class="address-text">
+                                <strong>{{ $order->shipping_first_name }} {{ $order->shipping_last_name }}</strong><br>
+                                {{ $order->shipping_address }}<br>
+                                {{ $order->shipping_city }}
+                                @if(!empty($order->shipping_state_or_county))
+                                    , {{ $order->shipping_state_or_county }}
+                                @endif
+                                , {{ $order->shipping_postal_code }}<br>
+                                {{ $order->shipping_country }}<br>
+                                @if($order->shipping_phone)
+                                <div style="margin-top: 5px; color: #6b7280;">
+                                    {{ $order->shipping_phone }}
+                                </div>
+                                @endif
+                            </div>
+                            @endif
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            @if($order->wants_invoice)
+            <div class="invoice-box">
+                <div class="label" style="margin-bottom: 8px;">Invoice Details</div>
+                <table class="invoice-table" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
+                    <tr>
+                        <td class="invoice-label">Company:</td>
+                        <td class="invoice-val">{{ $order->invoice_company_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="invoice-label">VAT Number:</td>
+                        <td class="invoice-val">{{ $order->invoice_vat_number }}</td>
+                    </tr>
+                    <tr>
+                        <td class="invoice-label">Tax Office:</td>
+                        <td class="invoice-val">{{ $order->invoice_tax_office }}</td>
+                    </tr>
+                    <tr>
+                        <td class="invoice-label">Profession:</td>
+                        <td class="invoice-val">{{ $order->invoice_profession }}</td>
+                    </tr>
+                </table>
+            </div>
+            @endif
+
+            @if($order->notes)
+            <div style="margin-bottom: 25px; padding: 15px; border: 1px dashed #e5e7eb; border-radius: 6px; background-color: #ffffff;">
+                <div class="label">Order Notes</div>
+                <div style="font-size: 13px; font-style: italic; color: #4b5563;">
+                    "{{ $order->notes }}"
+                </div>
+            </div>
+            @endif
+
+            <table class="items-table">
                 <thead>
                     <tr>
                         <th width="55%">Item</th>
@@ -77,6 +168,7 @@
                             <strong>{{ $item->artwork_title }}</strong><br>
                             <span style="font-size: 12px; color: #6b7280;">
                                 {{ ucfirst($item->type) }} | {{ $item->size }}
+                                @if($item->frame && $item->frame !== 'noframe') | {{ ucfirst($item->frame) }} @endif
                             </span>
                         </td>
                         <td>{{ $item->quantity }}</td>

@@ -25,34 +25,21 @@ const emailInput = useTemplateRef('email-input');
 
 // European countries list
 const countries = ref([
-    { name: 'Austria', code: 'AT' },
-    { name: 'Belgium', code: 'BE' },
-    { name: 'Bulgaria', code: 'BG' },
-    { name: 'Croatia', code: 'HR' },
-    { name: 'Cyprus', code: 'CY' },
-    { name: 'Czech Republic', code: 'CZ' }, // Note: PrimeVue flag CSS might use 'cz'
-    { name: 'Denmark', code: 'DK' },
-    { name: 'Estonia', code: 'EE' },
-    { name: 'Finland', code: 'FI' },
-    { name: 'France', code: 'FR' },
-    { name: 'Germany', code: 'DE' },
     { name: 'Greece', code: 'GR' },
-    { name: 'Hungary', code: 'HU' },
-    { name: 'Ireland', code: 'IE' },
-    { name: 'Italy', code: 'IT' },
-    { name: 'Latvia', value: 'LV' }, // Should be code: 'LV'
-    { name: 'Lithuania', code: 'LT' },
-    { name: 'Luxembourg', code: 'LU' },
-    { name: 'Malta', code: 'MT' },
-    { name: 'Netherlands', code: 'NL' },
-    { name: 'Poland', code: 'PL' },
-    { name: 'Portugal', code: 'PT' },
-    { name: 'Romania', code: 'RO' },
-    { name: 'Slovakia', code: 'SK' },
-    { name: 'Slovenia', code: 'SI' },
-    { name: 'Spain', code: 'ES' },
-    { name: 'Sweden', code: 'SE' },
-    // Add other countries as needed
+    { name: 'Austria', code: 'AT' }, { name: 'Belgium', code: 'BE' },
+    { name: 'Bulgaria', code: 'BG' }, { name: 'Croatia', code: 'HR' },
+    { name: 'Cyprus', code: 'CY' }, { name: 'Czech Republic', code: 'CZ' },
+    { name: 'Denmark', code: 'DK' }, { name: 'Estonia', code: 'EE' },
+    { name: 'Finland', code: 'FI' }, { name: 'France', code: 'FR' },
+    { name: 'Germany', code: 'DE' },
+    { name: 'Hungary', code: 'HU' }, { name: 'Ireland', code: 'IE' },
+    { name: 'Italy', code: 'IT' }, { name: 'Latvia', code: 'LV' },
+    { name: 'Lithuania', code: 'LT' }, { name: 'Luxembourg', code: 'LU' },
+    { name: 'Malta', code: 'MT' }, { name: 'Netherlands', code: 'NL' },
+    { name: 'Poland', code: 'PL' }, { name: 'Portugal', code: 'PT' },
+    { name: 'Romania', code: 'RO' }, { name: 'Slovakia', code: 'SK' },
+    { name: 'Slovenia', code: 'SI' }, { name: 'Spain', code: 'ES' },
+    { name: 'Sweden', code: 'SE' }, { name: 'United Kingdom', code: 'GB' },
 ]);
 
 const form = useForm({
@@ -74,6 +61,10 @@ const requestForm = useForm({
     company_name: '',
     email: '',
     phone: '',
+    vat_number: '',
+    address: '',
+    city: '',
+    postal_code: '',
     message: '',
     country_object: null, // Binds to the dropdown object
     country: ''           // Binds to the string code (sent to backend)
@@ -150,7 +141,7 @@ onMounted(() => {
                     Or create an account
                 </InertiaLink>
 
-                <div v-else class="text-sm text-gray-600">
+                <div v-else class="text-lg text-gray-600">
                     <span>New B2B Customer? </span>
                     <button type="button" @click="showRequestModal = true"
                         class="underline text-muted-color hover:text-color cursor-pointer">
@@ -173,6 +164,31 @@ onMounted(() => {
                                 :class="{ 'p-invalid': requestForm.errors.company_name }" />
                             <small class="text-red-500" v-if="requestForm.errors.company_name">{{
                                 requestForm.errors.company_name }}</small>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <label class="font-medium text-sm">Address</label>
+                            <InputText v-model="requestForm.address" class="w-full"
+                                :class="{ 'p-invalid': requestForm.errors.address }" />
+                            <small class="text-red-500" v-if="requestForm.errors.address">{{ requestForm.errors.address
+                                }}</small>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <div class="flex flex-col gap-1 flex-1">
+                                <label class="font-medium text-sm">City</label>
+                                <InputText v-model="requestForm.city" class="w-full"
+                                    :class="{ 'p-invalid': requestForm.errors.city }" />
+                                <small class="text-red-500" v-if="requestForm.errors.city">{{ requestForm.errors.city
+                                    }}</small>
+                            </div>
+                            <div class="flex flex-col gap-1 w-1/3">
+                                <label class="font-medium text-sm">Postal Code</label>
+                                <InputText v-model="requestForm.postal_code" class="w-full"
+                                    :class="{ 'p-invalid': requestForm.errors.postal_code }" />
+                                <small class="text-red-500" v-if="requestForm.errors.postal_code">{{
+                                    requestForm.errors.postal_code }}</small>
+                            </div>
                         </div>
 
                         <div class="flex flex-col gap-1">
@@ -200,31 +216,49 @@ onMounted(() => {
                                 </template>
                             </Select>
                             <small class="text-red-500" v-if="requestForm.errors.country">{{ requestForm.errors.country
-                                }}</small>
+                            }}</small>
                         </div>
 
                         <div class="flex flex-col gap-1">
                             <label class="font-medium text-sm">Contact Person</label>
                             <InputText v-model="requestForm.name" class="w-full"
                                 :class="{ 'p-invalid': requestForm.errors.name }" />
+                            <small class="text-red-500" v-if="requestForm.errors.name">{{ requestForm.errors.name
+                                }}</small>
+
                         </div>
 
                         <div class="flex flex-col gap-1">
                             <label class="font-medium text-sm">Email</label>
                             <InputText type="email" v-model="requestForm.email" class="w-full"
                                 :class="{ 'p-invalid': requestForm.errors.email }" />
+                            <small class="text-red-500" v-if="requestForm.errors.email">{{ requestForm.errors.email
+                                }}</small>
+
                         </div>
 
                         <div class="flex flex-col gap-1">
                             <label class="font-medium text-sm">Phone</label>
                             <InputText v-model="requestForm.phone" class="w-full"
                                 :class="{ 'p-invalid': requestForm.errors.phone }" />
+                            <small class="text-red-500" v-if="requestForm.errors.phone">{{ requestForm.errors.phone
+                                }}</small>
+
                         </div>
 
                         <div class="flex flex-col gap-1">
-                            <label class="font-medium text-sm">VAT / Details</label>
+                            <label class="font-medium text-sm">VAT Number</label>
+                            <InputText v-model="requestForm.vat_number" class="w-full"
+                                :class="{ 'p-invalid': requestForm.errors.vat_number }" />
+                            <small class="text-red-500" v-if="requestForm.errors.vat_number">
+                                {{ requestForm.errors.vat_number }}
+                            </small>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <label class="font-medium text-sm">Message / Details</label>
                             <Textarea v-model="requestForm.message" rows="3" class="w-full"
-                                placeholder="VAT Number or other details..." />
+                                placeholder="Any additional details..." />
                         </div>
 
                         <div class="flex justify-end gap-2 mt-2">

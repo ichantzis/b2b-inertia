@@ -22,22 +22,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                     <div>
                         <h4 class="text-white font-medium text-lg mb-6 tracking-wide">PINAKOTHIKI</h4>
+                        
+                        <div class="mb-6 text-gray-400 leading-relaxed">
+                            || b2b.pinakothiki.gr - Gallery || <br>
+                            Paintings on canvas or poster <br>
+                            Discover Unique Art for your space! <br>
+                            Handmade • Free Shipping • Made in Greece
+                        </div>
+
                         <ul class="space-y-4">
-                            <li class="flex items-start gap-3 group cursor-default">
-                                <i
-                                    class="pi pi-map-marker mt-1 text-gray-500 group-hover:text-white transition-colors"></i>
-                                <span class="group-hover:text-gray-300 transition-colors">123 Art Avenue,<br>Athens,
-                                    Greece, 10675</span>
-                            </li>
-                            <li class="flex items-center gap-3 group">
-                                <i class="pi pi-phone text-gray-500 group-hover:text-white transition-colors"></i>
-                                <a href="tel:+302101234567"
-                                    class="hover:text-white transition-colors no-underline">+30 210 1234567</a>
-                            </li>
                             <li class="flex items-center gap-3 group">
                                 <i class="pi pi-envelope text-gray-500 group-hover:text-white transition-colors"></i>
                                 <a href="mailto:info@example.com"
-                                    class="hover:text-white transition-colors no-underline">info@example.com</a>
+                                    class="hover:text-white transition-colors no-underline">info@pinakothiki.com</a>
                             </li>
                         </ul>
                     </div>
@@ -147,8 +144,8 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
                     <p class="font-light">&copy; {{ new Date().getFullYear() }} Pinakothiki. All rights reserved.</p>
                     <div class="flex gap-4">
-                        <span class="hover:text-gray-400 cursor-pointer transition-colors">Designed & Developed by <a class="text-grey-700 hover:text-gray-400"
-                                href="https://www.oneplusdesign.com/">OnePlus Design</a> .</span>
+                        <span class="hover:text-gray-400 cursor-pointer transition-colors"><a class="text-grey-700 hover:text-gray-400"
+                                href="https://www.oneplusdesign.com/">Designed & Developed by OnePlus Design.</a></span>
                     </div>
                 </div>
             </Container>

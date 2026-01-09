@@ -124,6 +124,7 @@
     <div class="container">
         <div class="header">
             <h1>Thank you for your order!</h1>
+            <p>We'll contact you soon for further payment details.</p>
         </div>
 
         <div class="order-info">

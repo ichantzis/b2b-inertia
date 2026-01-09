@@ -348,8 +348,8 @@
                             <Divider />
                             <div class="mt-4 pt-4">
                                 <div class="flex gap-2">
-                                    <InputText v-model="couponCode" placeholder="Coupon"
-                                        class="w-full p-inputtext-sm" :disabled="!!appliedCoupon" />
+                                    <InputText v-model="couponCode" placeholder="Coupon" class="w-full p-inputtext-sm"
+                                        :disabled="!!appliedCoupon" />
                                     <Button v-if="!appliedCoupon" label="Apply" size="small" :loading="isCheckingCoupon"
                                         @click="applyCoupon" :disabled="!couponCode" />
                                     <Button v-else icon="pi pi-times" severity="danger" outlined size="small"
@@ -357,7 +357,7 @@
                                 </div>
                                 <small class="text-red-500 block mt-1" v-if="couponError">{{ couponError }}</small>
                                 <small class="text-green-600 block mt-1" v-if="appliedCoupon">Code {{ appliedCoupon.code
-                                    }} applied!</small>
+                                }} applied!</small>
 
                                 <div class="space-y-2 mt-4 text-sm">
                                     <div class="flex justify-between">
@@ -386,19 +386,20 @@
                                             v-model="form.paymentMethod" />
                                         <label for="pmStripe" class="ml-2">Card (Stripe)</label>
                                     </div> -->
-                                    <div class="flex items-center">
+                                    <!-- <div class="flex items-center">
                                         <RadioButton inputId="pmCod" name="paymentMethod" value="cod"
                                             v-model="form.paymentMethod" />
                                         <label for="pmCod" class="ml-2">Cash on Delivery</label>
-                                    </div>
+                                    </div> -->
                                     <div class="flex items-center">
                                         <RadioButton inputId="pmBank" name="paymentMethod" value="bank_transfer"
                                             v-model="form.paymentMethod" />
                                         <label for="pmBank" class="ml-2">Bank Transfer</label>
                                     </div>
                                 </div>
+                                <p class="text-sm italic text-gray-600">We'll contact you for further payment details.</p>
                                 <small v-if="form.errors.paymentMethod" class="p-error">{{ form.errors.paymentMethod
-                                    }}</small>
+                                }}</small>
                             </div>
 
                             <Button label="Place Order" icon="pi pi-check" type="submit" @click="submit"
@@ -540,13 +541,13 @@ const applyCoupon = async () => {
 const removeCoupon = () => {
     // 1. Reset the input field
     couponCode.value = '';
-    
+
     // 2. Clear error messages
     couponError.value = '';
-    
+
     // 3. Clear the applied coupon object (hides the green success text & discount line)
     appliedCoupon.value = null;
-    
+
     // 4. IMPORTANT: Clear the value in the form object so it doesn't get sent to the backend
     form.coupon_code = null;
 };
@@ -586,7 +587,7 @@ const formatPrice = (value) => {
 // Submit handler
 function submit() {
     console.log('Submitting form:', form);
-    
+
     form.post(route('checkout.store'));
 }
 

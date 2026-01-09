@@ -306,6 +306,15 @@
           </div>
         </template>
       </DataView>
+
+      <div class="flex justify-center my-8">
+        <Button :label="`See all from ${currentArtwork.category}`" icon="pi pi-arrow-right" iconPos="right" outlined
+          severity="contrast"
+          
+          raised
+          class="w-full md:w-auto px-8 py-3 font-semibold tracking-wide"
+          @click="navigateToCategoryTrending" />
+      </div>
     </div>
   </section>
   <div v-else-if="isLoadingRelated" class="flex justify-center mt-12 mb-8">
@@ -752,6 +761,18 @@ const navigateToCategory = (categoryName) => {
   const categorySlug = generateCategorySlug(categoryName);
   if (categorySlug && categoryName) {
     router.visit(route('artworks', { filters: categorySlug }));
+  }
+};
+
+const navigateToCategoryTrending = () => {
+  const categoryName = currentArtwork.value?.category;
+  if (!categoryName) return;
+
+  const categorySlug = generateCategorySlug(categoryName);
+
+  if (categorySlug) {
+    // Δημιουργία του path: /artworks/trending/cat_...
+    router.visit(route('artworks', { filters: `trending/${categorySlug}` }));
   }
 };
 
@@ -1528,11 +1549,11 @@ const addToRecentlyViewed = (item) => {
 
 /* Artwork Card Styles */
 .content-wrapper {
-    margin: 0 auto;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
+  margin: 0 auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
 }
 
 .artwork-container {

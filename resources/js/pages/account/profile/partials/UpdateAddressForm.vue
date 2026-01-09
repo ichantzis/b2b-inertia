@@ -27,7 +27,7 @@ const countries = ref([
     { name: 'Poland', code: 'PL' }, { name: 'Portugal', code: 'PT' },
     { name: 'Romania', code: 'RO' }, { name: 'Slovakia', code: 'SK' },
     { name: 'Slovenia', code: 'SI' }, { name: 'Spain', code: 'ES' },
-    { name: 'Sweden', code: 'SE' },
+    { name: 'Sweden', code: 'SE' }, { name: 'United Kingdom', code: 'GB' },
 ]);
 
 // Helper to match the saved code (string) to the object required by Select

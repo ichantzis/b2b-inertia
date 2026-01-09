@@ -137,45 +137,45 @@ const mainMenuItems = computed(() => {
         }
     });
 
-    items.push({
-        label: 'Insights',
-        // route: route('artworks'),
-        icon: 'pi pi-fw pi-file-pdf',
-        // active: currentRoute.value == 'artworks',
-        command: () => {
-            mobileMenuOpen.value = false;
-        }
-    });
+    // items.push({
+    //     label: 'Insights',
+    //     // route: route('artworks'),
+    //     icon: 'pi pi-fw pi-file-pdf',
+    //     // active: currentRoute.value == 'artworks',
+    //     command: () => {
+    //         mobileMenuOpen.value = false;
+    //     }
+    // });
 
-    items.push({
-        label: 'About Us',
-        // route: route('artworks'),
-        icon: 'pi pi-fw pi-info-circle',
-        // active: currentRoute.value == 'artworks',
-        command: () => {
-            mobileMenuOpen.value = false;
-        }
-    });
+    // items.push({
+    //     label: 'About Us',
+    //     // route: route('artworks'),
+    //     icon: 'pi pi-fw pi-info-circle',
+    //     // active: currentRoute.value == 'artworks',
+    //     command: () => {
+    //         mobileMenuOpen.value = false;
+    //     }
+    // });
 
-    items.push({
-        label: 'Projects',
-        // route: route('artworks'),
-        icon: 'pi pi-fw pi-briefcase',
-        // active: currentRoute.value == 'artworks',
-        command: () => {
-            mobileMenuOpen.value = false;
-        }
-    });
+    // items.push({
+    //     label: 'Projects',
+    //     // route: route('artworks'),
+    //     icon: 'pi pi-fw pi-briefcase',
+    //     // active: currentRoute.value == 'artworks',
+    //     command: () => {
+    //         mobileMenuOpen.value = false;
+    //     }
+    // });
 
-    items.push({
-        label: 'B2B',
-        // route: route('artworks'),
-        icon: 'pi pi-fw pi-shop',
-        // active: currentRoute.value == 'artworks',
-        command: () => {
-            mobileMenuOpen.value = false;
-        }
-    });
+    // items.push({
+    //     label: 'B2B',
+    //     // route: route('artworks'),
+    //     icon: 'pi pi-fw pi-shop',
+    //     // active: currentRoute.value == 'artworks',
+    //     command: () => {
+    //         mobileMenuOpen.value = false;
+    //     }
+    // });
 
     items.push({
         label: 'Contact Us',
@@ -257,7 +257,20 @@ const clearUserHideTimer = () => {
 
 
 // Mobile menu (Drawer)
-const homeMobileMenuItems = computed(() => mainMenuItems.value);
+const homeMobileMenuItems = computed(() => {
+    return [
+        {
+            label: 'Home',
+            route: route('welcome'),
+            icon: 'pi pi-fw pi-home',
+            active: currentRoute.value === 'welcome', 
+            command: () => {
+                mobileMenuOpen.value = false;
+            }
+        },
+        ...mainMenuItems.value
+    ];
+});
 const mobileMenuOpen = ref(false);
 
 // Function to open drawer menu
@@ -348,37 +361,65 @@ watch(() => page.props.flash, (flashMessages) => {
         });
 
     }
-}, { deep: true }); // Use deep watch if flash is an object and its properties might change
+}, { deep: true, immediate: true }); // Use deep watch if flash is an object and its properties might change
 
+
+// // --- SOLUTION FOR STALE CART ON BACK NAVIGATION ---
+// let unregisterNavigateListener = null;
+
+// // Add lifecycle hooks
+// onMounted(() => {
+//     // window.addEventListener('scroll', handleScroll);
+
+//     unregisterNavigateListener = router.on('navigate', () => {
+//         // This event fires after any Inertia navigation, including back/forward.
+//         // We will ask Inertia to reload only the shared props related to the cart.
+//         // This ensures that if the user navigated back to a page whose cart data was stale,
+//         // it gets refreshed from the server.
+//         router.reload({
+//             only: ['cartCount', 'cartItemsPreview'], // Specify only the props you need to refresh
+//             preserveState: true, // Attempt to preserve component state
+//             preserveScroll: true, // Preserve scroll position
+//             onSuccess: () => {
+//                 // console.log('Cart props reloaded successfully via router.reload().');
+//             },
+//             onError: (errors) => {
+//                 console.error('Error reloading cart props on navigate:', errors);
+//             }
+//         });
+//     });
+// });
 
 // --- SOLUTION FOR STALE CART ON BACK NAVIGATION ---
-let unregisterNavigateListener = null;
+// Replace router.on('navigate') with popstate listener
 
-// Add lifecycle hooks
+const handlePopstate = () => {
+    // Reload cart data only when navigating via browser back/forward buttons
+    router.reload({
+        only: ['cartCount', 'cartItemsPreview'], 
+        preserveState: true, 
+        preserveScroll: true,
+        onSuccess: () => {
+            // console.log('Cart props reloaded successfully via popstate.');
+        },
+        onError: (errors) => {
+            console.error('Error reloading cart props on popstate:', errors);
+        }
+    });
+};
+
 onMounted(() => {
     // window.addEventListener('scroll', handleScroll);
 
-    unregisterNavigateListener = router.on('navigate', () => {
-        // This event fires after any Inertia navigation, including back/forward.
-        // We will ask Inertia to reload only the shared props related to the cart.
-        // This ensures that if the user navigated back to a page whose cart data was stale,
-        // it gets refreshed from the server.
-        router.reload({
-            only: ['cartCount', 'cartItemsPreview'], // Specify only the props you need to refresh
-            preserveState: true, // Attempt to preserve component state
-            preserveScroll: true, // Preserve scroll position
-            onSuccess: () => {
-                // console.log('Cart props reloaded successfully via router.reload().');
-            },
-            onError: (errors) => {
-                console.error('Error reloading cart props on navigate:', errors);
-            }
-        });
-    });
+    // Προσθήκη listener για το Back/Forward button
+    window.addEventListener('popstate', handlePopstate);
 });
 
 onUnmounted(() => {
     // window.removeEventListener('scroll', handleScroll);
+    
+    // Αφαίρεση του listener όταν το component καταστρέφεται
+    window.removeEventListener('popstate', handlePopstate);
 });
 </script>
 
@@ -497,7 +538,7 @@ onUnmounted(() => {
                 </template>
                 <div class="space-y-5">
                     <div class="flex flex-col gap-2">
-                        <LinksPanelMenu :model="mainMenuItems" class="w-full" />
+                        <LinksPanelMenu :model="homeMobileMenuItems" class="w-full" />
                     </div>
                 </div>
             </Drawer>
