@@ -1,5 +1,12 @@
 <template>
-    <InertiaHead :title="props.collectionName || 'Artworks'" />
+    <InertiaHead>
+        <title>{{ pageTitle }}</title>
+        <meta name="description" :content="pageDesc" />
+
+        <meta property="og:title" :content="pageTitle" />
+        <meta property="og:description" :content="pageDesc" />
+        <meta v-if="collectionCover" property="og:image" :content="collectionCover" />
+    </InertiaHead>
     <div class="layout-container">
         <main class="main-content">
             <div class="content-wrapper">
@@ -13,7 +20,7 @@
                     </div>
 
                     <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName
-                        }}</h1>
+                    }}</h1>
                     <p v-if="props.collectionDescription"
                         class="collection-description text-center text-gray-600 text-sm md:text-base max-w-3xl mx-auto">
                         {{ props.collectionDescription }}
@@ -66,7 +73,7 @@
                                             <div class="artwork-overlay">
                                                 <div class="overlay-content">
                                                     <span class="artwork-title">{{ artwork.title?.en || 'Untitled'
-                                                        }}</span>
+                                                    }}</span>
                                                     <Divider layout="vertical" />
                                                     <span class="artwork-id">ID: {{ artwork.id }}</span>
                                                 </div>
@@ -124,6 +131,9 @@ const props = defineProps({
 
 const page = usePage();
 const layout = inject('layout');
+
+const pageTitle = computed(() => props.collectionName ? `${props.collectionName} Art Prints` : 'All Artworks');
+const pageDesc = computed(() => props.collectionDescription || `Browse our collection of ${props.collectionName || 'art'} prints.`);
 
 const localArtworks = ref([]);
 const localNextPage = ref(null);

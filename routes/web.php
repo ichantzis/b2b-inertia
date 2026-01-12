@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', [App\Http\Controllers\PictufyController::class, 'homepage'])->name('welcome');
+// Route::get('/about', [App\Http\Controllers\PageController::class, 'about'])->name('about');
+// Route::get('/contact', [App\Http\Controllers\PageController::class, 'contact'])->name('contact');
+
 
 Route::post('/request-access', [App\Http\Controllers\Auth\AccessRequestController::class, 'store'])->name('access.request');
 

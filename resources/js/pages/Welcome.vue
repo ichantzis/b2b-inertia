@@ -1,6 +1,6 @@
 <script setup>
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
-import { usePage, Link } from '@inertiajs/vue3';
+import { usePage, Link, Head as InertiaHead } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import Button from 'primevue/button';
 import DataView from 'primevue/dataview';
@@ -47,6 +47,19 @@ const features = [
 
 const page = usePage();
 
+// JSON-LD για το Brand/E-shop
+const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Pinakothiki",
+    "url": "https://b2b.pinakothiki.gr/", // Άλλαξε το με το domain σου
+    "logo": "https://b2b.pinakothiki.gr/build/assets/PInakothiki-Logo-Header-CDixsy5W.png",
+    "sameAs": [
+        "https://www.facebook.com/pinakothiki.FineArtPrints",
+        "https://www.instagram.com/pinakothiki/"
+    ]
+};
+
 // --- RECENTLY VIEWED STATE ---
 const recentlyViewed = ref([]);
 
@@ -66,7 +79,21 @@ onMounted(() => {
 </script>
 
 <template>
-    <InertiaHead title="Home" />
+    <InertiaHead>
+        <title>Premium Art Prints & Custom Framing | Pinakothiki</title>
+        <meta name="description"
+            content="Discover curated art prints and posters from independent artists worldwide. Transform your space with high-quality framed art." />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Premium Art Prints & Custom Framing | Pinakothiki" />
+        <meta property="og:description"
+            content="Discover curated art prints and posters from independent artists worldwide. Transform your space with high-quality framed art." />
+        <meta property="og:image"
+            content="https://b2b.pinakothiki.gr/build/assets/PInakothiki-Logo-Header-CDixsy5W.png" />
+        <component is="script" type="application/ld+json">
+            {{ JSON.stringify(organizationSchema) }}
+        </component>
+    </InertiaHead>
 
     <!-- Hero Section -->
     <section class="hero-section">
@@ -135,7 +162,7 @@ onMounted(() => {
 
                         <div class="image-wrapper">
                             <img :src="list.cover || '/images/placeholder.png'" :alt="list.name"
-                                class="curated-banner-image" />
+                                class="curated-banner-image" loading="lazy" />
                         </div>
 
                         <div class="curated-banner-overlay"></div>
@@ -178,7 +205,7 @@ onMounted(() => {
                                             <div class="overlay-content">
                                                 <span class="artwork-title">
                                                     {{ typeof item.title === 'string' ? item.title : (item.title?.en ||
-                                                    'Untitled') }}
+                                                        'Untitled') }}
                                                 </span>
                                                 <Divider layout="vertical" />
                                                 <span class="artwork-id">ID: {{ item.artwork_id }}</span>

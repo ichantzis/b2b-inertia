@@ -15,7 +15,7 @@
     <meta name="twitter:image" :content="metaImage" />
 
     <component is="script" type="application/ld+json">
-        {{ JSON.stringify(jsonLd) }}
+      {{ JSON.stringify(jsonLd) }}
     </component>
 
     <link rel="canonical" :href="canonicalUrl" />
@@ -35,12 +35,12 @@
           }">
             <template v-if="galleryImages[currentIndex].isPrimaryArtwork">
               <div class="canvas-frame-wrapper">
-                <img v-if="selectedCanvas.url" :src="selectedCanvas.url" alt="Canvas Frame"
-                  class="canvas-frame-image" />
+                <img v-if="selectedCanvas.url" :src="selectedCanvas.url" alt="Canvas Frame" class="canvas-frame-image"
+                  fetchpriority="high" decoding="async" />
                 <img :src="galleryImages[currentIndex].itemImageSrc" class="artwork-on-canvas clickable"
                   :alt="galleryImages[currentIndex].alt"
                   :style="{ top: selectedCanvas.artworkContainerStyle.top, left: selectedCanvas.artworkContainerStyle.left, width: selectedCanvas.artworkContainerStyle.width, height: selectedCanvas.artworkContainerStyle.height, transform: selectedCanvas.artworkTransform, transformOrigin: selectedCanvas.transformOrigin || 'center center', boxShadow: selectedCanvas.artworkShadow }"
-                  @click="openPreview(currentIndex)" />
+                  @click="openPreview(currentIndex)" fetchpriority="high" decoding="async" />
               </div>
             </template>
 
@@ -281,7 +281,8 @@
                   <div class="relative">
                     <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
                       :alt="artwork.title?.en || 'Untitled'"
-                      class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]" />
+                      class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]"
+                      loading="lazy" decoding="async" />
                     <div v-else class="no-image">No Image Available</div>
                     <div class="artwork-overlay">
                       <div class="overlay-content">
@@ -321,7 +322,8 @@
                   <div class="relative">
                     <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
                       :alt="artwork.title?.en || 'Untitled'"
-                      class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]" />
+                      class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]"
+                      loading="lazy" decoding="async" />
                     <div v-else class="no-image">No Image Available</div>
                     <div class="artwork-overlay">
                       <div class="overlay-content">
@@ -446,8 +448,8 @@ const jsonLd = computed(() => {
     "@type": "Product",
     "name": props.artwork?.title?.en,
     "image": [
-        props.artwork?.urls?.img_high,
-        props.artwork?.urls?.img_medium
+      props.artwork?.urls?.img_high,
+      props.artwork?.urls?.img_medium
     ],
     "description": props.artwork?.description || `Artwork by ${props.artwork?.artist}`,
     "sku": props.artwork?.id,
