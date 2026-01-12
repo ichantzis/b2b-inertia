@@ -47,7 +47,7 @@ class GenerateSitemap extends Command
         $sitemap->add(Url::create(route('lists'))->setPriority(0.9));
         $sitemap->add(Url::create(route('artists.overview'))->setPriority(0.9));
         $sitemap->add(Url::create(route('about'))->setPriority(0.7));
-        $sitemap->add(Url::create(route('contact'))->setPriority(0.7));
+        $sitemap->add(Url::create(route('contact.index'))->setPriority(0.7));
         // Πρόσθεσε εδώ άλλες στατικές σελίδες (π.χ. About, Contact)
 
         // 3. Artworks Loop (Pagination)
