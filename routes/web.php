@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PictufyController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ContactController;
 use App\Http\Middleware\EnsureUserIsAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -15,7 +16,8 @@ use Inertia\Inertia;
 
 Route::get('/', [App\Http\Controllers\PictufyController::class, 'homepage'])->name('welcome');
 // Route::get('/about', [App\Http\Controllers\PageController::class, 'about'])->name('about');
-// Route::get('/contact', [App\Http\Controllers\PageController::class, 'contact'])->name('contact');
+Route::get('/contact-us', [ContactController::class, 'index'])->name('contact.index');
+Route::post('/contact-us', [ContactController::class, 'store'])->name('contact.store');
 
 
 Route::post('/request-access', [App\Http\Controllers\Auth\AccessRequestController::class, 'store'])->name('access.request');

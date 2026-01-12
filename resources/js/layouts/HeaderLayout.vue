@@ -179,9 +179,9 @@ const mainMenuItems = computed(() => {
 
     items.push({
         label: 'Contact Us',
-        // route: route('artworks'),
+        route: route('contact.index'),
         icon: 'pi pi-fw pi-envelope',
-        // active: currentRoute.value == 'artworks',
+        active: currentRoute.value == 'contact.index',
         command: () => {
             mobileMenuOpen.value = false;
         }
