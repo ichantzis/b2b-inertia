@@ -1,5 +1,25 @@
 <template>
-  <InertiaHead :title="currentArtwork?.title?.en || 'Artwork Details'" />
+  <InertiaHead>
+    <title>{{ currentArtwork?.title?.en || 'Artwork Details' }} | Pictufy</title>
+    <meta name="description" :content="metaDescription" />
+
+    <meta property="og:type" content="product" />
+    <meta property="og:url" :content="canonicalUrl" />
+    <meta property="og:title" :content="currentArtwork?.title?.en" />
+    <meta property="og:description" :content="metaDescription" />
+    <meta property="og:image" :content="metaImage" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" :content="currentArtwork?.title?.en" />
+    <meta name="twitter:description" :content="metaDescription" />
+    <meta name="twitter:image" :content="metaImage" />
+
+    <component is="script" type="application/ld+json">
+        {{ JSON.stringify(jsonLd) }}
+    </component>
+
+    <link rel="canonical" :href="canonicalUrl" />
+  </InertiaHead>
   <Button icon="pi pi-arrow-left" class="back-button" rounded severity="secondary" variant="text" size="large"
     aria-label="Back" @click="goBack" />
 
@@ -254,7 +274,10 @@
             <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
               class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
               <div class="rounded flex flex-col artwork-container">
-                <Link :href="route('artwork.details', artwork.id)" class="artwork-link">
+                <Link :href="route('artwork.details', {
+                  id: artwork.id,
+                  slug: slugify(artwork.title?.en || 'artwork')
+                })" class="artwork-link">
                   <div class="relative">
                     <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
                       :alt="artwork.title?.en || 'Untitled'"
@@ -274,6 +297,11 @@
           </div>
         </template>
       </DataView>
+      <div class="flex justify-center my-8">
+        <Button :label="`See all from ${currentArtwork.category}`" icon="pi pi-arrow-right" iconPos="right" outlined
+          severity="contrast" raised class="w-full md:w-auto px-8 py-3 font-semibold tracking-wide"
+          @click="navigateToCategoryTrending" />
+      </div>
     </div>
 
     <Divider />
@@ -286,7 +314,10 @@
             <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
               class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
               <div class="rounded flex flex-col artwork-container">
-                <Link :href="route('artwork.details', artwork.id)" class="artwork-link">
+                <Link :href="route('artwork.details', {
+                  id: artwork.id,
+                  slug: slugify(artwork.title?.en || 'artwork')
+                })" class="artwork-link">
                   <div class="relative">
                     <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
                       :alt="artwork.title?.en || 'Untitled'"
@@ -306,15 +337,6 @@
           </div>
         </template>
       </DataView>
-
-      <div class="flex justify-center my-8">
-        <Button :label="`See all from ${currentArtwork.category}`" icon="pi pi-arrow-right" iconPos="right" outlined
-          severity="contrast"
-          
-          raised
-          class="w-full md:w-auto px-8 py-3 font-semibold tracking-wide"
-          @click="navigateToCategoryTrending" />
-      </div>
     </div>
   </section>
   <div v-else-if="isLoadingRelated" class="flex justify-center mt-12 mb-8">
@@ -388,6 +410,62 @@ const props = defineProps({
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+
+// --- SEO COMPUTED PROPERTIES ---
+const metaDescription = computed(() => {
+  // 1. Get the description or create a default one
+  const rawDesc = currentArtwork.value?.description || '';
+
+  // 2. Remove HTML tags (if any) to make it clear text
+  const strippedDesc = rawDesc.replace(/<[^>]*>?/gm, '');
+
+  // 3. If it is empty, we create a fallback text
+  const finalDesc = strippedDesc || `Buy ${currentArtwork.value?.title?.en || 'Art'} by ${currentArtwork.value?.artist}. High-quality art prints available on canvas and framed.`;
+
+  // 4. Cut to 160 characters (Google limit)
+  return finalDesc.length > 160 ? finalDesc.substring(0, 157) + '...' : finalDesc;
+});
+
+const metaImage = computed(() => {
+  // Prefer the middle image, otherwise the thumbnail
+  return currentArtwork.value?.urls?.img_medium || currentArtwork.value?.urls?.img_thumb || '';
+});
+
+const canonicalUrl = computed(() => {
+  if (!currentArtwork.value?.id) return window.location.href;
+  return route('artwork.details', {
+    id: currentArtwork.value.id,
+    slug: slugify(currentArtwork.value.title?.en || 'artwork')
+  });
+});
+
+// In script setup
+const jsonLd = computed(() => {
+  return {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": props.artwork?.title?.en,
+    "image": [
+        props.artwork?.urls?.img_high,
+        props.artwork?.urls?.img_medium
+    ],
+    "description": props.artwork?.description || `Artwork by ${props.artwork?.artist}`,
+    "sku": props.artwork?.id,
+    "brand": {
+      "@type": "Brand",
+      "name": "Pictufy"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": window.location.href,
+      //" priceCurrency": "EUR",
+      //" price": "99.00", // You need to inject the starting price here from props if available
+      "availability": "https://schema.org/InStock",
+      "itemCondition": "https://schema.org/NewCondition"
+    }
+  };
+});
+// --- END SEO COMPUTED PROPERTIES ---
 
 // Logic to determine if price/cart is visible
 const canViewPrice = computed(() => {

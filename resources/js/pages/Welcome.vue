@@ -5,6 +5,7 @@ import { ref, onMounted } from 'vue';
 import Button from 'primevue/button';
 import DataView from 'primevue/dataview';
 import Divider from 'primevue/divider';
+import { slugify } from '@/composables/utils.js';
 
 defineOptions({ layout: HeaderLayout })
 
@@ -55,7 +56,7 @@ onMounted(() => {
         try {
             recentlyViewed.value = JSON.parse(stored);
             console.log("Recently viewed items loaded:", recentlyViewed.value);
-            
+
         } catch (e) {
             console.error("Error parsing recently viewed items", e);
         }
@@ -164,18 +165,20 @@ onMounted(() => {
                         <div v-for="(item, index) in slotProps.items" :key="item.artwork_id || index"
                             class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
                             <div class="rounded flex flex-col artwork-container">
-                                <Link :href="route('artwork.details', { id: item.artwork_id })" class="artwork-link">
+                                <Link :href="route('artwork.details', {
+                                    id: item.artwork_id,
+                                    slug: slugify(typeof item.title === 'string' ? item.title : (item.title?.en || 'artwork'))
+                                })" class="artwork-link">
                                     <div class="relative">
-                                        <img 
-                                            :src="item.image || item.thumb || '/images/placeholder.png'"
+                                        <img :src="item.image || item.thumb || '/images/placeholder.png'"
                                             :alt="typeof item.title === 'string' ? item.title : (item.title?.en || 'Untitled')"
-                                            class="rounded w-full h-auto object-contain max-h-[300px]" 
-                                        />
-                                        
+                                            class="rounded w-full h-auto object-contain max-h-[300px]" />
+
                                         <div class="artwork-overlay">
                                             <div class="overlay-content">
                                                 <span class="artwork-title">
-                                                    {{ typeof item.title === 'string' ? item.title : (item.title?.en || 'Untitled') }}
+                                                    {{ typeof item.title === 'string' ? item.title : (item.title?.en ||
+                                                    'Untitled') }}
                                                 </span>
                                                 <Divider layout="vertical" />
                                                 <span class="artwork-id">ID: {{ item.artwork_id }}</span>
@@ -362,7 +365,8 @@ onMounted(() => {
 
 .curated-list-container {
     display: grid;
-    grid-template-columns: 1fr; /* Mobile: 1 item per row */
+    grid-template-columns: 1fr;
+    /* Mobile: 1 item per row */
     gap: 2.5rem;
 }
 
@@ -385,7 +389,8 @@ onMounted(() => {
     display: block;
     position: relative;
     width: 100%;
-    height: 400px; /* Fixed height as requested */
+    height: 400px;
+    /* Fixed height as requested */
 }
 
 .curated-image-wrapper {
@@ -424,7 +429,8 @@ onMounted(() => {
 
 .curated-banner-title {
     font-family: serif;
-    font-size: 2rem; /* Adjusted slightly for 2-col layout */
+    font-size: 2rem;
+    /* Adjusted slightly for 2-col layout */
     font-weight: 400;
     margin-bottom: 0.5rem;
     letter-spacing: 0.05em;
@@ -528,7 +534,8 @@ onMounted(() => {
 }
 
 .artwork-container:hover {
-    transform: translateY(-5px); /* Gentle lift effect */
+    transform: translateY(-5px);
+    /* Gentle lift effect */
 }
 
 .artwork-link {
@@ -542,7 +549,7 @@ onMounted(() => {
     height: auto;
     margin: 0 auto;
     border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .artwork-overlay {

@@ -4,17 +4,16 @@
         <main class="main-content">
             <div class="content-wrapper">
                 <div v-if="props.collectionId" class="collection-header mb-8">
-                    <div v-if="props.collectionCover" 
-                        :class="[
-                            'mb-4 mx-auto', 
-                            props.isArtistPage ? 'artist-cover-wrapper' : 'collection-cover-image-wrapper'
-                        ]">
-                        <img :src="props.collectionCover" 
-                            :alt="`Cover image for ${props.collectionName}`"
+                    <div v-if="props.collectionCover" :class="[
+                        'mb-4 mx-auto',
+                        props.isArtistPage ? 'artist-cover-wrapper' : 'collection-cover-image-wrapper'
+                    ]">
+                        <img :src="props.collectionCover" :alt="`Cover image for ${props.collectionName}`"
                             :class="props.isArtistPage ? 'artist-cover-image' : 'collection-cover-image'" />
                     </div>
-                    
-                    <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName }}</h1>
+
+                    <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName
+                        }}</h1>
                     <p v-if="props.collectionDescription"
                         class="collection-description text-center text-gray-600 text-sm md:text-base max-w-3xl mx-auto">
                         {{ props.collectionDescription }}
@@ -55,20 +54,24 @@
                             <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
                                 class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
                                 <div class="rounded flex flex-col artwork-container">
-                                    <Link :href="`/artwork/${artwork.id}`" class="artwork-link">
-                                    <div class="relative">
-                                        <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
-                                            :alt="artwork.title?.en || 'Untitled'"
-                                            class="rounded w-full h-auto object-contain max-h-[300px]" />
-                                        <div v-else class="no-image">No Image Available</div>
-                                        <div class="artwork-overlay">
-                                            <div class="overlay-content">
-                                                <span class="artwork-title">{{ artwork.title?.en || 'Untitled' }}</span>
-                                                <Divider layout="vertical" />
-                                                <span class="artwork-id">ID: {{ artwork.id }}</span>
+                                    <Link :href="route('artwork.details', {
+                                        id: artwork.id,
+                                        slug: slugify(artwork.title?.en || 'artwork')
+                                    })" class="artwork-link">
+                                        <div class="relative">
+                                            <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
+                                                :alt="artwork.title?.en || 'Untitled'"
+                                                class="rounded w-full h-auto object-contain max-h-[300px]" />
+                                            <div v-else class="no-image">No Image Available</div>
+                                            <div class="artwork-overlay">
+                                                <div class="overlay-content">
+                                                    <span class="artwork-title">{{ artwork.title?.en || 'Untitled'
+                                                        }}</span>
+                                                    <Divider layout="vertical" />
+                                                    <span class="artwork-id">ID: {{ artwork.id }}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
                                     </Link>
                                 </div>
                             </div>
@@ -101,6 +104,7 @@ import Divider from 'primevue/divider';
 import ScrollTop from 'primevue/scrolltop';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import { slugify } from '@/composables/utils.js';
 
 defineOptions({ layout: FilteredLayout });
 
@@ -153,7 +157,7 @@ const performSearchRequest = (searchVal) => {
     } else if (baseRouteName === 'list.filtered' && !routeParams.list_id && props.collectionId) {
         routeParams.list_id = props.collectionId;
     } else if (baseRouteName === 'artist.show' && !routeParams.artist_id && props.collectionId) {
-         routeParams.artist_id = props.collectionId;
+        routeParams.artist_id = props.collectionId;
     }
 
     router.get(route(baseRouteName, routeParams), queryParams, {
@@ -229,7 +233,7 @@ const loadMoreArtworks = async () => {
                 per_page: 30,
                 collection_id: baseRouteName === 'collection.show' ? props.collectionId : null,
                 list_id: baseRouteName === 'list.filtered' ? props.collectionId : null,
-                artist_id: baseRouteName === 'artist.show' ? props.collectionId : null, 
+                artist_id: baseRouteName === 'artist.show' ? props.collectionId : null,
                 filters: props.filters?.join('/'),
                 order: props.initialOrder,
                 search: localCurrentSearchTerm.value || undefined,
@@ -252,7 +256,7 @@ const loadMoreArtworks = async () => {
 
 const handleScroll = debounce(() => {
     const bottomOfWindow = window.innerHeight + window.pageYOffset;
-    const documentHeight = document.documentElement.offsetHeight; 
+    const documentHeight = document.documentElement.offsetHeight;
     if (bottomOfWindow >= documentHeight - 500 && localNextPage.value && !loading.value) {
         loadMoreArtworks();
     }
@@ -310,11 +314,13 @@ const artworks = computed(() => localArtworks.value);
 .artist-cover-wrapper {
     width: 150px;
     height: 150px;
-    border-radius: 50%; /* Circular mask */
+    border-radius: 50%;
+    /* Circular mask */
     overflow: hidden;
     background-color: #e5e7eb;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border: 4px solid white; /* White border to make it pop */
+    border: 4px solid white;
+    /* White border to make it pop */
     display: flex;
     justify-content: center;
     align-items: center;

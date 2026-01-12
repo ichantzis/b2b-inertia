@@ -352,7 +352,7 @@ class PictufyController extends Controller
     }
 
 
-    public function artworkDetails($id)
+    public function artworkDetails($id, $slug = null)
     {
         try {
             $artworkResponse = $this->pictufy->getArtworkDetails($id);
@@ -366,6 +366,14 @@ class PictufyController extends Controller
                     $artwork['artist_username'] = $artistResponse['items'][0]['username'];
                 }
             }
+
+            // --- SEO REDIRECT LOGIC ---
+            $correctSlug = Str::slug($artwork['title']['en'] ?? 'artwork');
+            // If the slug is missing or incorrect, do a permanent redirect (301)
+            if ($slug !== $correctSlug) {
+                return redirect()->route('artwork.details', ['id' => $id, 'slug' => $correctSlug], 301);
+            }
+            // --- END SEO REDIRECT LOGIC ---
 
             // Fetch Settings
             $requireLogin = $this->settings->get('require_login_for_prices', false);

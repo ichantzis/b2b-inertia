@@ -28,8 +28,10 @@ Route::get('/artworks/{filters?}', [PictufyController::class, 'filteredArtworks'
     ->where('filters', '.*')
     ->name('artworks');
 Route::get('/fetch-artworks', [PictufyController::class, 'fetchData'])->name('artworks.fetch');
-Route::get('/artwork/{id}', [PictufyController::class, 'artworkDetails'])->name('artwork.details');
+// Add {slug?} to the end. The ? means it's optional,
+// so old links won't break.
 Route::get('/artwork/{id}/related', [PictufyController::class, 'getRelatedContent'])->name('artwork.related');
+Route::get('/artwork/{id}/{slug?}', [PictufyController::class, 'artworkDetails'])->name('artwork.details');
 
 // Update collection route to use list_id
 Route::get('/collections', [PictufyController::class, 'indexCollections'])->name('collections.index'); // Page to display all collections
