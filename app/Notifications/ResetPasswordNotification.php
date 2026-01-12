@@ -41,11 +41,16 @@ class ResetPasswordNotification extends Notification
             'email' => $notifiable->getEmailForPasswordReset(),
         ], false));
 
+        // Take minutes from config
+        $minutes = config('auth.passwords.' . config('auth.defaults.passwords') . '.expire');
+        // Convert to hours (we use ceil to avoid decimals if it is not an integer)
+        $hours = ceil($minutes / 60);
+
         return (new MailMessage)
             ->subject('Reset Password Notification')
             ->view('emails.auth.reset_password', [
                 'url' => $url,
-                'count' => config('auth.passwords.'.config('auth.defaults.passwords').'.expire')
+                'count' => $hours // Pass hours to the view
             ]);
     }
 }

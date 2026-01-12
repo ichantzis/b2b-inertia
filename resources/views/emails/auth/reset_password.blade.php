@@ -34,7 +34,7 @@
             <a href="{{ $url }}" class="btn">Reset Password</a>
 
             <div class="text" style="margin-top: 25px;">
-                This password reset link will expire in {{ $count }} minutes.
+                This password reset link will expire in {{ $count }} hours.
                 <br><br>
                 If you did not request a password reset, no further action is required.
             </div>

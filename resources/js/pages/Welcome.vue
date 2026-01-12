@@ -343,7 +343,7 @@ onMounted(() => {
 }
 
 /* =========================================
-   4. CURATED LISTS (Vertical Banners)
+   4. CURATED LISTS (Grid Layout)
    ========================================= */
 .curated-section {
     padding: 4rem 2rem;
@@ -361,9 +361,16 @@ onMounted(() => {
 }
 
 .curated-list-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile: 1 item per row */
     gap: 2.5rem;
+}
+
+/* Tablet & Desktop: 2 items per row */
+@media (min-width: 768px) {
+    .curated-list-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .curated-banner-item {
@@ -378,8 +385,7 @@ onMounted(() => {
     display: block;
     position: relative;
     width: 100%;
-    height: 400px;
-    /* Tall enough to show artwork detail */
+    height: 400px; /* Fixed height as requested */
 }
 
 .curated-image-wrapper {
@@ -398,7 +404,7 @@ onMounted(() => {
     transform: scale(1.05);
 }
 
-/* Gradient from bottom to make text readable */
+/* Gradient Overlay */
 .curated-banner-overlay {
     position: absolute;
     inset: 0;
@@ -418,7 +424,7 @@ onMounted(() => {
 
 .curated-banner-title {
     font-family: serif;
-    font-size: 2.5rem;
+    font-size: 2rem; /* Adjusted slightly for 2-col layout */
     font-weight: 400;
     margin-bottom: 0.5rem;
     letter-spacing: 0.05em;
