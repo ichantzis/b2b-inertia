@@ -549,6 +549,13 @@ const frameColorImagePaths = {
   }
 };
 
+// Configuration for allowed Interior IDs per geometry
+const INTERIOR_WHITELIST = {
+    vertical:   ['31', '52', '75', '87', '94', '124', '1194', '1226', '1506', '1598'],
+    horizontal: ['36', '86', '645', '1162', '1600', '1870'],
+    square:     ['39', '64', '129', '170', '652', '899', '1041', '1596']
+};
+
 
 const primaryArtworkGeometryType = computed(() => {
   // ... (η λογική παραμένει ίδια)
@@ -665,34 +672,76 @@ const parsedKeywords = computed(() => {
   return raw.split(',').map(k => k.trim()).filter(Boolean).slice(0, 10);
 });
 
+// Gallery Images Computed Property with Interior Whitelisting
 const galleryImages = computed(() => {
-  const images = [];
-  const art = currentArtwork.value;
-  if (!art || !art.urls) return images;
-  const urls = art.urls;
+    if (!currentArtwork.value) return [];
 
-  if (urls.img_high) {
-    images.push({
-      itemImageSrc: urls.img_medium || urls.img_high,
-      thumbnailImageSrc: urls.img_thumb || urls.img_high,
-      alt: art.title?.en || 'Main Artwork View',
-      isPrimaryArtwork: true
+    // 1. Start with the Main Artwork Image
+    const images = [
+        {
+            itemImageSrc: currentArtwork.value.urls.img_medium || currentArtwork.value.urls.img_high,
+            thumbnailImageSrc: currentArtwork.value.urls.img_thumb || currentArtwork.value.urls.img_high,
+            alt: currentArtwork.value.title?.en || 'Main Artwork',
+            isPrimaryArtwork: true
+        }
+    ];
+
+    // 2. Get the geometry (default to 'vertical' if missing)
+    const geometry = currentArtwork.value.geometry ? currentArtwork.value.geometry.toLowerCase() : 'vertical';
+    
+    // 3. Get the list of allowed IDs for this geometry
+    const allowedIds = INTERIOR_WHITELIST[geometry] || [];
+    
+    // 4. Get the raw interiors object from API
+    const availableInteriors = currentArtwork.value.urls?.interiors || {};
+
+    // 5. Loop through allowed IDs and add them if they exist in the API response
+    allowedIds.forEach(id => {
+        // We look up the ID in the available interiors object
+        // Note: Object keys are strings, so '31' matches key "31"
+        const interior = availableInteriors[id];
+
+        if (interior && interior.url) {
+            images.push({
+                itemImageSrc: interior.url,
+                thumbnailImageSrc: interior.url, // Using same URL for thumb as interiors usually load fast
+                alt: interior['short-name'] || 'Interior View',
+                isPrimaryArtwork: false
+            });
+        }
     });
-  }
-  if (urls.interiors && typeof urls.interiors === 'object') {
-    Object.values(urls.interiors).forEach(interior => {
-      if (interior.url) {
-        images.push({
-          itemImageSrc: interior.url,
-          thumbnailImageSrc: interior.url,
-          alt: interior['short-name'] || 'Interior View',
-          isPrimaryArtwork: false
-        });
-      }
-    });
-  }
-  return images;
+
+    return images;
 });
+
+// const galleryImages = computed(() => {
+//   const images = [];
+//   const art = currentArtwork.value;
+//   if (!art || !art.urls) return images;
+//   const urls = art.urls;
+
+//   if (urls.img_high) {
+//     images.push({
+//       itemImageSrc: urls.img_medium || urls.img_high,
+//       thumbnailImageSrc: urls.img_thumb || urls.img_high,
+//       alt: art.title?.en || 'Main Artwork View',
+//       isPrimaryArtwork: true
+//     });
+//   }
+//   if (urls.interiors && typeof urls.interiors === 'object') {
+//     Object.values(urls.interiors).forEach(interior => {
+//       if (interior.url) {
+//         images.push({
+//           itemImageSrc: interior.url,
+//           thumbnailImageSrc: interior.url,
+//           alt: interior['short-name'] || 'Interior View',
+//           isPrimaryArtwork: false
+//         });
+//       }
+//     });
+//   }
+//   return images;
+// });
 
 // 1. Define the exact colors from FilterSideBar
 const availableColors = [

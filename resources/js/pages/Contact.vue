@@ -16,7 +16,7 @@ const toast = useToast();
 const form = useForm({
     name: '',
     email: '',
-    subject: '',
+    phone: '',
     message: ''
 });
 
@@ -25,7 +25,7 @@ const submit = () => {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Message sent successfully!', life: 3000 });
+            // toast.add({ severity: 'success', summary: 'Success', detail: 'Message sent successfully!', life: 3000 });
         },
         onError: () => {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Please check the form for errors.', life: 3000 });

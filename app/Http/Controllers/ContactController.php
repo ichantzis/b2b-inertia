@@ -20,8 +20,8 @@ class ContactController extends Controller
         // 1. Validate
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'phone'   => 'required|string|max:20',
             'email' => 'required|email|max:255',
-            'subject' => 'required|string|max:255',
             'message' => 'required|string|max:2000',
         ]);
 
@@ -35,6 +35,6 @@ class ContactController extends Controller
         }
 
         // 3. Redirect back with success
-        return redirect()->back()->with('success', 'Thank you! Your message has been sent successfully.');
+        return redirect()->back();
     }
 }

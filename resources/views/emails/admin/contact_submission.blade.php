@@ -155,13 +155,6 @@
                     <span class="value">{{ $data['phone'] }}</span>
                 </div>
                 @endif
-
-                @if(!empty($data['subject']))
-                <div class="info-row">
-                    <span class="label">Subject</span>
-                    <span class="value">{{ $data['subject'] }}</span>
-                </div>
-                @endif
             </div>
 
             @if(!empty($data['message']))
