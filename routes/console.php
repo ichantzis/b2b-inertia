@@ -9,4 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 // Adding the command to automatically generate a sitemap every day at 4 am
-Schedule::command('sitemap:generate')->dailyAt('04:00');
+// Schedule::command('sitemap:generate')->dailyAt('04:00');
