@@ -119,6 +119,11 @@ class AuthenticatedSessionController extends Controller
         $userName = $user->name;
         session()->flash('login_success_message', "Welcome back, {$userName}!");
 
+        // Redirect if admin
+        if ($user->role === 'admin') {
+            return redirect()->intended(route('dashboard.index', absolute: false));
+        }
+
         // Redirect to the intended page or welcome
         return redirect()->intended(route('welcome', absolute: false));
     }
@@ -134,6 +139,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/')->with('success', 'You have been logged out successfully.');
     }
 }

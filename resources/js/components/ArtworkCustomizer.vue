@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import { useToast } from 'primevue/usetoast';
+import Tooltip from 'primevue/tooltip';
 
 const props = defineProps({
     artwork: Object,
@@ -76,8 +77,8 @@ const sortSizes = (sizes) => {
 // Get the raw price object for the CURRENT selection (Canvas vs NoFrame vs Poster)
 const currentCategoryPrices = computed(() => {
     if (selectedType.value === 'canvas') {
-        return selectedCanvas.value === 'noframe' 
-            ? prices.value.frame.noframe 
+        return selectedCanvas.value === 'noframe'
+            ? prices.value.frame.noframe
             : prices.value.frame.canvas;
     } else {
         return prices.value.frame.poster;
@@ -137,8 +138,8 @@ const currentPrice = computed(() => {
     const sizeToUse = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     if (selectedType.value === 'canvas') {
         // Must use prices.value here
-        const frameTypePrices = selectedCanvas.value === 'noframe' 
-            ? prices.value.frame.noframe 
+        const frameTypePrices = selectedCanvas.value === 'noframe'
+            ? prices.value.frame.noframe
             : prices.value.frame.canvas;
         return frameTypePrices[sizeToUse] || 0;
     }
@@ -215,10 +216,10 @@ watch(selectedType, (newType) => {
         addToCartForm.type = newType;
         addToCartForm.frame = selectedCanvas.value;
     }
-    
+
     // Reset size logic
     const currentSize = isSquare.value ? selectedSquareSize.value : selectedSize.value;
-    
+
     // Check if current size is valid in new list using prices.value
     if (!showSize(currentSize)) {
         // Helper to find available sizes in the specific category
@@ -292,16 +293,12 @@ watch([selectedType, selectedCanvas], () => {
         </div>
         <div class="canvas-wrapper" v-show="showCanvasFrames">
             <div v-for="frame in frames" :key="frame.id" class="relative group">
-                <Button 
-                    v-bind="getButtonProps(frame.id, selectedCanvas)" 
-                    @click="selectedCanvas = frame.id"
-                >
+                <Button v-bind="getButtonProps(frame.id, selectedCanvas)" @click="selectedCanvas = frame.id">
                     <img :src="frame.img" :alt="frame.label + ' Frame'" class="frame-icon" />
                 </Button>
-                
-                <span 
-                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10"
-                >
+
+                <span
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                     {{ frame.label }}
                 </span>
             </div>
@@ -311,26 +308,15 @@ watch([selectedType, selectedCanvas], () => {
             <span class="detail-label">Size</span>
         </div>
         <div class="sizes-wrapper" v-if="!isSquare">
-            <Button 
-                v-for="size in availableRectangularSizes" 
-                :key="size" 
-                v-bind="getButtonProps(size, selectedSize)"
-                @click="selectedSize = size" 
-                :label="size" 
-            />
-             <div v-if="availableRectangularSizes.length === 0" class="text-sm text-gray-500 italic">
+            <Button v-for="size in availableRectangularSizes" :key="size" v-bind="getButtonProps(size, selectedSize)"
+                @click="selectedSize = size" :label="size" />
+            <div v-if="availableRectangularSizes.length === 0" class="text-sm text-gray-500 italic">
                 No sizes available for this selection.
             </div>
         </div>
         <div class="sizes-square-wrapper" v-if="isSquare">
-            <Button 
-                v-for="size in availableSquareSizes" 
-                :key="size"
-                v-bind="getButtonProps(size, selectedSquareSize)"
-                @click="selectedSquareSize = size" 
-                :label="size" 
-                severity="contrast" 
-            />
+            <Button v-for="size in availableSquareSizes" :key="size" v-bind="getButtonProps(size, selectedSquareSize)"
+                @click="selectedSquareSize = size" :label="size" severity="contrast" />
             <div v-if="availableSquareSizes.length === 0" class="text-sm text-gray-500 italic">
                 No square sizes available.
             </div>
@@ -349,17 +335,23 @@ watch([selectedType, selectedCanvas], () => {
                     <p v-else class="text-sm sm:text-base text-muted-color"><span class="font-semibold">Size:</span> {{
                         selectedSquareSize }}</p>
                 </div>
-                <span v-if="canViewPrice" class="total-amount">{{ formattedTotalPrice }}</span>
+                <div v-if="canViewPrice" class="price-container">
+                    <span class="total-amount">{{ formattedTotalPrice }}</span>
+                    <span class="vat-label cursor-help decoration-dotted underline underline-offset-4"
+                        v-tooltip.top="'Price excludes VAT.'">
+                        +VAT
+                    </span>
+                </div>
                 <div class="cart-actions">
                     <div v-if="canViewPrice" class="quantity-wrapper">
                         <InputNumber v-model="quantity" :min="1" :max="10" showButtons buttonLayout="horizontal"
                             :step="1" size="small" class="quantity-input"
                             :inputStyle="{ width: '3rem', textAlign: 'center' }" />
                     </div>
-                    <Button v-if="canViewPrice" label="ADD TO CART" icon="pi pi-shopping-cart" severity="primary" raised @click="addToCart"
-                        :disabled="addToCartForm.processing" class="add-to-cart-btn" />
-                    <Button v-else label="LOGIN TO ADD TO CART" icon="pi pi-shopping-cart" severity="primary" raised @click="handleLogin"
-                        :disabled="addToCartForm.processing" class="add-to-cart-btn" />
+                    <Button v-if="canViewPrice" label="ADD TO CART" icon="pi pi-shopping-cart" severity="primary" raised
+                        @click="addToCart" :disabled="addToCartForm.processing" class="add-to-cart-btn" />
+                    <Button v-else label="LOGIN TO ADD TO CART" icon="pi pi-shopping-cart" severity="primary" raised
+                        @click="handleLogin" :disabled="addToCartForm.processing" class="add-to-cart-btn" />
                 </div>
             </div>
         </div>
@@ -438,13 +430,25 @@ watch([selectedType, selectedCanvas], () => {
     /* Αυξήθηκε το κενό για καλύτερη οπτική διάκριση */
 }
 
+.price-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.vat-label {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #64748b;
+    /* The utility classes 'cursor-help' and 'underline' handle the visual cues */
+}
+
 .total-amount {
     font-size: 2rem;
-    /* Αυξήθηκε για έμφαση */
     font-weight: 700;
-    /* Bold για έμφαση */
     color: #2c3e50;
-    /* Πιο σκούρο χρώμα για αντίθεση */
+    line-height: 1;
+    /* Helps with baseline alignment */
 }
 
 .cart-actions {
