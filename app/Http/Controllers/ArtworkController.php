@@ -3,56 +3,70 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artwork;
+use App\Models\Artist;
 use App\Models\Category;
+use App\Services\SettingsService;
+use App\Services\PictufyService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class ArtworkController extends Controller
 {
+    protected $settings;
+    protected $pictufy;
+
+    public function __construct(SettingsService $settings, PictufyService $pictufy)
+    {
+        $this->settings = $settings;
+        $this->pictufy = $pictufy;
+    }
+
     /**
-     * Handles the main /artworks page and /artworks/{filters}
-     * Formerly: PictufyController@filteredArtworks
+     * Main Shop Page (Equivalent to PictufyController@filteredArtworks)
      */
     public function index(Request $request, $filters = null)
     {
-        // 1. Parse Parameters
-        $params = $this->parseFilters($filters, $request);
+        $query = Artwork::query();
 
-        // 2. Build Query
-        $query = $this->buildQuery($params);
+        // Apply shared filter logic
+        $this->buildFilteredQuery($query, $filters, $request);
 
-        // 3. Fetch Data
-        $artworks = $query->paginate($params['per_page'])->withQueryString();
+        $artworks = $query->paginate($request->input('per_page', 30))->withQueryString();
 
         return Inertia::render('Artworks', [
-            'artworks' => $artworks->items(), // Inertia handles pagination object differently usually, but matching your structure
+            'artworks' => $artworks->items(),
             'filters' => $filters ? explode('/', $filters) : [],
-            'currentSearchTerm' => $params['search'],
+            'currentSearchTerm' => $request->input('search'),
             'collectionName' => 'Artworks',
             'nextPage' => $artworks->hasMorePages() ? $artworks->currentPage() + 1 : null,
         ]);
     }
 
     /**
-     * AJAX Endpoint for Infinite Scroll
-     * Formerly: PictufyController@fetchData
+     * Infinite Scroll / Ajax Endpoint (Equivalent to PictufyController@fetchData)
      */
     public function fetchData(Request $request)
     {
-        $filters = $request->input('filters');
+        $query = Artwork::query();
 
-        // Merge request inputs with parsed path filters
-        $params = $this->parseFilters($filters, $request);
+        // 1. Handle Contexts (Collection, List, Artist)
+        if ($request->has('collection_id')) {
+            $query->whereHas('collections', fn($q) => $q->where('collections.pictufy_id', $request->input('collection_id')));
+        }
+        if ($request->has('list_id')) {
+            $query->whereHas('artworkLists', fn($q) => $q->where('artwork_lists.pictufy_id', $request->input('list_id')));
+        }
+        if ($request->has('artist_id')) {
+            $query->where('artist_id', $request->input('artist_id'));
+        }
 
-        // Overrides from direct AJAX params (like artist_id or collection_id passed explicitly)
-        if ($request->has('collection_id')) $params['collection_id'] = $request->input('collection_id');
-        if ($request->has('artist_id')) $params['artist_id'] = $request->input('artist_id');
+        // 2. Apply Filters & Search
+        $this->buildFilteredQuery($query, $request->input('filters'), $request);
 
-        $query = $this->buildQuery($params);
-
-        $artworks = $query->paginate($params['per_page']);
+        // 3. Paginate
+        $artworks = $query->paginate($request->input('per_page', 30));
 
         return response()->json([
             'artworks' => $artworks->items(),
@@ -61,54 +75,70 @@ class ArtworkController extends Controller
     }
 
     /**
-     * Single Artwork Page
-     * Formerly: PictufyController@artworkDetails
+     * Single Artwork Page (Equivalent to PictufyController@artworkDetails)
      */
     public function show($id, $slug = null)
     {
-        // Find by local ID or Pictufy ID
-        $artwork = Artwork::where('id', $id)
-            ->orWhere('pictufy_id', $id)
-            ->firstOrFail();
+        $artwork = Artwork::where('id', $id)->orWhere('pictufy_id', $id)->with('relatedCategory')->firstOrFail();
+        // Fetch interiors from Pictufy API temporarily
+        $artworkResponse = $this->pictufy->getArtworkDetails($id);
+        $artwork->interiors = $artworkResponse['items'][0]['urls']['interiors'] ?? [];
 
-        // SEO Redirect logic
+        // SEO Redirect
         $correctSlug = Str::slug($artwork->title);
-        if ($slug !== $correctSlug) {
-            return redirect()->route('artworks.show', ['id' => $artwork->id, 'slug' => $correctSlug], 301);
+        if ($slug !== $correctSlug && $slug !== null) {
+            return redirect()->route('artwork.details', ['id' => $artwork->id, 'slug' => $correctSlug], 301);
         }
+
+        // Add artist_username for frontend linking
+        $artist = Artist::where('pictufy_id', $artwork->artist_id)->first();
+        if ($artist) {
+            $artwork->artist_username = $artist->username ?? Str::slug($artist->name);
+        }
+
+        // Map 'parent_slug' to 'artwork_type' for the frontend
+        if ($artwork->relatedCategory) {
+            $artwork->artwork_type = $artwork->relatedCategory->parent_slug;
+            // Ensure category_slug is also accessible if needed
+            $artwork->category_slug = $artwork->relatedCategory->slug; 
+        }
+
+        // Settings
+        $requireLogin = $this->settings->get('require_login_for_prices', false);
+        $pricingConfig = $this->settings->get('pricing_config', []);
 
         return Inertia::render('ArtworkDetails', [
             'artwork' => $artwork,
-            // Pass settings if needed, e.g. from a SettingsService
-            'requireLoginForPrices' => false, // Replace with your Settings logic
+            'requireLoginForPrices' => $requireLogin,
+            'pricingConfig' => $pricingConfig
         ]);
     }
 
     /**
-     * Related Artworks (AJAX)
-     * Formerly: PictufyController@getRelatedContent
+     * Related Content (Equivalent to PictufyController@getRelatedContent)
      */
     public function getRelatedContent($id)
     {
-        $artwork = Artwork::findOrFail($id);
+        $artwork = Artwork::where('pictufy_id', $id)->first();
+        if (!$artwork) return response()->json(['related' => [], 'youMayLike' => []]);
 
-        // 1. Related: Same Category + Matching Keywords
-        // We pick the first keyword from the stored CSV string
-        $firstKeyword = explode(',', $artwork->keywords)[0] ?? null;
+        // 1. Related: Same Category + First Keyword
+        $relatedQuery = Artwork::where('category_id', $artwork->category_id)
+            ->where('id', '!=', $artwork->id);
 
-        $related = Artwork::where('category_id', $artwork->category_id)
-            ->where('id', '!=', $artwork->id)
-            ->when($firstKeyword, function ($q) use ($firstKeyword) {
-                $q->where('keywords', 'LIKE', "%$firstKeyword%");
-            })
-            ->take(8)
-            ->get();
+        $keywords = explode(',', $artwork->keywords ?? '');
+        $firstKeyword = trim($keywords[0] ?? '');
+
+        if ($firstKeyword) {
+            $relatedQuery->where('keywords', 'LIKE', "%$firstKeyword%");
+        }
+
+        $related = $relatedQuery->take(12)->get(); // Fetch 12 like API
 
         // 2. You May Like: Trending (Highest Rank)
         $youMayLike = Artwork::where('id', '!=', $artwork->id)
-            ->whereNotNull('trending_rank')
-            ->orderBy('trending_rank', 'asc')
-            ->take(4)
+            ->orderByRaw('trending_rank IS NULL ASC, trending_rank ASC') // Put NULLs last
+            ->take(6)
             ->get();
 
         return response()->json([
@@ -117,47 +147,54 @@ class ArtworkController extends Controller
         ]);
     }
 
-    // --- Helper Methods ---
-
-    private function parseFilters($filtersString, Request $request)
+    /**
+     * Shared Filter Logic (The helper function we discussed)
+     */
+    private function buildFilteredQuery($query, $filters, Request $request)
     {
         $params = [
-            'page' => (int) $request->input('page', 1),
-            'per_page' => (int) $request->input('per_page', 30),
             'order' => $request->input('order', 'recommended'),
             'search' => $request->input('search'),
             'category_id' => null,
-            'geometry' => null,
+            'geometry' => [],
             'colors' => [],
         ];
 
-        if ($filtersString) {
-            $segments = explode('/', $filtersString);
+        // --- A. Parse URL Filters ---
+        if ($filters) {
+            $segments = explode('/', $filters);
             foreach ($segments as $segment) {
                 // Order
                 if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
                     $params['order'] = $segment;
                     continue;
                 }
-                // Category (cat_slug)
-                if (str_starts_with($segment, 'cat_')) {
-                    // Extract slug: cat_photography -> photography
-                    // You might need smarter logic if your slugs have underscores, 
-                    // but usually slugs use dashes.
-                    // Let's assume the slug is everything after 'cat_'
-                    // Or match your specific regex logic from PictufyService
-                    $slug = substr($segment, 4);
 
-                    // DB Lookup for ID
-                    $category = Category::where('slug', $slug)->first();
-                    if ($category) $params['category_id'] = $category->pictufy_id; // or local ID
+                // Category (Robust Parent/Child Parsing)
+                if (Str::startsWith($segment, 'cat_')) {
+                    $slugPart = substr($segment, 4); // Remove 'cat_'
+
+                    // 1. Try finding by slug directly
+                    $cat = Category::where('slug', $slugPart)->first();
+
+                    // 2. If not found, try split (parent_child)
+                    if (!$cat && str_contains($slugPart, '_')) {
+                        [$parent, $child] = explode('_', $slugPart, 2);
+                        $cat = Category::where('slug', $child)
+                            ->where('parent_slug', $parent)
+                            ->first();
+                    }
+
+                    if ($cat) $params['category_id'] = $cat->pictufy_id;
                     continue;
                 }
+
                 // Geometry
                 if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
-                    $params['geometry'] = $segment;
+                    $params['geometry'][] = $segment;
                     continue;
                 }
+
                 // Colors
                 if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
                     $params['colors'][] = $segment;
@@ -165,15 +202,11 @@ class ArtworkController extends Controller
                 }
             }
         }
-        return $params;
-    }
 
-    private function buildQuery($params)
-    {
-        $query = Artwork::query();
+        // --- B. Apply to Query ---
 
         // Search
-        if (!empty($params['search'])) {
+        if ($params['search']) {
             $term = $params['search'];
             $query->where(function ($q) use ($term) {
                 $q->where('title', 'LIKE', "%{$term}%")
@@ -183,16 +216,16 @@ class ArtworkController extends Controller
         }
 
         // Category
-        if (!empty($params['category_id'])) {
+        if ($params['category_id']) {
             $query->where('category_id', $params['category_id']);
         }
 
         // Geometry
         if (!empty($params['geometry'])) {
-            $query->where('geometry', $params['geometry']);
+            $query->whereIn('geometry', $params['geometry']);
         }
 
-        // Colors (OR logic for multiple colors usually, or AND depending on needs)
+        // Colors
         if (!empty($params['colors'])) {
             $query->where(function ($q) use ($params) {
                 foreach ($params['colors'] as $color) {
@@ -203,26 +236,7 @@ class ArtworkController extends Controller
             });
         }
 
-        // Collection (if pivot exists)
-        if (!empty($params['collection_id'])) {
-            $query->whereHas('collections', function ($q) use ($params) {
-                $q->where('collections.pictufy_id', $params['collection_id']);
-            });
-        }
-
-        // Filter by List (via Pivot)
-        if (!empty($params['list_id'])) {
-            $query->whereHas('artworksLists', function ($q) use ($params) { // Προσοχή στη σχέση στο Artwork Model
-                $q->where('artwork_lists.pictufy_id', $params['list_id']);
-            });
-        }
-
-        // Artist
-        if (!empty($params['artist_id'])) {
-            $query->where('artist_id', $params['artist_id']);
-        }
-
-        // Ordering
+        // Sorting
         switch ($params['order']) {
             case 'recently_added':
                 $query->orderByDesc('artwork_published_at');
@@ -230,17 +244,15 @@ class ArtworkController extends Controller
             case 'oldest_first':
                 $query->orderBy('artwork_published_at');
                 break;
-            case 'best_selling':
-                $query->orderBy(DB::raw('best_seller_rank IS NULL'), 'asc')->orderBy('best_seller_rank', 'asc');
-                break;
             case 'trending':
-                $query->orderBy(DB::raw('trending_rank IS NULL'), 'asc')->orderBy('trending_rank', 'asc');
+                $query->orderByRaw('trending_rank IS NULL ASC, trending_rank ASC');
                 break;
-            default: // recommended
+            case 'best_selling':
+                $query->orderByRaw('best_seller_rank IS NULL ASC, best_seller_rank ASC');
+                break;
+            default:
                 $query->orderByDesc('grade');
                 break;
         }
-
-        return $query;
     }
 }

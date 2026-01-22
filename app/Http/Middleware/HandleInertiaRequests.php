@@ -2,30 +2,24 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Http\Request; // Make sure Request is imported
+use App\Models\ArtworkList;
+use App\Models\Category;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
-use Tighten\Ziggy\Ziggy; // Ensure Ziggy is imported
-use App\Services\PictufyService; // Your existing service
-use App\Services\SettingsService;
-use App\Http\Controllers\CartController; // Your existing controller
-use Illuminate\Support\Str; // Your existing Str usage
+use App\Http\Controllers\CartController;
 
 class HandleInertiaRequests extends Middleware
 {
     /**
-     * The root template that's loaded on the first page visit.
+     * The root template that is loaded on the first page visit.
      *
-     * @see https://inertiajs.com/server-side-setup#root-template
      * @var string
      */
-    protected $rootView = 'app'; // Or your actual root Blade file
+    protected $rootView = 'app';
 
     /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
-     * @param  \Illuminate\Http\Request  $request
-     * @return string|null
+     * Determine the current asset version.
      */
     public function version(Request $request): ?string
     {
@@ -33,94 +27,53 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * Defines the props that are shared by default.
+     * Define the props that are shared by default.
      *
-     * @see https://inertiajs.com/shared-data
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
+     * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
-        // Your existing shared data logic
-        $pictufyService = app(PictufyService::class);
-        $settings = app(SettingsService::class);
-        $listsData = $pictufyService->getLists();
+        // Fetch Cart Data using the static helper we created
         $cartData = CartController::getSharedCartData();
-        $allCollectionCategoriesWithCollections = [];
 
-        // Fetch collections (your existing logic)
-        $response = $pictufyService->getCollections(['skip_categories' => 0, 'order' => 'alpha']);
-        if (!empty($response['items']) && is_array($response['items'])) {
-            $allCollectionCategoriesWithCollections = array_map(function ($category) {
-                // ... your existing mapping ...
-                $collections = [];
-                if (isset($category['collections']) && is_array($category['collections'])) {
-                    $collections = array_map(function ($collection) {
-                        $urlPath = !empty($collection['url']) ? parse_url($collection['url'], PHP_URL_PATH) : '';
-                        $collectionSlug = !empty($urlPath) ? basename($urlPath) : Str::slug($collection['name'] ?? 'untitled-collection');
-                        return [
-                            'id' => $collection['id'] ?? Str::random(10),
-                            'name' => html_entity_decode($collection['name'] ?? 'Untitled', ENT_QUOTES | ENT_HTML5),
-                            'slug' => $collectionSlug,
-                        ];
-                    }, $category['collections']);
-                }
-                return [
-                    'category_id' => $category['category_id'] ?? null,
-                    'category_name' => html_entity_decode($category['category_name'] ?? 'Unnamed Category', ENT_QUOTES | ENT_HTML5),
-                    'category_slug' => Str::slug(html_entity_decode($category['category_name'] ?? 'untitled-category')),
-                    'collections' => $collections,
-                ];
-            }, $response['items']);
-        }
-
-        // Consolidate flash messages
-        $flashMessages = [];
-        if ($request->session()->has('success')) {
-            $flashMessages['success'] = $request->session()->get('success');
-        }
-        if ($request->session()->has('error')) {
-            $flashMessages['error'] = $request->session()->get('error');
-        }
-        // Add other flash message keys if you use them (e.g., 'warning', 'info')
-        // Example of your existing specific flash message:
-        if ($request->session()->has('login_success_message')) {
-            $flashMessages['login_success_message'] = $request->session()->get('login_success_message');
-        }
-
-
-        return array_merge(parent::share($request), [
+        return [
+            ...parent::share($request),
+            
             'auth' => [
-                'user' => $request->user() ? [
-                    // Share only necessary user fields
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'role' => $request->user()->role, // If you need to check role on frontend (use with caution)
-                ] : null,
+                'user' => $request->user(),
             ],
-            // Add Global Config
-            'config' => [
-                'allow_registration' => $settings->get('allow_public_registration', false),
+            
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
-            'allCollectionCategoriesWithCollections' => $allCollectionCategoriesWithCollections,
-            'lists' => collect($listsData['items'] ?? [])->map(function ($list) {
-                return [
-                    'name' => html_entity_decode($list['name']),
-                    'list_id' => $list['list_id'],
-                    'cover' => $list['cover'],
-                    'route' => route('list.filtered', ['list_id' => $list['list_id']]),
-                    'icon' => 'pi pi-fw pi-images', // Example icon
-                ];
-            })->values()->all(),
+
             'cartCount' => $cartData['cartCount'],
             'cartItemsPreview' => $cartData['cartItemsPreview'],
-            'flash' => $flashMessages, // Pass all collected flash messages under the 'flash' key,
-            'ziggy' => fn () => [
-                ...(new Ziggy)->toArray(),
-                'location' => $request->url(), // Current full URL
-                'current_route_name' => $request->route()->getName(), // Alternative if Ziggy object isn't enough
-            ],
-        ]);
+
+            // --- CHANGED: Fetch from DB (Cached) instead of API ---
+            'global_data' => Cache::remember('global_menu_data', 3600, function () {
+                return [
+                    'categories' => \App\Models\Category::orderBy('name')->get()->map(function ($cat) {
+                        return [
+                            'id' => $cat->pictufy_id,
+                            'name' => $cat->name,
+                            'slug' => $cat->slug,
+                            'parent_slug' => $cat->parent_slug,
+                        ];
+                    }),
+
+                    // --- UPDATED LISTS LOGIC ---
+                    'lists' => \App\Models\ArtworkList::orderByDesc('last_change')->get()->map(function ($list) {
+                        return [
+                            'id' => $list->pictufy_id,
+                            'name' => $list->name,
+                            'slug' => $list->slug,
+                            'cover' => $list->cover, // Pass the cover image
+                        ];
+                    }),
+                ];
+            }),
+        ];
     }
 }

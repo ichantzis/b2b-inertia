@@ -14,7 +14,7 @@ return new class extends Migration
         // Create Artwork Lists Table
         Schema::create('artwork_lists', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('pictufy_id')->unique();
+            $table->string('pictufy_id')->unique();
             $table->string('name');
             $table->string('slug')->index(); // e.g. 'best-sellers-2025'
             $table->string('thumb')->nullable(); // Thumbnail image URL

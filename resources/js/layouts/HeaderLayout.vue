@@ -100,15 +100,15 @@ const mainMenuItems = computed(() => {
             {
                 label: 'All Collections',
                 // icon: 'pi pi-fw pi-images',
-                route: route('lists'),
+                route: route('lists.index'),
                 command: () => {
                     mobileMenuOpen.value = false;
                 }
             },
-            ...(page.props.lists || []).map(list => ({
+            ...(page.props.global_data?.lists || []).map(list => ({
                 label: list.name,
                 icon: list.cover,
-                route: route('list.filtered', { list_id: list.list_id }),
+                route: route('lists.show', { slug: list.slug }),
                 command: () => {
                     mobileMenuOpen.value = false;
                 }

@@ -14,13 +14,13 @@ return new class extends Migration
         // 1. Create the Collections Table
         Schema::create('collections', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('pictufy_id')->unique();
+            $table->string('pictufy_id')->unique();
             $table->string('name');
             $table->string('slug')->index();
             $table->string('thumb')->nullable();
             $table->text('description')->nullable();
             $table->integer('artwork_count')->default(0);
-            $table->unsignedBigInteger('category_id')->nullable();
+            $table->string('category_id')->nullable()->index();
             $table->timestamps();
         });
 

@@ -3,35 +3,28 @@
         <div class="filter-section">
             <h3 class="filter-title">Sort Order</h3>
             <div class="filter-items">
-                <Select
-                    v-model="activeSort"
-                    :options="sortOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select Sort Order"
-                    class="w-full"
-                    @change="handleSortChange"
-                />
+                <Select v-model="activeSort" :options="sortOptions" optionLabel="label" optionValue="value"
+                    placeholder="Select Sort Order" class="w-full" @change="handleSortChange" />
             </div>
         </div>
-        
+
         <div class="filter-section">
             <h3 class="filter-title">Categories</h3>
             <div class="filter-items">
-                <div v-for="(section, key) in categories" :key="key" class="category-section">
-                    <h4 class="section-title">{{ key }}</h4>
+                <div v-for="(sectionItems, sectionName) in categories" :key="sectionName" class="category-section">
+                    <h4 class="section-title capitalize">{{ sectionName }}</h4>
                     <div class="category-grid">
-                        <span v-for="category in section" :key="category.category_id" class="filter-item">
+                        <span v-for="category in sectionItems" :key="category.id" class="filter-item">
                             <Checkbox 
-                                :value="buildCategoryUrl(category, key)"
+                                :value="buildCategoryUrl(category)" 
                                 v-model="activeCategory"
-                                @change="() => handleCategoryChange(category, key)"
-                                :pt="{ root: { class: 'mr-2' } }"
+                                @change="() => handleCategoryChange(category)" 
+                                :pt="{ root: { class: 'mr-2' } }" 
                                 size="small"
-                                :inputId="`category-${key}-${category.category_id}`"
+                                :inputId="`category-${category.id}`" 
                             />
-                            <label :for="`category-${key}-${category.category_id}`" class="filter-label text-sm">
-                                {{ category.category_name }}
+                            <label :for="`category-${category.id}`" class="filter-label text-sm">
+                                {{ category.name }}
                             </label>
                         </span>
                     </div>
@@ -46,8 +39,10 @@
                     <Checkbox :value="format.value" v-model="activeFormat"
                         @change="() => handleFormatChange(format.value)" :pt="{ root: { class: 'mr-2' } }" size="small"
                         :inputId="format.value" />
-                    <label :for="format.value" class="filter-label"><img :src="format.icon" :alt="format.label"
-                            class="format-icon" :class="{ 'selected': activeFormat.includes(format.value) }" /></label>
+                    <label :for="format.value" class="filter-label">
+                        <img :src="format.icon" :alt="format.label" class="format-icon"
+                            :class="{ 'selected': activeFormat.includes(format.value) }" />
+                    </label>
                 </span>
             </div>
         </div>
@@ -61,24 +56,23 @@
                 </span>
             </div>
         </div>
-        <div class="flex justify-center items-center mb-4">
-                    <Button icon="pi pi-eraser" @click="clearFilters"
-                        label="Clear Filters" severity="info"
-                        size="medium" class="filter-button" variant="outlined" raised />
-                </div>
+
+        <div class="flex justify-center items-center mb-4 mt-6">
+            <Button icon="pi pi-eraser" @click="clearFilters" label="Clear Filters" severity="info" size="medium"
+                class="filter-button" variant="outlined" raised />
+        </div>
     </aside>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import axios from 'axios';
 import Checkbox from 'primevue/checkbox';
 import Select from 'primevue/select';
-import { slugify } from '@/composables/utils.js';
+import Button from 'primevue/button'; // Ensure Button is imported
 
 const props = defineProps({
-    listId: String,
+    listId: [String, Number], // Can be number or string from DB
     collectionSlug: String,
     activeFilters: {
         type: Array,
@@ -90,8 +84,32 @@ const props = defineProps({
     }
 });
 
+const page = usePage();
 
-const categories = ref({});
+// --- DATA SOURCES ---
+
+// Get Categories directly from Shared Props (Middleware)
+const categories = computed(() => {
+    const rawCategories = page.props.global_data?.categories || [];
+    const groups = {};
+
+    // Group categories by their parent_slug (e.g. 'subjects', 'styles')
+    // If no parent_slug exists, group under 'All Categories'
+    rawCategories.forEach(cat => {
+        // Format the key (e.g. 'subjects' -> 'Subjects')
+        let key = 'Categories';
+        if (cat.parent_slug) {
+            key = cat.parent_slug.charAt(0).toUpperCase() + cat.parent_slug.slice(1);
+        }
+        
+        if (!groups[key]) {
+            groups[key] = [];
+        }
+        groups[key].push(cat);
+    });
+
+    return groups;
+});
 
 const formats = [
     { label: 'Horizontal', value: 'horizontal', icon: '/images/formats/geometry-horizontal.png' },
@@ -121,12 +139,15 @@ const sortOptions = [
     { label: 'Oldest First', value: 'oldest_first' }
 ];
 
+// --- ACTIVE STATE COMPUTED ---
+
 const activeCategory = computed({
     get: () => {
+        // Looks for 'cat_abstract', 'cat_landscape' etc.
         const category = props.activeFilters.find(f => f.startsWith('cat_'));
         return category ? [category] : [];
     },
-    set: () => { } // Handled by change event
+    set: () => { } 
 });
 
 const activeFormat = computed({
@@ -134,7 +155,7 @@ const activeFormat = computed({
         const format = props.activeFilters.find(f => ['horizontal', 'vertical', 'square', 'panorama'].includes(f));
         return format ? [format] : [];
     },
-    set: () => { } // Handled by change event
+    set: () => { }
 });
 
 const activeColor = computed({
@@ -142,7 +163,7 @@ const activeColor = computed({
         const color = props.activeFilters.find(f => colors.map(c => c.value).includes(f));
         return color ? [color] : [];
     },
-    set: () => { } // Handled by change event
+    set: () => { }
 });
 
 const activeSort = computed({
@@ -150,167 +171,129 @@ const activeSort = computed({
         const sort = props.activeFilters.find(f => sortOptions.map(o => o.value).includes(f));
         return sort || 'recommended';
     },
-    set: () => { } // Handled by change event
+    set: () => { }
 });
 
-const fetchCategories = async () => {
-    try {
-        const response = await axios.get('/api/categories');
-        console.log('Fetched categories:', response.data.items);
-        
-        categories.value = response.data.items;     
-    } catch (error) {
-        console.error('Error fetching categories:', error);
-    }
-};
 
-const isActiveCategory = (categoryId) => {
-    return props.activeFilters.includes(`cat_${categoryId}`);
-};
+// --- URL & LOGIC HELPERS ---
 
-const isActiveFilter = (filterValue) => props.activeFilters.includes(filterValue);
-
-// Modify buildCategoryUrl to include section
-const buildCategoryUrl = (category, section) => {
-    const categoryName = category.category_name;
-    const categorySlug = `cat_${section}_${slugify(categoryName)}`; // e.g., cat_photography_abstract
-    return categorySlug;
-};
-
-const buildFilterUrl = (type, value) => {
-    const currentFilters = [...props.activeFilters];
-    const filterIndex = currentFilters.indexOf(value);
-
-    if (filterIndex === -1) {
-        currentFilters.push(value);
-    } else {
-        currentFilters.splice(filterIndex, 1);
-    }
-
-    return currentFilters.length ? currentFilters.join('/') : '';
-};
-
-const getActiveCategory = () => {
-    return props.activeFilters.find(f => f.startsWith('cat_')) || '';
-};
-
-const getActiveFormat = () => {
-    return props.activeFilters.find(f => ['horizontal', 'vertical', 'square', 'panorama'].includes(f)) || '';
-};
-
-
-const getActiveColor = () => {
-    return props.activeFilters.find(f => colors.map(c => c.value).includes(f)) || '';
-};
-
-// Updated getBaseUrl to handle Artist route
 const getBaseUrl = () => {
-    const currentPath = usePage().url;    
-        
+    const currentPath = page.url;    
+    
+    // Logic for Collections
     if (currentPath.startsWith('/collection/') && props.collectionSlug) {
         return `/collection/${props.collectionSlug}`;
     }
-    if (currentPath.startsWith('/lists/') && props.listId) {
-        return `/lists/${props.listId}`;
+    // Logic for Lists
+    if (currentPath.startsWith('/lists/') && props.collectionSlug) {
+         // Using slug for lists now based on route definition
+        return `/lists/${props.collectionSlug}`;
     }
-    // Added check for artist page
+    // Logic for Artists
     if (currentPath.startsWith('/artist/') && props.collectionSlug) {
         return `/artist/${props.collectionSlug}`;
     }
+    
     return '/artworks';
 };
 
 const updateUrl = (pathFiltersArray) => {
+    // Filter out empty values and join
     const cleanPathFilters = pathFiltersArray.filter(f => f).join('/');
     const baseUrl = getBaseUrl();
-    let targetUrl = baseUrl;
-
-    if (cleanPathFilters) {
-        targetUrl = `${baseUrl}/${cleanPathFilters}`;
-    }
+    
+    // Build target URL (e.g., /artworks/cat_blue/horizontal)
+    const targetUrl = cleanPathFilters ? `${baseUrl}/${cleanPathFilters}` : baseUrl;
 
     const queryParams = {};
-    if (props.currentSearchQuery) { // Use the passed-in search query
-        queryParams.search = props.currentSearchQuery;
-    }
-
-    router.visit(targetUrl, {
-        data: queryParams, // Send query parameters as 'data'
-        preserveState: true,
-        preserveScroll: true, // Or false if you want to scroll to top
-        replace: true, // Good for filter changes
-    });
-};
-
-const clearFilters = () => {
-    const baseUrl = getBaseUrl(); // This gets /artworks, /collection/slug, or /lists/id
-    const queryParams = {};
-
-    // IMPORTANT: Preserve the current search query when clearing path filters
     if (props.currentSearchQuery) {
         queryParams.search = props.currentSearchQuery;
     }
 
-    // Navigate to the base URL (which removes all path segments for filters)
-    // and include the current search query if it exists.
-    router.visit(baseUrl, {
-        data: queryParams, // Send search query parameter
+    router.visit(targetUrl, {
+        data: queryParams,
         preserveState: true,
-        preserveScroll: true, // Or false, depending on desired scroll behavior
-        replace: true, // Good for filter changes
+        preserveScroll: true,
+        replace: true,
     });
 };
 
-// Update the handler to include section
-const handleCategoryChange = (category, section) => {
-    const categorySlug = buildCategoryUrl(category, section); // e.g., cat_photography_abstract
-    let otherPathFilters = props.activeFilters.filter(f => !f.startsWith('cat_')); // Remove old category
+const buildCategoryUrl = (category) => {
+    // Check if category has a parent_slug (e.g. 'illustration')
+    if (category.parent_slug) {
+        // Format: cat_parent_child (e.g. cat_illustration_abstract)
+        return `cat_${category.parent_slug}_${category.slug}`;
+    }
+    // Fallback for top-level categories
+    return `cat_${category.slug}`;
+};
 
-    const currentActiveCategory = getActiveCategory(); // From your existing computed prop logic
+const handleCategoryChange = (category) => {
+    const newCategorySlug = buildCategoryUrl(category);
+    
+    // Remove any EXISTING category filter (assuming single category select)
+    // We filter out any string starting with 'cat_'
+    let otherFilters = props.activeFilters.filter(f => !f.startsWith('cat_'));
 
-    if (currentActiveCategory === categorySlug) { // If clicking the same category to deselect
-        // Filters are already without this category in otherPathFilters
-        updateUrl(otherPathFilters);
+    // Check if we are DESELECTING the current category
+    const isCurrentlyActive = props.activeFilters.includes(newCategorySlug);
+
+    if (isCurrentlyActive) {
+        // Just send the other filters (clearing category)
+        updateUrl(otherFilters);
     } else {
-        // Add new category, keep other filters
-        updateUrl([categorySlug, ...otherPathFilters]);
+        // Add new category + other filters
+        updateUrl([newCategorySlug, ...otherFilters]);
     }
 };
 
 const handleFormatChange = (formatValue) => {
-    let otherPathFilters = props.activeFilters.filter(f => !formats.map(opt => opt.value).includes(f)); // Remove old format
-    const currentActiveFormat = getActiveFormat();
-
-    if (currentActiveFormat === formatValue) {
-        updateUrl(otherPathFilters);
+    // Remove existing format
+    let otherFilters = props.activeFilters.filter(f => !formats.map(opt => opt.value).includes(f));
+    
+    if (props.activeFilters.includes(formatValue)) {
+        updateUrl(otherFilters);
     } else {
-        updateUrl([formatValue, ...otherPathFilters]);
+        updateUrl([formatValue, ...otherFilters]);
     }
 };
 
 const handleColorChange = (colorValue) => {
-    let otherPathFilters = props.activeFilters.filter(f => !colors.map(opt => opt.value).includes(f)); // Remove old color
-    const currentActiveColor = getActiveColor();
-
-    if (currentActiveColor === colorValue) {
-        updateUrl(otherPathFilters);
+    // Remove existing colors (if single select) or keep if multi select?
+    // Implementation suggests single select per type logic in original code
+    let otherFilters = props.activeFilters.filter(f => !colors.map(opt => opt.value).includes(f));
+    
+    if (props.activeFilters.includes(colorValue)) {
+        updateUrl(otherFilters);
     } else {
-        updateUrl([colorValue, ...otherPathFilters]);
+        updateUrl([colorValue, ...otherFilters]);
     }
 };
 
 const handleSortChange = (event) => {
     const newSortValue = event.value;
-    // Remove any existing sort order from path filters
-    let otherPathFilters = props.activeFilters.filter(f => !sortOptions.map(o => o.value).includes(f));
+    let otherFilters = props.activeFilters.filter(f => !sortOptions.map(o => o.value).includes(f));
 
-    if (newSortValue && newSortValue !== 'recommended') { // 'recommended' often means no sort param
-        otherPathFilters = [newSortValue, ...otherPathFilters];
+    if (newSortValue && newSortValue !== 'recommended') {
+        otherFilters = [newSortValue, ...otherFilters];
     }
-    // No need to manage queryParams.order here if sort is path-based
-    updateUrl(otherPathFilters);
+    updateUrl(otherFilters);
 };
-onMounted(fetchCategories);
+
+const clearFilters = () => {
+    const baseUrl = getBaseUrl();
+    const queryParams = {};
+    if (props.currentSearchQuery) {
+        queryParams.search = props.currentSearchQuery;
+    }
+    
+    router.visit(baseUrl, {
+        data: queryParams,
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+    });
+};
 </script>
 
 <style scoped>

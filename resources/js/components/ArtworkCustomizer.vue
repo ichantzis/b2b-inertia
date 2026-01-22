@@ -42,7 +42,7 @@ const frames = [
     { id: 'noframe', label: 'No Frame', img: '/images/frames/floatnoframe.jpg' },
 ];
 
-// TRANSFORM DB CONFIG TO COMPONENT FORMAT
+// ... (Pricing logic remains same) ...
 const prices = computed(() => {
     const arrayToObject = (arr) => {
         if (!Array.isArray(arr)) return {};
@@ -65,16 +65,14 @@ const prices = computed(() => {
     };
 });
 
-// Helper to sort sizes naturally (e.g. 30x40 < 40x60)
 const sortSizes = (sizes) => {
     return sizes.sort((a, b) => {
         const [w1, h1] = a.split('x').map(Number);
         const [w2, h2] = b.split('x').map(Number);
-        return (w1 * h1) - (w2 * h2); // Sort by total area
+        return (w1 * h1) - (w2 * h2);
     });
 };
 
-// Get the raw price object for the CURRENT selection (Canvas vs NoFrame vs Poster)
 const currentCategoryPrices = computed(() => {
     if (selectedType.value === 'canvas') {
         return selectedCanvas.value === 'noframe'
@@ -85,7 +83,6 @@ const currentCategoryPrices = computed(() => {
     }
 });
 
-// Filter for Rectangular sizes (Width != Height)
 const availableRectangularSizes = computed(() => {
     const allSizes = Object.keys(currentCategoryPrices.value);
     const rectSizes = allSizes.filter(size => {
@@ -95,7 +92,6 @@ const availableRectangularSizes = computed(() => {
     return sortSizes(rectSizes);
 });
 
-// Filter for Square sizes (Width == Height)
 const availableSquareSizes = computed(() => {
     const allSizes = Object.keys(currentCategoryPrices.value);
     const sqSizes = allSizes.filter(size => {
@@ -114,7 +110,6 @@ const showSize = (size) => {
     if (!isSquare.value && isSquareSize) return false;
 
     if (selectedType.value === 'canvas') {
-        // Must use prices.value here
         return selectedCanvas.value === 'noframe'
             ? (prices.value.frame.noframe[size] > 0)
             : (prices.value.frame.canvas[size] > 0);
@@ -137,14 +132,12 @@ const quantity = ref(1);
 const currentPrice = computed(() => {
     const sizeToUse = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     if (selectedType.value === 'canvas') {
-        // Must use prices.value here
         const frameTypePrices = selectedCanvas.value === 'noframe'
             ? prices.value.frame.noframe
             : prices.value.frame.canvas;
         return frameTypePrices[sizeToUse] || 0;
     }
-    // return prices.value.frame.poster[sizeToUse] || 0;
-    return 0;
+    return 0; // Poster logic disabled based on previous code
 });
 
 const totalPrice = computed(() => {
@@ -159,33 +152,46 @@ const formattedTotalPrice = computed(() => {
     }).format(totalPrice.value);
 });
 
+// Helper to safely get the image thumb whether from DB (flat) or API (nested)
+const getArtworkThumb = () => {
+    return props.artwork?.img_thumb || props.artwork?.urls?.img_thumb || null;
+};
+
+// Helper to get title safely
+const getArtworkTitle = () => {
+    // If it's a string (DB), return it. If it's localized (API), try English.
+    if (typeof props.artwork?.title === 'string') return props.artwork.title;
+    return props.artwork?.title?.en || 'Artwork';
+};
+
 const addToCartForm = useForm({
-    artwork_id: props.artwork?.id || null,
-    title: props.artwork?.title?.en || null,
+    artwork_id: props.artwork?.pictufy_id || null, // <--- CHANGED: Use pictufy_id
+    title: null,
     type: selectedType.value,
     frame: selectedCanvas.value,
     size: isSquare.value ? selectedSquareSize.value : selectedSize.value,
     quantity: quantity.value,
-    img_thumb: props.artwork?.urls?.img_thumb || null,
+    img_thumb: null,
     price: currentPrice.value,
     total: totalPrice.value
 });
 
 const addToCart = () => {
-    addToCartForm.artwork_id = props.artwork.id;
-    addToCartForm.title = props.artwork.title?.en || 'Artwork';
+    // Ensure we send the correct Pictufy ID
+    addToCartForm.artwork_id = String(props.artwork.pictufy_id);
+    addToCartForm.title = getArtworkTitle();
     addToCartForm.type = selectedType.value;
     addToCartForm.frame = selectedCanvas.value;
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
-    addToCartForm.img_thumb = props.artwork.urls?.img_thumb;
+    addToCartForm.img_thumb = getArtworkThumb();
     addToCartForm.price = currentPrice.value;
     addToCartForm.total = totalPrice.value;
 
     addToCartForm.post(route('cart.store'), {
         preserveScroll: true,
         onSuccess: () => {
-            toast.add({ severity: 'success', summary: 'Added to cart', detail: `${quantity.value} x ${props.artwork.title?.en || 'Artwork'} added.`, life: 3000 });
+            toast.add({ severity: 'success', summary: 'Added to cart', detail: `${quantity.value} x ${addToCartForm.title} added.`, life: 3000 });
         },
         onError: (errors) => {
             console.error('Failed to add item:', errors);
@@ -216,14 +222,9 @@ watch(selectedType, (newType) => {
         addToCartForm.type = newType;
         addToCartForm.frame = selectedCanvas.value;
     }
-
-    // Reset size logic
+    // ... (size reset logic remains same) ...
     const currentSize = isSquare.value ? selectedSquareSize.value : selectedSize.value;
-
-    // Check if current size is valid in new list using prices.value
     if (!showSize(currentSize)) {
-        // Helper to find available sizes in the specific category
-        // Must use prices.value.frame[...]
         const availablePrices = prices.value.frame[newType === 'canvas' ? (selectedCanvas.value === 'noframe' ? 'noframe' : 'canvas') : 'poster'];
         const availableSizes = Object.keys(availablePrices);
 
@@ -252,13 +253,14 @@ onMounted(() => {
     if (selectedType.value === 'canvas') {
         emit('frameChange', selectedCanvas.value);
     }
-    addToCartForm.artwork_id = props.artwork?.id;
-    addToCartForm.title = props.artwork?.title?.en;
+    // Initialize form with safe getters
+    addToCartForm.artwork_id = props.artwork?.pictufy_id ? String(props.artwork.pictufy_id) : '';
+    addToCartForm.title = getArtworkTitle();
     addToCartForm.type = selectedType.value;
     addToCartForm.frame = selectedCanvas.value;
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
-    addToCartForm.img_thumb = props.artwork?.urls?.img_thumb;
+    addToCartForm.img_thumb = getArtworkThumb();
     addToCartForm.price = currentPrice.value;
     addToCartForm.total = totalPrice.value;
 });
@@ -287,7 +289,6 @@ watch([selectedType, selectedCanvas], () => {
                 <img src="/images/frames/floating-frame.svg" alt="Floating Canvas" class="canvas-icon" />
             </Button>
         </div>
-
         <div class="detail-item">
             <span class="detail-label">Frame</span>
         </div>
@@ -338,9 +339,7 @@ watch([selectedType, selectedCanvas], () => {
                 <div v-if="canViewPrice" class="price-container">
                     <span class="total-amount">{{ formattedTotalPrice }}</span>
                     <span class="vat-label cursor-help decoration-dotted underline underline-offset-4"
-                        v-tooltip.top="'Price excludes VAT.'">
-                        +VAT
-                    </span>
+                        v-tooltip.top="'Price excludes VAT.'">+VAT</span>
                 </div>
                 <div class="cart-actions">
                     <div v-if="canViewPrice" class="quantity-wrapper">

@@ -45,17 +45,36 @@ const cartSubtotal = computed(() => {
 const shippingCost = computed(() => cartSubtotal.value > 100 ? 0 : 5.00); // Example cost
 const cartTotal = computed(() => cartSubtotal.value + shippingCost.value);
 
-const updateQuantity = (itemId) => {
-    const newQuantity = itemQuantities.value[itemId];
-    router.put(route('cart.update', itemId), { quantity: newQuantity }, {
+const updateQuantity = (itemId, newValue) => {
+    // 1. Update the local reactive state immediately for UI responsiveness
+    itemQuantities.value[itemId] = newValue;
+
+    // 2. Find the original item from the Inertia props (Server State)
+    const originalItem = props.cartItems.find(item => item.id === itemId);
+
+    // 3. THE FIX: Equality Check
+    // If the server already has this quantity, do nothing.
+    // This blocks the second "blur" request.
+    if (originalItem && Number(originalItem.quantity) === Number(newValue)) {
+        return;
+    }
+
+    // 4. Send Request
+    // Note: Laravel Resource routes usually prefer PATCH for updates, but PUT works if configured.
+    router.put(route('cart.update', itemId), { 
+        quantity: newValue 
+    }, {
         preserveScroll: true,
-        preserveState: (page) => Object.keys(page.props.errors).length > 0,
-        onSuccess: () => { toast.add({ severity: 'success', summary: 'Success', detail: 'Cart updated', life: 3000 }); },
+        preserveState: true,
+        // No onSuccess needed if you removed backend toast & use global watcher
         onError: (errors) => {
-            const originalItem = props.cartItems.find(item => item.id === itemId);
-            if (originalItem) { itemQuantities.value[itemId] = originalItem.quantity; }
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update quantity.', life: 3000 });
-            console.error('Quantity update error:', errors);
+            // Revert local state on error
+            if (originalItem) {
+                itemQuantities.value[itemId] = originalItem.quantity;
+            }
+            // Manual toast only for errors (since global watcher handles success)
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update.', life: 3000 });
+            console.error('Update error:', errors);
         },
     });
 };
@@ -63,7 +82,7 @@ const updateQuantity = (itemId) => {
 const removeItem = (itemId) => {
     router.delete(route('cart.destroy', itemId), {
         preserveScroll: true,
-        preserveState: (page) => Object.keys(page.props.errors).length > 0,
+        preserveState: true,
         onSuccess: () => {
             toast.add({ severity: 'info', summary: 'Removed', detail: 'Item removed from cart', life: 3000 });
             delete itemQuantities.value[itemId]; // Keep manual deletion for immediate feedback
@@ -99,7 +118,7 @@ const formatCurrency = (value, showSymbol = true) => {
         <div v-if="cartIsEmpty" class="text-center py-12">
             <Message severity="info" :closable="false">Your cart is currently empty.</Message>
             <Link :href="route('artworks')">
-            <Button label="Continue Shopping" icon="pi pi-arrow-right" iconPos="right" class="mt-6" />
+                <Button label="Continue Shopping" icon="pi pi-arrow-right" iconPos="right" class="mt-6" />
             </Link>
         </div>
 
@@ -125,26 +144,23 @@ const formatCurrency = (value, showSymbol = true) => {
                             <p class="text-xs sm:text-sm text-muted-color">Size: {{ item.size }}</p>
 
                             <p class="block sm:hidden mt-1 text-sm text-muted-color">
-                                {{ itemQuantities[item.id] }} x <span class="font-semibold">€{{ formatCurrency(item.artwork_data?.price || 0, false)
-                                }}</span>
+                                {{ itemQuantities[item.id] }} x <span class="font-semibold">€{{
+                                    formatCurrency(item.artwork_data?.price || 0, false)
+                                    }}</span>
                             </p>
                         </div>
 
                         <div class="flex flex-row items-center justify-end gap-2 sm:gap-4 ml-auto">
-                            <InputNumber v-model="itemQuantities[item.id]" showButtons buttonLayout="horizontal"
-                                :min="1" @update:modelValue="updateQuantity(item.id)"
-                                inputClass="w-8 sm:w-10 text-center !text-xs sm:!text-sm"
-                                decrementButtonClass="p-button-secondary p-button-outlined !px-1 !py-0 sm:!p-1"
-                                incrementButtonClass="p-button-secondary p-button-outlined !px-1 !py-0 sm:!p-1"
-                                incrementButtonIcon="pi pi-plus !text-xs" decrementButtonIcon="pi pi-minus !text-xs"
-                                pt:root:class="'!w-auto'" />
+                            <InputNumber :modelValue="itemQuantities[item.id]"
+                                @update:modelValue="(newValue) => updateQuantity(item.id, newValue)" :min="1"
+                                showButtons buttonLayout="horizontal" inputClass="w-12 text-center"
+                                decrementButtonClass="p-button-secondary" incrementButtonClass="p-button-secondary" />
                             <div class="font-semibold w-16 sm:w-24 text-right hidden sm:block">
                                 {{ formatCurrency(parseFloat(item.artwork_data?.price || 0) * itemQuantities[item.id])
                                 }}
                             </div>
                             <Button icon="pi pi-times-circle" severity="secondary" text rounded aria-label="Remove Item"
-                                @click="removeItem(item.id)" pt:root:class="!p-1 !w-7 !h-7 sm:!p-2 sm:!w-8 sm:!h-8"
-                                 />
+                                @click="removeItem(item.id)" pt:root:class="!p-1 !w-7 !h-7 sm:!p-2 sm:!w-8 sm:!h-8" />
                         </div>
                     </div>
                 </div>
@@ -174,7 +190,7 @@ const formatCurrency = (value, showSymbol = true) => {
                     </template>
                     <template #footer>
                         <Link :href="route('checkout.index')" class="w-full">
-                        <Button label="Proceed to Checkout" class="w-full" icon="pi pi-lock" iconPos="right" />
+                            <Button label="Proceed to Checkout" class="w-full" icon="pi pi-lock" iconPos="right" />
                         </Link>
                     </template>
                 </Card>

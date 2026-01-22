@@ -54,7 +54,40 @@ class Artwork extends Model
     ];
 
 
-    public function artworksLists()
+    /**
+     * An artwork belongs to one Category.
+     */
+    public function relatedCategory() 
+    {
+        // Assuming 'category_id' is the foreign key in the artworks table
+        // and 'pictufy_id' is the key in the categories table
+        return $this->belongsTo(Category::class, 'category_id', 'pictufy_id');
+    }
+
+    /**
+     * An artwork belongs to one Artist.
+     */
+    public function artist()
+    {
+        return $this->belongsTo(Artist::class, 'artist_id', 'pictufy_id');
+    }
+
+    /**
+     * An artwork can belong to many Collections.
+     */
+    public function collections()
+    {
+        // The pivot table name is usually alphabetical: 'artwork_collection'
+        // Foreign keys: 'artwork_id', 'collection_id' (referencing valid IDs, usually local IDs)
+        // If your pivot table uses pictufy_ids, you might need to specify them.
+        // Assuming standard Laravel pivot:
+        return $this->belongsToMany(Collection::class, 'artwork_collection');
+    }
+
+    /**
+     * An artwork can belong to many Lists.
+     */
+    public function artworkLists()
     {
         return $this->belongsToMany(ArtworkList::class, 'artwork_artwork_list');
     }

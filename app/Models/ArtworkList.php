@@ -13,9 +13,9 @@ class ArtworkList extends Model
         'pictufy_id',
         'name',
         'slug',
-        'thumb',
+        'cover',      
         'description',
-        'artwork_count',
+        'last_change',
     ];
 
     // Many-to-Many relationship with projects

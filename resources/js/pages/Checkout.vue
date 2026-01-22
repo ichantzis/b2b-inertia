@@ -335,12 +335,17 @@
                         <template #content>
                             <div class="space-y-4">
                                 <div v-for="item in cartItems" :key="item.id" class="flex justify-between items-start">
-                                    <div>
-                                        <div class="font-medium">{{ item.artwork_data.title || 'Artwork' }}</div>
-                                        <div class="text-sm text-gray-600">Type: {{ item.type }}</div>
-                                        <div class="text-sm text-gray-600">Frame: {{ item.frame }}</div>
-                                        <div class="text-sm text-gray-600">Size: {{ item.size }}</div>
-                                        <div class="text-sm text-gray-600">Qty: {{ item.quantity }}</div>
+                                    <div class="flex items-start">
+                                        <img :src="item.artwork_data.img_thumb"
+                                        class="w-12 h-12 sm:w-24 sm:h-24 object-contain flex-shrink-0 mr-4 shadow-md"
+                                        :alt="item.artwork_data.title || 'Artwork image'">
+                                        <div>
+                                            <div class="font-medium">{{ item.artwork_data.title || 'Artwork' }}</div>
+                                            <div class="text-sm text-gray-600">Type: {{ item.type }}</div>
+                                            <div class="text-sm text-gray-600">Frame: {{ item.frame }}</div>
+                                            <div class="text-sm text-gray-600">Size: {{ item.size }}</div>
+                                            <div class="text-sm text-gray-600">Qty: {{ item.quantity }}</div>
+                                        </div>
                                     </div>
                                     <div>{{ formatCurrency(item.artwork_data.price * item.quantity) }}</div>
                                 </div>
@@ -397,7 +402,8 @@
                                         <label for="pmBank" class="ml-2">Bank Transfer</label>
                                     </div>
                                 </div>
-                                <p class="text-sm italic text-gray-600">We'll contact you for further payment details.</p>
+                                <p class="text-sm italic text-gray-600">We'll contact you for further payment details.
+                                </p>
                                 <small v-if="form.errors.paymentMethod" class="p-error">{{ form.errors.paymentMethod
                                 }}</small>
                             </div>

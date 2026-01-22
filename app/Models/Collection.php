@@ -17,6 +17,7 @@ class Collection extends Model
         'description',
         'artwork_count',
         'category_id',
+        'category_name',
     ];
 
     /**

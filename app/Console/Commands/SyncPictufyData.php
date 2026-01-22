@@ -19,7 +19,9 @@ class SyncPictufyData extends Command
      * --fresh : Truncate tables before starting (Clean slate)
      * --skip-artworks : Skip the heavy artwork sync (useful for debugging metadata)
      */
-    protected $signature = 'pictufy:sync-all {--fresh} {--skip-artworks}';
+
+    // Add {--collections-only} to the signature
+    protected $signature = 'pictufy:sync-all {--fresh} {--skip-artworks} {--collections-only} {--lists-only}';
 
     protected $description = 'Syncs all Categories, Artists, Collections, Lists and Artworks from Pictufy API to the Database.';
 
@@ -33,7 +35,24 @@ class SyncPictufyData extends Command
 
     public function handle()
     {
+        ini_set('memory_limit', '1024M');
+
         $start = microtime(true);
+
+        // --- CHECK FOR FLAG ---
+        if ($this->option('collections-only')) {
+            $this->info('Running PARTIAL sync: Collections Only.');
+            $this->syncCollections(); 
+            $this->info('Collections sync completed.');
+            return;
+        }
+
+        if ($this->option('lists-only')) {
+            $this->info('Running PARTIAL sync: Lists Only.');
+            $this->syncLists(); 
+            $this->info('Lists sync completed.');
+            return;
+        }
 
         // Optional: Clean slate
         if ($this->option('fresh')) {
@@ -62,7 +81,7 @@ class SyncPictufyData extends Command
         // 2. Sync Artworks (The heavy part)
         if (!$this->option('skip-artworks')) {
             $this->syncArtworks();
-            
+
             // 3. Sync Relationships (Connecting Artworks to Lists/Collections)
             // This is necessary because the "All Artworks" endpoint doesn't tell us 
             // which Collection/List an artwork belongs to.
@@ -78,7 +97,7 @@ class SyncPictufyData extends Command
     {
         $this->info('Syncing Categories...');
         $response = $this->pictufy->getCategories();
-        
+
         // API returns categorized array (e.g. ['photography' => [...], 'illustration' => [...]])
         // We flatten it or iterate sections.
         $items = $response['items'] ?? [];
@@ -102,42 +121,55 @@ class SyncPictufyData extends Command
 
     private function syncArtists()
     {
-        $this->info('Syncing Artists (this may take a moment)...');
-        
-        // Fetch ALL artists (pagination loop)
-        $page = 1;
-        $perPage = 100;
-        
-        // Get first page to see total? API doesn't always give total pages.
-        // We'll loop until empty.
-        
-        do {
-            $response = $this->pictufy->getArtists(['page' => $page, 'per_page' => $perPage]);
-            $items = $response['items'] ?? [];
-            
-            if (empty($items)) break;
+        $this->info('Syncing Artists...');
 
-            foreach ($items as $item) {
-                Artist::updateOrCreate(
-                    ['pictufy_id' => $item['artist_id']],
-                    [
-                        'username' => $item['username'] ?? null,
-                        'name' => html_entity_decode($item['name']),
-                        'biography' => $item['biography_text'] ?? null,
-                        'profile_picture' => $item['profile_picture'] ?? null,
-                        'country' => $item['country'] ?? null,
-                        'artist_type' => $item['artist_type'] ?? null,
-                        'artwork_count' => $item['artworks'] ?? 0,
-                    ]
-                );
+        // 1. Fetch ALL artists in one request (since API doesn't paginate this)
+        $response = $this->pictufy->getArtists();
+        $items = $response['items'] ?? [];
+
+        if (empty($items)) {
+            $this->info('No artists found.');
+            return;
+        }
+
+        $totalItems = count($items);
+        $this->info("Found $totalItems artists. Processing...");
+
+        $syncedCount = 0;
+
+        // 2. Initialize Progress Bar
+        $bar = $this->output->createProgressBar($totalItems);
+        $bar->start();
+
+        foreach ($items as $item) {
+            // Restriction: Only sync artists with >= 10 artworks
+            $count = $item['artworks'] ?? 0;
+
+            if ($count < 10) {
+                $bar->advance(); // Still advance bar to show progress
+                continue;
             }
-            
-            $this->output->write('.'); // Visual feedback
-            $page++;
-        } while (count($items) >= $perPage);
 
+            Artist::updateOrCreate(
+                ['pictufy_id' => $item['artist_id']],
+                [
+                    'username' => $item['username'] ?? null,
+                    'name' => html_entity_decode($item['name']),
+                    'biography' => $item['biography_text'] ?? null,
+                    'profile_picture' => $item['profile_picture'] ?? null,
+                    'country' => $item['country'] ?? null,
+                    'artist_type' => $item['artist_type'] ?? null,
+                    'artwork_count' => $count,
+                ]
+            );
+
+            $syncedCount++;
+            $bar->advance();
+        }
+
+        $bar->finish();
         $this->newLine();
-        $this->info("Artists synced.");
+        $this->info("Synced $syncedCount Artists (filtered by > 10 artworks).");
     }
 
     private function syncLists()
@@ -147,69 +179,122 @@ class SyncPictufyData extends Command
         $items = $response['items'] ?? [];
 
         foreach ($items as $item) {
-            ArtworkList::updateOrCreate(
-                ['pictufy_id' => $item['list_id']],
+            \App\Models\ArtworkList::updateOrCreate(
+                ['pictufy_id' => (string) $item['list_id']], // API Key: list_id
                 [
                     'name' => html_entity_decode($item['name']),
-                    'slug' => \Illuminate\Support\Str::slug($item['name']),
-                    // 'thumb' => ... (List API response usually has thumbnails?)
-                    'artwork_count' => $item['artworks'] ?? 0,
+                    'slug' => $item['slug'] ?? \Illuminate\Support\Str::slug($item['name']),
+                    
+                    // Map API 'cover' to DB 'cover'
+                    'cover' => $item['cover'] ?? null, 
+                    
+                    'description' => $item['description'] ?? null,
+                    
+                    // Map API 'last_change' to DB 'last_change'
+                    'last_change' => $item['last_change'] ?? null, 
                 ]
             );
         }
-        $this->info("Synced " . count($items) . " Lists.");
+        $this->info('Lists synced.');
     }
 
     private function syncCollections()
     {
-        $this->info('Syncing Collections...');
-        // We use skip_categories=1 to get a flat list of all collections
-        $response = $this->pictufy->getCollections(['skip_categories' => 1]);
-        $items = $response['items'] ?? [];
+        $this->info('Syncing Collections (Structured)...');
+        
+        $response = $this->pictufy->getCollections(); 
+        $categories = $response['items'] ?? [];
 
-        foreach ($items as $item) {
-            // Helper to get slug from URL if needed, or generated
-            $slug = isset($item['url']) 
-                ? basename(parse_url($item['url'], PHP_URL_PATH)) 
-                : \Illuminate\Support\Str::slug($item['name']);
+        $totalCollections = 0;
 
-            Collection::updateOrCreate(
-                ['pictufy_id' => $item['id']],
-                [
-                    'name' => html_entity_decode($item['name']),
-                    'slug' => $slug,
-                    'thumb' => $item['thumb'] ?? null,
-                    'description' => $item['description'] ?? null,
-                    'artwork_count' => $item['artworks'] ?? 0,
-                    'category_id' => $item['category_id'] ?? null,
-                ]
-            );
+        foreach ($categories as $cat) {
+            $categoryId = $cat['category_id'] ?? null;
+            $categoryName = $cat['category_name'] ?? 'General';
+            
+            // Debug output to confirm we are getting names
+            // $this->line("Processing Category: $categoryName ($categoryId)"); 
+
+            if (isset($cat['collections']) && is_array($cat['collections'])) {
+                foreach ($cat['collections'] as $item) {
+                    if (empty($item['id'])) continue;
+
+                    $name = $item['name'] ?? 'Untitled Collection';
+                    
+                    if (!empty($item['url'])) {
+                        $slug = basename(parse_url($item['url'], PHP_URL_PATH));
+                    } else {
+                        $slug = \Illuminate\Support\Str::slug($name);
+                    }
+
+                    // Force update by finding the model first
+                    $collection = Collection::where('pictufy_id', (string) $item['id'])->first();
+
+                    if ($collection) {
+                        // Update existing
+                        $collection->update([
+                            'name' => html_entity_decode($name),
+                            'category_id' => $categoryId,
+                            'category_name' => html_entity_decode($categoryName), // Saving the name
+                            'slug' => $slug ?: 'collection-' . $item['id'],
+                            // Update other fields if you wish, but name/cat is priority
+                        ]);
+                    } else {
+                        // Create new
+                        Collection::create([
+                            'pictufy_id' => (string) $item['id'],
+                            'name' => html_entity_decode($name),
+                            'slug' => $slug ?: 'collection-' . $item['id'],
+                            'thumb' => $item['thumb'] ?? null,
+                            'description' => $item['description'] ?? null,
+                            'artwork_count' => $item['artworks'] ?? 0,
+                            'category_id' => $categoryId,
+                            'category_name' => html_entity_decode($categoryName),
+                        ]);
+                    }
+                    $totalCollections++;
+                }
+            }
         }
-        $this->info("Synced " . count($items) . " Collections.");
+        
+        $this->info("Synced $totalCollections collections.");
     }
 
     private function syncArtworks()
     {
-        $this->info('Syncing Artworks (Approx 40k items)...');
-        
+        $limit = 1000;
+        $this->info("Syncing first $limit Artworks...");
+
         $page = 1;
-        $perPage = 100; // Safe batch size
-        
-        // We can check how many pages roughly if we knew total, but let's loop safely.
-        // Assuming ~400 pages.
-        $bar = $this->output->createProgressBar(400); // Estimation
+        $perPage = 100;
+        $totalSynced = 0;
+
+        $bar = $this->output->createProgressBar(ceil($limit / $perPage));
         $bar->start();
 
         do {
-            // Using 'recently_added' to ensure we get a consistent list if possible,
-            // or just default order.
-            $response = $this->pictufy->getArtworks(['page' => $page, 'per_page' => $perPage]);
+            $response = $this->pictufy->getArtworks([
+                'page' => $page,
+                'per_page' => $perPage,
+                'order' => 'best_selling',
+            ]);
             $items = $response['items'] ?? [];
 
             if (empty($items)) break;
 
             foreach ($items as $item) {
-                // Map API Colors to Booleans
+                // --- FIX 1: Clean Keywords (Remove ID prefix) ---
+                $keywords = $item['keywords']['en'] ?? '';
+                if (!empty($keywords) && str_starts_with($keywords, $item['id'] . ',')) {
+                    $keywords = substr($keywords, strlen($item['id']) + 1);
+                }
+
+                // --- FIX 2: Handle Invalid Dates (1970 Epoch) ---
+                $publishedAt = $item['artwork_published'] ?? null;
+                // If date is missing or is the Unix Epoch start (1970...), set to NULL
+                if (!$publishedAt || str_starts_with($publishedAt, '1970')) {
+                    $publishedAt = null;
+                }
+
                 $colors = $item['color'] ?? [];
 
                 Artwork::updateOrCreate(
@@ -220,18 +305,14 @@ class SyncPictufyData extends Command
                         'artist_id' => $item['artist_id'],
                         'category' => html_entity_decode($item['category']),
                         'category_id' => $item['category_id'],
-                        'keywords' => $item['keywords']['en'] ?? '',
+                        'keywords' => $keywords,
                         'geometry' => $item['geometry'],
                         'width' => $item['width'],
                         'height' => $item['height'],
                         'grade' => $item['grade'] ?? 0,
-                        
-                        // Images
                         'img_thumb' => $item['urls']['img_thumb'] ?? null,
                         'img_medium' => $item['urls']['img_medium'] ?? null,
                         'img_high' => $item['urls']['img_high'] ?? null,
-
-                        // Colors
                         'has_red' => $colors['red'] ?? false,
                         'has_orange' => $colors['orange'] ?? false,
                         'has_yellow' => $colors['yellow'] ?? false,
@@ -242,29 +323,27 @@ class SyncPictufyData extends Command
                         'has_pink' => $colors['pink'] ?? false,
                         'is_highkey' => $colors['highkey'] ?? false,
                         'is_lowkey' => $colors['lowkey'] ?? false,
-
-                        'artwork_published_at' => $item['artwork_published'] ?? now(),
+                        'artwork_published_at' => $publishedAt, // Use cleaned date
                     ]
                 );
             }
 
+            $totalSynced += count($items);
             $bar->advance();
             $page++;
-            
-            // Sleep slightly to be nice to the API if running on server (optional)
-            // usleep(100000); 
 
+            if ($totalSynced >= $limit) break;
         } while (count($items) >= $perPage);
 
         $bar->finish();
         $this->newLine();
-        $this->info("Artworks synced.");
+        $this->info("Synced $totalSynced artworks.");
     }
 
     private function syncListContents()
     {
         $this->info('Mapping Artworks to Lists (Populating Pivot)...');
-        
+
         $lists = ArtworkList::all();
         $bar = $this->output->createProgressBar($lists->count());
         $bar->start();
@@ -275,20 +354,20 @@ class SyncPictufyData extends Command
             $page = 1;
             do {
                 $response = $this->pictufy->getArtworks([
-                    'list_id' => $list->pictufy_id, 
-                    'page' => $page, 
+                    'list_id' => $list->pictufy_id,
+                    'page' => $page,
                     'per_page' => 100
                 ]);
                 $items = $response['items'] ?? [];
-                
+
                 if (empty($items)) break;
 
                 // Collect local IDs
                 $artworkPictufyIds = collect($items)->pluck('id')->toArray();
-                
+
                 // Find local IDs for these Pictufy IDs
                 $localIds = Artwork::whereIn('pictufy_id', $artworkPictufyIds)->pluck('id')->toArray();
-                
+
                 // Attach without detaching previous (since we page)
                 // OR better: Sync if it's the first page? 
                 // Simplest: just attach. 'syncWithoutDetaching'
@@ -307,33 +386,45 @@ class SyncPictufyData extends Command
     private function syncCollectionContents()
     {
         $this->info('Mapping Artworks to Collections (Populating Pivot)...');
-        
-        $collections = Collection::all();
-        $bar = $this->output->createProgressBar($collections->count());
+
+        // Use chunking to avoid loading all 500 collections into RAM at once
+        $count = Collection::count();
+        $bar = $this->output->createProgressBar($count);
         $bar->start();
 
-        foreach ($collections as $collection) {
-            $page = 1;
-            do {
-                $response = $this->pictufy->getArtworks([
-                    'collection_id' => $collection->pictufy_id, 
-                    'page' => $page, 
-                    'per_page' => 100
-                ]);
-                $items = $response['items'] ?? [];
-                
-                if (empty($items)) break;
+        // Process in chunks of 50
+        Collection::chunk(50, function ($collections) use ($bar) {
+            foreach ($collections as $collection) {
+                $page = 1;
+                do {
+                    $response = $this->pictufy->getArtworks([
+                        'collection_id' => $collection->pictufy_id,
+                        'page' => $page,
+                        'per_page' => 100
+                    ]);
+                    $items = $response['items'] ?? [];
 
-                $artworkPictufyIds = collect($items)->pluck('id')->toArray();
-                $localIds = Artwork::whereIn('pictufy_id', $artworkPictufyIds)->pluck('id')->toArray();
-                
-                $collection->artworks()->syncWithoutDetaching($localIds);
+                    if (empty($items)) break;
 
-                $page++;
-            } while (count($items) >= 100);
+                    $artworkPictufyIds = collect($items)->pluck('id')->toArray();
 
-            $bar->advance();
-        }
+                    // Optimization: Only select ID to save memory
+                    $localIds = Artwork::whereIn('pictufy_id', $artworkPictufyIds)->pluck('id')->toArray();
+
+                    $collection->artworks()->syncWithoutDetaching($localIds);
+
+                    $page++;
+
+                    // Break infinite loop safeguard
+                    if ($page > 50) break;
+                } while (count($items) >= 100);
+
+                $bar->advance();
+            }
+
+            // --- Free up memory after every chunk ---
+            gc_collect_cycles();
+        });
 
         $bar->finish();
         $this->newLine();
