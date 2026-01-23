@@ -13,10 +13,6 @@ const props = defineProps({
         type: Array,
         default: () => []
     },
-    currentOrder: {
-        type: String,
-        default: 'alpha'
-    }
 });
 
 const decodeHTMLEntities = (text) => {
@@ -171,7 +167,7 @@ const scrollToLetter = (letter) => {
                                                             {{ artist.artist_type }}
                                                         </p>
                                                         <div class="text-xs text-gray-400 mt-0.5">
-                                                            {{ artist.artworks }} Artworks
+                                                            {{ artist.artwork_count }} Artworks
                                                         </div>
                                                     </div>
                                                 </template>

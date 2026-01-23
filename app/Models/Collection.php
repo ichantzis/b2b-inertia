@@ -35,4 +35,12 @@ class Collection extends Model
     {
         return $this->belongsToMany(Artwork::class, 'artwork_collection');
     }
+
+    /**
+     * Relationship: A Collection belongs to many Categories (Many-to-Many).
+     */
+    public function categories()
+    {
+        return $this->belongsToMany(CollectionCategory::class, 'collection_collection_category');
+    }
 }

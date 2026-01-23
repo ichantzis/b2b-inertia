@@ -6,6 +6,7 @@ use App\Models\Artist;
 use App\Models\Category;
 use App\Services\PictufyService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
@@ -34,7 +35,7 @@ class ArtistController extends Controller
             'biography' => $artist->biography,
             'artist_type' => $artist->artist_type,
             'country' => $artist->country,
-            'artworks_count' => $artist->artwork_count ?? 0,
+            'artwork_count' => $artist->artwork_count ?? 0,
         ];
     }
 
@@ -42,22 +43,13 @@ class ArtistController extends Controller
     {
         $order = $request->input('order', 'alpha');
 
-        $query = Artist::where('artwork_count', '>=', 10);
-
-        if ($order === 'trending') {
-            $query->orderByRaw('trending_rank IS NULL ASC, trending_rank ASC');
-        } else {
-            $query->orderBy('name');
-        }
-
-        $artists = $query->paginate(100)->withQueryString();
-
-        // Transform items
-        $artists->getCollection()->transform(fn($a) => $this->formatArtist($a));
+        $artists = Artist::where('artwork_count', '>=', 10)
+            ->orderBy('name')
+            ->get()
+            ->map(fn($a) => $this->formatArtist($a));
 
         return Inertia::render('artists/Index', [
-            'artists' => $artists->items(),
-            'currentOrder' => $order
+            'artists' => $artists,
         ]);
     }
 

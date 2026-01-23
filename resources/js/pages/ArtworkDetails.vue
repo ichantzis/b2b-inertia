@@ -785,40 +785,40 @@ const getColorValue = (name) => {
 };
 
 const artworkColors = computed(() => {
-  // 1. Get the color object (e.g., { red: false, green: true ... })
-  const colorObj = currentArtwork.value?.color;
+  const art = currentArtwork.value;
+  if (!art) return [];
 
-  // Safety check: ensure it exists and is an object
-  if (!colorObj || typeof colorObj !== 'object') {
-    return [];
-  }
+  const activeColors = [];
 
-  // 2. Filter keys where the value is TRUE
-  // Object.entries returns [['red', false], ['green', true], ...]
-  const activeKeys = Object.entries(colorObj)
-    .filter(([key, isActive]) => isActive === true)
-    .map(([key]) => key);
+  // Αντιστοίχιση των πεδίων της Βάσης Δεδομένων με τα values του availableColors
+  const dbMapping = {
+    'has_red': 'red',
+    'has_orange': 'orange',
+    'has_yellow': 'yellow',
+    'has_green': 'green',
+    'has_turquoise': 'turquoise',
+    'has_blue': 'blue',
+    'has_lilac': 'lilac',
+    'has_pink': 'pink',
+    'is_highkey': 'highkey',
+    'is_lowkey': 'lowkey'
+  };
 
-  // 3. Map these keys to our availableColors configuration to get Hex/Labels
-  return activeKeys.map(key => {
-    // Find the matching color config (key 'highkey' matches value 'highkey')
-    const found = availableColors.find(c => c.value === key);
-
-    if (found) {
-      return {
-        label: found.label,
-        value: found.value,
-        hex: found.hex
-      };
+  Object.entries(dbMapping).forEach(([dbColumn, colorValue]) => {
+    // Ελέγχουμε αν το πεδίο είναι true (ή 1)
+    if (art[dbColumn]) {
+      const colorConfig = availableColors.find(c => c.value === colorValue);
+      if (colorConfig) {
+        activeColors.push({
+          label: colorConfig.label,
+          value: colorConfig.value,
+          hex: colorConfig.hex
+        });
+      }
     }
-
-    // Fallback (just in case API returns a color we don't have defined)
-    return {
-      label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize
-      value: key,
-      hex: '#cccccc' // Default gray
-    };
   });
+
+  return activeColors;
 });
 
 const navigateToArtworksWithColor = (colorValue) => {

@@ -53,7 +53,7 @@ return new class extends Migration
             $table->boolean('is_lowkey')->default(false);  // Dark/Black dominant
 
             // Metadata
-            $table->timestamp('artwork_published_at')->nullable();
+            $table->dateTime('artwork_published_at')->nullable();
             $table->timestamps();
 
             // Compound Index for common filtered queries (Category + Geometry is very common)

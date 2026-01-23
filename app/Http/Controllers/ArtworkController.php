@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ArtworkController extends Controller
 {
@@ -56,7 +57,7 @@ class ArtworkController extends Controller
             $query->whereHas('collections', fn($q) => $q->where('collections.pictufy_id', $request->input('collection_id')));
         }
         if ($request->has('list_id')) {
-            $query->whereHas('artworkLists', fn($q) => $q->where('artwork_lists.pictufy_id', $request->input('list_id')));
+            $query->whereHas('artworkLists', fn($q) => $q->where('artwork_lists.id', $request->input('list_id')));
         }
         if ($request->has('artist_id')) {
             $query->where('artist_id', $request->input('artist_id'));

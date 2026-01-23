@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
-use App\Models\Category; 
+use App\Models\CollectionCategory;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
@@ -11,28 +12,25 @@ use Illuminate\Support\Str;
 class CollectionController extends Controller
 {
     /**
-     * Helper to group and format collections for the frontend.
+     * Helper to fetch categories with their collections 
+     * and format them for the frontend.
      */
-    private function formatCategorizedCollections($collections)
+    private function getAllCategorizedData()
     {
-        $grouped = $collections->groupBy('category_name');
-        $categorized = [];
+        // 1. Fetch all Collection Categories with their related Collections
+        // We order categories by name, and collections within them by name.
+        $categories = CollectionCategory::with(['collections' => function ($query) {
+            $query->orderBy('name');
+        }])->get();
 
-        foreach ($grouped as $catName => $items) {
-            $cleanName = $catName ?: 'General';
-            // Use the first item's category_id as the group ID, or fallback to hash
-            $firstItem = $items->first();
-            $catId = $firstItem->category_id ?? md5($cleanName);
-            
-            // Create a slug from the name for URL generation
-            $slug = Str::slug($cleanName);
-
-            $categorized[] = [
-                'category_id'   => $catId,
-                'category_name' => $cleanName,
-                'slug'          => $slug,          // Used by frontend for links
-                'category_slug' => $slug,          // Used by active state checks
-                'collections'   => $items->map(fn($c) => [
+        // 2. Transform to the structure expected by Vue
+        return $categories->map(function ($cat) {
+            return [
+                'category_id'   => $cat->pictufy_id,
+                'category_name' => $cat->name,
+                'slug'          => $cat->slug,
+                'category_slug' => $cat->slug, // Used for active state matching
+                'collections'   => $cat->collections->map(fn($c) => [
                     'id'             => $c->pictufy_id,
                     'name'           => $c->name,
                     'slug'           => $c->slug,
@@ -41,8 +39,7 @@ class CollectionController extends Controller
                     'description'    => $c->description
                 ])->values()
             ];
-        }
-        return array_values($categorized);
+        })->values(); // Reset keys to ensure JSON array
     }
 
     /**
@@ -51,8 +48,7 @@ class CollectionController extends Controller
      */
     public function index()
     {
-        $collections = Collection::orderBy('name')->get();
-        $allCategorized = $this->formatCategorizedCollections($collections);
+        $allCategorized = $this->getAllCategorizedData();
 
         return Inertia::render('Collections', [
             'categorized_collections' => $allCategorized,
@@ -67,20 +63,20 @@ class CollectionController extends Controller
      */
     public function showByCategory($category_collection_slug)
     {
-        $collections = Collection::orderBy('name')->get();
-        $allCategorized = $this->formatCategorizedCollections($collections);
+        // We need all categories for the Sidebar
+        $allCategorized = $this->getAllCategorizedData();
 
-        // Filter to find the requested category
-        $activeCategory = collect($allCategorized)->first(function ($cat) use ($category_collection_slug) {
-            return $cat['category_slug'] === $category_collection_slug;
+        // Filter to find the requested category for the Main View
+        $activeCategory = $allCategorized->first(function ($cat) use ($category_collection_slug) {
+            return $cat['slug'] === $category_collection_slug;
         });
 
         if (!$activeCategory) {
-            abort(404, 'Category not found');
+            abort(404, 'Collection Category not found');
         }
 
         return Inertia::render('Collections', [
-            'categorized_collections' => [$activeCategory], // Only show this one
+            'categorized_collections' => [$activeCategory], // Only show this one in the main area
             'all_categories' => $allCategorized,            // Keep sidebar full
             'is_category_view' => true                      // Switch layout to grid
         ]);
@@ -92,13 +88,14 @@ class CollectionController extends Controller
      */
     public function show(Request $request, $collection_slug, $filters = null)
     {
+        // Find collection by slug or ID
         $collection = Collection::where('slug', $collection_slug)
             ->orWhere('pictufy_id', $collection_slug)
             ->firstOrFail();
 
         $query = $collection->artworks();
 
-        // reuse the filter logic (same as ListController)
+        // Apply filters (Sort, Color, Geometry, etc.)
         $this->buildFilteredQuery($query, $filters, $request);
 
         $artworks = $query->paginate(30)->withQueryString();
@@ -116,6 +113,9 @@ class CollectionController extends Controller
         ]);
     }
 
+    /**
+     * Helper to apply filters to the artwork query.
+     */
     private function buildFilteredQuery($query, $filters, Request $request)
     {
         $params = [
@@ -135,20 +135,13 @@ class CollectionController extends Controller
                     continue;
                 }
                 
-                // --- UPDATED CATEGORY PARSING ---
+                // Category parsing
                 if (Str::startsWith($segment, 'cat_')) {
-                    $string = substr($segment, 4); // e.g. "illustration_abstract"
-
-                    // Check if it contains an underscore separator for parent_child
+                    $string = substr($segment, 4);
                     if (str_contains($string, '_')) {
-                        // Split into [parent, child]
                         [$parent, $child] = explode('_', $string, 2);
-                        
-                        $cat = Category::where('slug', $child)
-                            ->where('parent_slug', $parent)
-                            ->first();
+                        $cat = Category::where('slug', $child)->where('parent_slug', $parent)->first();
                     } else {
-                        // Fallback for top-level categories or legacy links
                         $cat = Category::where('slug', $string)->first();
                     }
 
@@ -157,7 +150,6 @@ class CollectionController extends Controller
                     }
                     continue;
                 }
-                // --------------------------------
 
                 // Geometry
                 if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
@@ -172,7 +164,7 @@ class CollectionController extends Controller
             }
         }
 
-        // Apply filters to query...
+        // Apply filters
         if ($params['search']) {
             $term = $params['search'];
             $query->where(function($q) use ($term) {
@@ -192,6 +184,7 @@ class CollectionController extends Controller
                 }
             });
         }
+        
         switch ($params['order']) {
             case 'recently_added': $query->orderByDesc('artwork_published_at'); break;
             case 'oldest_first': $query->orderBy('artwork_published_at'); break;

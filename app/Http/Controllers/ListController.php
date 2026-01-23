@@ -35,7 +35,7 @@ class ListController extends Controller
 
         return Inertia::render('Artworks', [
             'artworks' => $artworks->items(),
-            'collectionId' => (string) $list->pictufy_id,
+            'collectionId' => $list->id,
             'collectionName' => $list->name,
             'isListPage' => true, 
             'collectionSlug' => $slug, // Important for FilterSidebar URL building

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 use App\Http\Controllers\CartController;
+use Tighten\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -50,6 +51,12 @@ class HandleInertiaRequests extends Middleware
 
             'cartCount' => $cartData['cartCount'],
             'cartItemsPreview' => $cartData['cartItemsPreview'],
+
+            'ziggy' => fn () => [
+                ...(new Ziggy)->toArray(),
+                'location' => $request->url(), // Current full URL
+                'current_route_name' => $request->route()->getName(), // Alternative if Ziggy object isn't enough
+            ],
 
             // --- CHANGED: Fetch from DB (Cached) instead of API ---
             'global_data' => Cache::remember('global_menu_data', 3600, function () {
