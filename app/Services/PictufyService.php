@@ -18,15 +18,17 @@ class PictufyService
         $this->apiKey = config('services.pictufy.key');
     }
 
-    private function request($endpoint, $params = [])
+    private function request($endpoint, $params = [], $timeout = 30)
     {
-        // Log::info("Requesting $endpoint with params: " . json_encode($params)); // Can be verbose
-        $response = Http::withHeaders([
-            'X-AUTH-KEY' => $this->apiKey,
-            'Content-Type' => 'application/x-www-form-urlencoded',
-        ])->withOptions([
-            'verify' => false, // Consider true in production with valid SSL
-        ])->asForm()
+        // Log::info("Requesting $endpoint with params: " . json_encode($params)); 
+
+        $response = Http::timeout($timeout) // Ρύθμιση του timeout
+            ->withHeaders([
+                'X-AUTH-KEY' => $this->apiKey,
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ])->withOptions([
+                'verify' => false,
+            ])->asForm()
             ->post("$this->apiUrl/$endpoint", $params);
 
         if ($response->failed()) {
@@ -34,20 +36,23 @@ class PictufyService
                 'status' => $response->status(),
                 'response' => $response->body()
             ]);
-            return ['items' => [], 'status' => ['code' => $response->status(), 'returned_items' => 0]]; // Ensure consistent error structure
+            return ['items' => [], 'status' => ['code' => $response->status(), 'returned_items' => 0]];
         }
         return $response->json();
     }
 
     public function getCollections($params = [])
     {
-        // API docs params: collection_category, order, with_ids, skip_categories
         $cacheKey = 'pictufy_collections_' . md5(json_encode($params));
-        $cacheDuration = 60; // Cache for 60 minutes
+        $cacheDuration = 60; 
 
-        return Cache::remember($cacheKey, $cacheDuration, function () use ($params) {
+        // Αν ζητάμε IDs, το API αργεί, οπότε δίνουμε 3 λεπτά (180s)
+        $timeout = !empty($params['with_ids']) ? 180 : 30;
+
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($params, $timeout) {
             Log::info("Fetching collections from API with params: " . json_encode($params));
-            return $this->request('collections', $params);
+            // Περνάμε το timeout στη request
+            return $this->request('collections', $params, $timeout);
         });
     }
 
@@ -259,8 +264,8 @@ class PictufyService
         // We fetch a large list of artists sorted alphabetically to create a lookup directory.
         // Caching this response effectively creates our "Slug -> ID" database.
         // Adjust per_page if your artist count exceeds 2000.
-        $params = ['order' => 'alpha', 'per_page' => 2000]; 
-        
+        $params = ['order' => 'alpha', 'per_page' => 2000];
+
         $response = $this->getArtists($params);
         $artists = $response['items'] ?? [];
 

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Artist;
 use App\Models\Category;
+use App\Models\CollectionCategory;
 use App\Services\PictufyService;
+use App\Traits\BuildsArtworkQueries;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -12,6 +14,7 @@ use Illuminate\Support\Str;
 
 class ArtistController extends Controller
 {
+    use BuildsArtworkQueries;
 
     protected $pictufy;
 
@@ -55,15 +58,41 @@ class ArtistController extends Controller
 
     public function overview()
     {
-        // 1. Featured (Top 15 Trending)
-        $featured = Artist::where('artwork_count', '>=', 10)
-            ->orderByRaw('trending_rank IS NULL ASC, trending_rank ASC')
-            ->take(15)->get()
-            ->map(fn($a) => $this->formatArtist($a));
+        // 1. Featured (From 'Featured Artists' Collection Category)
+        // Φέρνουμε την κατηγορία και τις συλλογές της
+        $featuredCategory = CollectionCategory::where('slug', 'featured-artists')
+            ->with('collections')
+            ->first();
+
+        $featured = collect();
+
+        if ($featuredCategory) {
+            // Υποθέτουμε ότι το όνομα της Συλλογής ταυτίζεται με το όνομα του Καλλιτέχνη
+            $artistNames = $featuredCategory->collections->pluck('name')->toArray();
+
+            if (!empty($artistNames)) {
+                // Βρίσκουμε τους Artists βάσει ονόματος
+                $featured = Artist::whereIn('name', $artistNames)->where('artwork_count', '>=', 10)
+                    ->get()
+                    // (Προαιρετικό) Ταξινόμηση με τη σειρά που εμφανίζονται στη συλλογή
+                    ->sortBy(function ($artist) use ($artistNames) {
+                        return array_search($artist->name, $artistNames);
+                    })
+                    ->map(fn($a) => $this->formatArtist($a))
+                    ->values();
+            }
+        }
+
+        // Fallback: Αν δεν βρεθεί η κατηγορία ή είναι άδεια, φέρε μερικούς τυχαίους/top
+        if ($featured->isEmpty()) {
+            $featured = Artist::where('artwork_count', '>=', 10)
+                ->orderByDesc('artwork_count')
+                ->take(15)->get()
+                ->map(fn($a) => $this->formatArtist($a));
+        }
 
         // 2. Trending (Top 40)
         $trending = Artist::where('artwork_count', '>=', 10)
-            ->orderByRaw('trending_rank IS NULL ASC, trending_rank ASC')
             ->take(40)->get()
             ->map(fn($a) => $this->formatArtist($a));
 
@@ -201,83 +230,5 @@ class ArtistController extends Controller
             'rows' => $rows,
             'gridItems' => []
         ]);
-    }
-
-    private function buildFilteredQuery($query, $filters, Request $request)
-    {
-        $params = [
-            'order' => $request->input('order', 'recommended'),
-            'search' => $request->input('search'),
-            'category_id' => null,
-            'geometry' => [],
-            'colors' => [],
-        ];
-
-        if ($filters) {
-            $segments = explode('/', $filters);
-            foreach ($segments as $segment) {
-                if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
-                    $params['order'] = $segment;
-                    continue;
-                }
-
-                // Category Parsing
-                if (Str::startsWith($segment, 'cat_')) {
-                    $slugPart = substr($segment, 4);
-                    // Try exact match
-                    $cat = Category::where('slug', $slugPart)->first();
-                    // Try parent_child match
-                    if (!$cat && str_contains($slugPart, '_')) {
-                        [$parent, $child] = explode('_', $slugPart, 2);
-                        $cat = Category::where('slug', $child)->where('parent_slug', $parent)->first();
-                    }
-                    if ($cat) $params['category_id'] = $cat->pictufy_id;
-                    continue;
-                }
-
-                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
-                    $params['geometry'][] = $segment;
-                    continue;
-                }
-                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
-                    $params['colors'][] = $segment;
-                    continue;
-                }
-            }
-        }
-
-        if ($params['search']) {
-            $term = $params['search'];
-            $query->where(function ($q) use ($term) {
-                $q->where('title', 'LIKE', "%{$term}%")
-                    ->orWhere('keywords', 'LIKE', "%{$term}%");
-            });
-        }
-        if ($params['category_id']) $query->where('category_id', $params['category_id']);
-        if (!empty($params['geometry'])) $query->whereIn('geometry', $params['geometry']);
-        if (!empty($params['colors'])) {
-            $query->where(function ($q) use ($params) {
-                foreach ($params['colors'] as $color) {
-                    if ($color === 'highkey') $q->orWhere('is_highkey', true);
-                    elseif ($color === 'lowkey') $q->orWhere('is_lowkey', true);
-                    else $q->orWhere('has_' . $color, true);
-                }
-            });
-        }
-
-        switch ($params['order']) {
-            case 'recently_added':
-                $query->orderByDesc('artwork_published_at');
-                break;
-            case 'oldest_first':
-                $query->orderBy('artwork_published_at');
-                break;
-            case 'trending':
-                $query->orderByRaw('trending_rank IS NULL ASC, trending_rank ASC');
-                break;
-            default:
-                $query->orderByDesc('grade');
-                break;
-        }
     }
 }

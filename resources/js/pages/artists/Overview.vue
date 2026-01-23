@@ -108,7 +108,7 @@ const decodeHTMLEntities = (text) => {
                                                         {{ artist.artist_type }}
                                                     </p>
                                                     <p class="text-xs text-gray-400 mt-0.5">
-                                                        {{ artist.artworks_count }} Artworks
+                                                        {{ artist.artwork_count }} Artworks
                                                     </p>
                                                 </div>
                                             </template>

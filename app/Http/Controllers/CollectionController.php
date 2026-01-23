@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Collection;
 use App\Models\CollectionCategory;
-use App\Models\Category;
+use App\Traits\BuildsArtworkQueries;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Str;
 
 class CollectionController extends Controller
 {
+    use BuildsArtworkQueries;
+
     /**
      * Helper to fetch categories with their collections 
      * and format them for the frontend.
@@ -113,82 +114,4 @@ class CollectionController extends Controller
         ]);
     }
 
-    /**
-     * Helper to apply filters to the artwork query.
-     */
-    private function buildFilteredQuery($query, $filters, Request $request)
-    {
-        $params = [
-            'order' => $request->input('order', 'recommended'),
-            'search' => $request->input('search'),
-            'category_id' => null,
-            'geometry' => [],
-            'colors' => [],
-        ];
-
-        if ($filters) {
-            $segments = explode('/', $filters);
-            foreach ($segments as $segment) {
-                // Order
-                if (in_array($segment, ['recommended', 'recently_added', 'best_selling', 'trending', 'oldest_first'])) {
-                    $params['order'] = $segment;
-                    continue;
-                }
-                
-                // Category parsing
-                if (Str::startsWith($segment, 'cat_')) {
-                    $string = substr($segment, 4);
-                    if (str_contains($string, '_')) {
-                        [$parent, $child] = explode('_', $string, 2);
-                        $cat = Category::where('slug', $child)->where('parent_slug', $parent)->first();
-                    } else {
-                        $cat = Category::where('slug', $string)->first();
-                    }
-
-                    if ($cat) {
-                        $params['category_id'] = $cat->pictufy_id; 
-                    }
-                    continue;
-                }
-
-                // Geometry
-                if (in_array($segment, ['horizontal', 'vertical', 'square', 'panorama'])) {
-                    $params['geometry'][] = $segment;
-                    continue;
-                }
-                // Colors
-                if (in_array($segment, ['red', 'orange', 'yellow', 'green', 'turquoise', 'blue', 'lilac', 'pink', 'highkey', 'lowkey'])) {
-                    $params['colors'][] = $segment;
-                    continue;
-                }
-            }
-        }
-
-        // Apply filters
-        if ($params['search']) {
-            $term = $params['search'];
-            $query->where(function($q) use ($term) {
-                $q->where('title', 'LIKE', "%{$term}%")
-                  ->orWhere('artist', 'LIKE', "%{$term}%")
-                  ->orWhere('keywords', 'LIKE', "%{$term}%");
-            });
-        }
-        if ($params['category_id']) $query->where('category_id', $params['category_id']);
-        if (!empty($params['geometry'])) $query->whereIn('geometry', $params['geometry']);
-        if (!empty($params['colors'])) {
-            $query->where(function ($q) use ($params) {
-                foreach ($params['colors'] as $color) {
-                    if ($color === 'highkey') $q->orWhere('is_highkey', true);
-                    elseif ($color === 'lowkey') $q->orWhere('is_lowkey', true);
-                    else $q->orWhere('has_' . $color, true);
-                }
-            });
-        }
-        
-        switch ($params['order']) {
-            case 'recently_added': $query->orderByDesc('artwork_published_at'); break;
-            case 'oldest_first': $query->orderBy('artwork_published_at'); break;
-            default: $query->orderByDesc('grade'); break;
-        }
-    }
 }

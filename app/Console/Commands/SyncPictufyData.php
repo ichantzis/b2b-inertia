@@ -405,36 +405,76 @@ class SyncPictufyData extends Command
 
     private function syncCollectionContents()
     {
-        $this->info('Mapping Artworks to Collections...');
-        $count = Collection::count();
-        $bar = $this->output->createProgressBar($count);
+        $this->info('Mapping Artworks to Collections (Optimized)...');
+
+        // 1. Ζητάμε όλες τις συλλογές ΜΑΖΙ με τα artwork_ids (with_ids=1)
+        // Αυτό το request μπορεί να πάρει ώρα (~30s), οπότε αυξάνουμε το timeout αν χρειάζεται
+        $this->info('Fetching collection structures with artwork IDs from API...');
+        
+        try {
+            $response = $this->pictufy->getCollections(['with_ids' => 1]);
+        } catch (\Exception $e) {
+            $this->error('Failed to fetch collections with IDs: ' . $e->getMessage());
+            return;
+        }
+
+        $groups = $response['items'] ?? [];
+        $totalMappings = 0;
+
+        // 2. Προετοιμασία: Φέρνουμε όλα τα Collection IDs από τη βάση για να αποφύγουμε queries στο loop
+        // Key: pictufy_id, Value: local_db_id
+        $localCollections = Collection::pluck('id', 'pictufy_id')->toArray();
+
+        // 3. Προετοιμασία: Φέρνουμε όλα τα Artwork IDs (Pictufy ID -> Local ID)
+        // Για να κάνουμε map τα IDs του API στα δικά μας
+        $localArtworks = DB::table('artworks')->pluck('id', 'pictufy_id')->toArray();
+
+        $this->info('Processing relationships...');
+        $bar = $this->output->createProgressBar(count($groups));
         $bar->start();
 
-        Collection::chunk(20, function ($collections) use ($bar) {
-            foreach ($collections as $collection) {
-                $page = 1;
-                do {
-                    $response = $this->pictufy->getArtworks([
-                        'collection_id' => $collection->pictufy_id,
-                        'page' => $page,
-                        'per_page' => 100
-                    ]);
-                    $items = $response['items'] ?? [];
-                    if (empty($items)) break;
+        foreach ($groups as $group) {
+            if (isset($group['collections']) && is_array($group['collections'])) {
+                foreach ($group['collections'] as $item) {
+                    $pictufyCollectionId = (string) $item['id'];
 
-                    $artworkPictufyIds = collect($items)->pluck('id')->toArray();
-                    $localIds = Artwork::whereIn('pictufy_id', $artworkPictufyIds)->pluck('id')->toArray();
+                    // Αν δεν έχουμε αυτή τη συλλογή τοπικά, την προσπερνάμε
+                    if (!isset($localCollections[$pictufyCollectionId])) {
+                        continue;
+                    }
 
-                    $collection->artworks()->syncWithoutDetaching($localIds);
-                    $page++;
-                    if ($page > 50) break; 
-                } while (count($items) >= 100);
-                
-                $bar->advance();
+                    $localCollectionId = $localCollections[$pictufyCollectionId];
+                    $apiArtworkIds = $item['artwork_ids'] ?? []; 
+                    // Σημείωση: Το API μπορεί να επιστρέφει 'artwork_ids' ή 'artworks' ως array από IDs. 
+                    // Στο doc λέει "get all artwork ids". Συνήθως είναι array.
+                    
+                    if (empty($apiArtworkIds) || !is_array($apiArtworkIds)) {
+                        continue;
+                    }
+
+                    // Βρίσκουμε ποια από αυτά τα έργα έχουμε εμείς στη βάση μας
+                    $localArtworkIds = [];
+                    foreach ($apiArtworkIds as $apiArtId) {
+                        if (isset($localArtworks[$apiArtId])) {
+                            $localArtworkIds[] = $localArtworks[$apiArtId];
+                        }
+                    }
+
+                    if (!empty($localArtworkIds)) {
+                        // Μαζική εισαγωγή στον pivot πίνακα για ταχύτητα
+                        $collection = Collection::find($localCollectionId);
+                        if ($collection) {
+                            $collection->artworks()->syncWithoutDetaching($localArtworkIds);
+                            $totalMappings += count($localArtworkIds);
+                        }
+                    }
+                }
             }
-            gc_collect_cycles();
-        });
+            $bar->advance();
+        }
+
         $bar->finish();
         $this->newLine();
+        $this->info("Mapped $totalMappings artwork-collection relationships.");
     }
 }
