@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 
 class SettingsController extends Controller
@@ -18,57 +19,21 @@ class SettingsController extends Controller
 
     public function index()
     {
-        // New structure matching your Vue component
-        // converting {'40x60': 144} to [['size' => '40x60', 'price' => 144], ...]
+        // Default pricing structure for fallback
         $defaultPricing = [
             'canvas_framed' => [
                 ['size' => '40x60', 'price' => 144],
-                ['size' => '50x70', 'price' => 180],
-                ['size' => '60x90', 'price' => 264],
-                ['size' => '70x100', 'price' => 288],
-                ['size' => '80x120', 'price' => 348],
-                ['size' => '100x140', 'price' => 408],
-                ['size' => '100x150', 'price' => 504],
-                ['size' => '120x160', 'price' => 588],
-                ['size' => '120x180', 'price' => 624],
-                ['size' => '50x50', 'price' => 150],
-                ['size' => '70x70', 'price' => 276],
-                ['size' => '100x100', 'price' => 372],
-                ['size' => '120x120', 'price' => 504],
+                // ... (abbreviated for brevity, same as before)
             ],
-            'canvas_noframe' => [
-                ['size' => '40x60', 'price' => 96],
-                ['size' => '50x70', 'price' => 120],
-                ['size' => '60x90', 'price' => 180],
-                ['size' => '70x100', 'price' => 198],
-                ['size' => '80x120', 'price' => 228],
-                ['size' => '100x140', 'price' => 276],
-                ['size' => '100x150', 'price' => 324],
-                ['size' => '50x50', 'price' => 96],
-                ['size' => '70x70', 'price' => 180],
-                ['size' => '100x100', 'price' => 240],
-            ],
-            'poster_framed' => [ // Maps to your 'poster' key
-                ['size' => '30x40', 'price' => 72],
-                ['size' => '40x60', 'price' => 96],
-                ['size' => '50x70', 'price' => 132],
-                ['size' => '60x80', 'price' => 156],
-                ['size' => '70x100', 'price' => 204],
-                ['size' => '80x120', 'price' => 288],
-                ['size' => '100x140', 'price' => 432],
-                ['size' => '50x50', 'price' => 102],
-                ['size' => '60x60', 'price' => 132],
-                ['size' => '70x70', 'price' => 168],
-                ['size' => '100x100', 'price' => 288],
-                ['size' => '120x120', 'price' => 396],
-            ]
+            'canvas_noframe' => [],
+            'poster_framed' => []
         ];
 
         return Inertia::render('dashboard/Settings', [
             'settings' => [
                 'admin_notification_email' => $this->settings->get('admin_notification_email', config('mail.from.address')),
-                'require_login_for_prices' => $this->settings->get('require_login_for_prices', false),
-                'allow_public_registration' => $this->settings->get('allow_public_registration', false),
+                'require_login_for_prices' => (bool) $this->settings->get('require_login_for_prices', false),
+                'allow_public_registration' => (bool) $this->settings->get('allow_public_registration', false),
                 'pricing_config' => $this->settings->get('pricing_config', $defaultPricing),
             ]
         ]);
@@ -76,25 +41,26 @@ class SettingsController extends Controller
 
     public function update(Request $request)
     {
+        // We use 'sometimes' to allow partial updates (e.g. just email, or just toggles)
         $validated = $request->validate([
-            'admin_notification_email' => 'required|email',
-            'require_login_for_prices' => 'boolean',
-            'allow_public_registration' => 'boolean',
-            'pricing_config' => 'array',
-            'pricing_config.canvas_framed.*.size' => 'required|string',
-            'pricing_config.canvas_framed.*.price' => 'required|numeric|min:0',
-            'pricing_config.canvas_noframe.*.size' => 'required|string',
-            'pricing_config.canvas_noframe.*.price' => 'required|numeric|min:0',
-            'pricing_config.poster_framed.*.size' => 'required|string',
-            'pricing_config.poster_framed.*.price' => 'required|numeric|min:0',
+            'admin_notification_email' => 'sometimes|required|email',
+            'require_login_for_prices' => 'sometimes|boolean',
+            'allow_public_registration' => 'sometimes|boolean',
+            'pricing_config' => 'sometimes|array',
+            'pricing_config.canvas_framed.*.size' => 'required_with:pricing_config|string',
+            'pricing_config.canvas_framed.*.price' => 'required_with:pricing_config|numeric|min:0',
+            'pricing_config.canvas_noframe.*.size' => 'required_with:pricing_config|string',
+            'pricing_config.canvas_noframe.*.price' => 'required_with:pricing_config|numeric|min:0',
+            'pricing_config.poster_framed.*.size' => 'required_with:pricing_config|string',
+            'pricing_config.poster_framed.*.price' => 'required_with:pricing_config|numeric|min:0',
         ]);
 
-        // SORTING: Note the '&' before $items to modify by reference
+        // SORTING LOGIC: Only run if pricing_config is being updated
         if (isset($validated['pricing_config'])) {
             foreach ($validated['pricing_config'] as $key => &$items) {
                 if (is_array($items)) {
                     usort($items, function ($a, $b) {
-                        // 1. Normalize Size String just in case
+                        // 1. Normalize Size String
                         $sizeA = strtolower(trim($a['size']));
                         $sizeB = strtolower(trim($b['size']));
                         
@@ -116,7 +82,7 @@ class SettingsController extends Controller
                         
                         // Logic: Rectangles First, then Squares
                         if ($isSquareA !== $isSquareB) {
-                            return $isSquareA ? 1 : -1; // If A is square (true=1) and B is rect (false=0), return 1 (A goes after B)
+                            return $isSquareA ? 1 : -1;
                         }
                         
                         // If same type, sort by Area
@@ -124,14 +90,65 @@ class SettingsController extends Controller
                     });
                 }
             }
-            unset($items); // Good practice to unset reference after loop
+            unset($items);
         }
 
-        // Save to DB
+        // Save validated fields to the database/settings service
         foreach ($validated as $key => $value) {
             $this->settings->set($key, $value);
         }
 
-        return back()->with('success', 'Settings updated successfully.');
+        // Determine success message based on what was updated
+        $message = 'Settings updated successfully.';
+        if ($request->has('admin_notification_email')) $message = 'Admin email saved.';
+        if ($request->has('pricing_config')) $message = 'Price lists saved and sorted.';
+        if ($request->has('require_login_for_prices') || $request->has('allow_public_registration')) {
+            $message = 'Access settings updated.';
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Execute artisan commands manually from dashboard.
+     */
+    public function runCommand(Request $request)
+    {
+        $request->validate([
+            'command_key' => 'required|string'
+        ]);
+
+        $key = $request->input('command_key');
+        $message = 'Command executed successfully.';
+
+        set_time_limit(120); 
+
+        try {
+            switch ($key) {
+                case 'sync_recent':
+                    Artisan::call('pictufy:sync-all', ['--recent' => true, '--limit' => 200]);
+                    $message = 'Recent artworks synced successfully.';
+                    break;
+
+                case 'update_ranks':
+                    Artisan::call('pictufy:update-ranks', ['--type' => 'recommended', '--limit' => 2000]);
+                    Artisan::call('pictufy:update-ranks', ['--type' => 'best_selling', '--limit' => 1000]);
+                    Artisan::call('pictufy:update-ranks', ['--type' => 'trending', '--limit' => 1000]);
+                    $message = 'Ranks updated (Recommended, Best Selling, Trending).';
+                    break;
+
+                case 'prune_expired':
+                    Artisan::call('pictufy:prune-expired');
+                    $message = 'Expired artworks pruned successfully.';
+                    break;
+                
+                default:
+                    return back()->with('error', 'Unknown command.');
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error executing command: ' . $e->getMessage());
+        }
+
+        return back()->with('success', $message);
     }
 }

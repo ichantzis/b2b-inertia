@@ -222,6 +222,7 @@ class PictufyService
         if (isset($params['nudity'])) $requestParams['nudity'] = $params['nudity'];
         if (isset($params['artwork_type'])) $requestParams['artwork_type'] = $params['artwork_type'];
         if (isset($params['artist_id'])) $requestParams['artist_id'] = $params['artist_id'];
+        if (isset($params['grade'])) $requestParams['grade'] = $params['grade'];
 
         // *** ADD SEARCH PARAMETER HERE ***
         if (!empty($params['search'])) { // Check if search term is provided and not empty
@@ -300,6 +301,16 @@ class PictufyService
             Log::info("Fetching artist details for ID: " . $artistId);
             return $this->request('artist', ['artist_id' => $artistId]);
         });
+    }
+
+    /**
+     * Get list of expired artworks (licenses ended).
+     */
+    public function getExpired()
+    {
+        // No caching, as this data may change frequently
+        // Set a higher timeout in case the API takes longer to respond
+        return $this->request('expired', [], 60);
     }
 
     public function refreshListsCache()

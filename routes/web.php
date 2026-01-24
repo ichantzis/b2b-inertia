@@ -100,6 +100,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->names('coupons');
     Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/run-command', [App\Http\Controllers\Admin\SettingsController::class, 'runCommand'])->name('settings.command');
 });
 
 Route::middleware('auth')->group(function () {

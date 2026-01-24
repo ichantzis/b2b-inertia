@@ -33,7 +33,8 @@ class SyncPictufyData extends Command
                             {--update-artists}
                             {--update-categories}
                             {--update-collections}
-                            {--update-lists}';
+                            {--update-lists}
+                            {--prune-low-grade}';
 
     protected $description = 'Syncs all data from Pictufy API. Handles large datasets with memory optimization.';
 
@@ -52,6 +53,13 @@ class SyncPictufyData extends Command
         DB::disableQueryLog(); // Critical for 300k inserts
 
         $start = microtime(true);
+
+        // --- 1. CLEANUP JOB (Αν ζητήθηκε διαγραφή των grade 0) ---
+        if ($this->option('prune-low-grade')) {
+            $this->pruneLowGradeArtworks();
+            // Αν θέλουμε να τρέξει μόνο αυτό και να σταματήσει, μπορούμε να κάνουμε return.
+            // Αλλά συνήθως το τρέχουμε συνδυαστικά, οπότε συνεχίζουμε.
+        }
 
         // --- HANDLE PARTIAL UPDATES ---
         if ($this->option('update-metadata')) {
@@ -118,6 +126,18 @@ class SyncPictufyData extends Command
         $this->info("Sync completed in {$duration} minutes.");
     }
 
+    private function pruneLowGradeArtworks()
+    {
+        $this->info('Pruning artworks with Grade < 1 (Quality Control)...');
+        
+        // Σβήνουμε όσα έχουν grade 0 ή NULL
+        $deleted = Artwork::where('grade', '<', 1)
+                    ->orWhereNull('grade')
+                    ->delete();
+        
+        $this->info("Deleted $deleted low-grade artworks from database.");
+    }
+
     private function truncateTables()
     {
         $this->info('Truncating tables...');
@@ -176,7 +196,7 @@ class SyncPictufyData extends Command
                 [
                     'username' => $item['username'] ?? null,
                     'name' => html_entity_decode($item['name']),
-                    'biography' => $item['biography_text'] ?? null,
+                    // 'biography' => $item['biography_text'] ?? null, // Biography removed to avoid overwriting lazy-loaded data
                     'profile_picture' => $item['profile_picture'] ?? null,
                     'country' => $item['country'] ?? null,
                     'artist_type' => $item['artist_type'] ?? null,
@@ -266,6 +286,8 @@ class SyncPictufyData extends Command
 
     private function syncArtworks($order, $limit, $startPage)
     {
+        $this->info("Syncing Artworks (Grade >= 1)...");
+
         $page = $startPage;
         $perPage = 100;
         $totalSynced = 0;
@@ -281,6 +303,7 @@ class SyncPictufyData extends Command
                 'page' => $page,
                 'per_page' => $perPage,
                 'order' => $order,
+                'grade' => 1,
             ]);
             $items = $response['items'] ?? [];
 

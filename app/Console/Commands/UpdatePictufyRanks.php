@@ -4,17 +4,18 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Services\PictufyService;
-use App\Models\Artwork;
 use Illuminate\Support\Facades\DB;
 
 class UpdatePictufyRanks extends Command
 {
     /**
-     * Εντολή για ενημέρωση μόνο των κατατάξεων.
-     * --type= : recommended, best_selling, trending
-     * --limit= : Πόσα έργα να ενημερώσουμε (π.χ. τα top 2000)
+     * The name and signature of the console command.
      */
     protected $signature = 'pictufy:update-ranks {--type=recommended} {--limit=2000}';
+
+    /**
+     * The console command description.
+     */
     protected $description = 'Updates ranking columns (recommended, best_selling, trending) based on API order.';
 
     protected $pictufy;
@@ -27,10 +28,12 @@ class UpdatePictufyRanks extends Command
 
     public function handle()
     {
+        ini_set('memory_limit', '1024M');
+        // Settings
         $type = $this->option('type');
         $limit = (int) $this->option('limit');
         
-        // Αντιστοίχιση τύπου με στήλη βάσης
+        // Map API order types to Database columns
         $columnMap = [
             'recommended' => 'recommended_rank',
             'best_selling' => 'best_seller_rank',
@@ -43,9 +46,9 @@ class UpdatePictufyRanks extends Command
         }
 
         $column = $columnMap[$type];
-        $this->info("Updating [$column] based on API order [$type]...");
+        $this->info("Updating [$column] based on API order [$type] (Grade >= 1)...");
 
-        // 1. Reset ranks (Optional: Set all to NULL first if you want strict ordering)
+        // 1. Reset ranks for this type (Optional: clears old ranks)
         // DB::table('artworks')->update([$column => null]); 
 
         $page = 1;
@@ -56,19 +59,19 @@ class UpdatePictufyRanks extends Command
         $bar->start();
 
         do {
-            // Ζητάμε από το API μόνο τα IDs για ταχύτητα, αν το API το υποστηρίζει (αλλιώς κατεβαίνουν όλα)
+            // Fetch IDs from API in the specific order
             $response = $this->pictufy->getArtworks([
                 'page' => $page,
                 'per_page' => $perPage,
-                'order' => $type, // Το API καταλαβαίνει τα orders
+                'order' => $type,
+                'grade' => 1, // Only fetch rank for valid artworks
             ]);
 
             $items = $response['items'] ?? [];
             if (empty($items)) break;
 
             foreach ($items as $item) {
-                // Ενημερώνουμε απευθείας τη στήλη ranking
-                // Χρησιμοποιούμε DB query για ταχύτητα αντί για Eloquent Model save()
+                // Update the rank column directly in DB
                 DB::table('artworks')
                     ->where('pictufy_id', $item['id'])
                     ->update([$column => $rankCounter]);
