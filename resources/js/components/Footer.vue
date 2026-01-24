@@ -33,7 +33,7 @@
                         <ul class="space-y-4">
                             <li class="flex items-center gap-3 group">
                                 <i class="pi pi-envelope text-gray-500 group-hover:text-white transition-colors"></i>
-                                <a href="mailto:info@example.com"
+                                <a href="mailto:info@pinakothiki.com"
                                     class="hover:text-white transition-colors no-underline">info@pinakothiki.com</a>
                             </li>
                         </ul>
@@ -67,7 +67,7 @@
                                 </Link>
                             </li>
                             <li>
-                                <Link href="#"
+                                <Link :href="route('contact.index')"
                                     class="hover:text-white transition-colors duration-200 no-underline block w-fit">
                                 Contact
                                 </Link>

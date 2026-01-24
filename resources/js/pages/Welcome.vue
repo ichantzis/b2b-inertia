@@ -115,7 +115,7 @@ onMounted(() => {
     <!-- Secondary Banner -->
     <section class="secondary-banner my-8 px-4">
         <div class="promo-banner-container relative rounded-xl overflow-hidden shadow-lg">
-            <img src="/images/banner2.png" alt="Timeless Art" class="w-full object-cover h-[300px]" />
+            <img src="/images/banner2.webp" alt="Timeless Art" class="w-full object-cover h-[300px]" />
             <div class="absolute inset-0 bg-black/20 flex flex-col justify-center p-8 text-white">
                 <!-- <h2 class="text-4xl font-serif">TIMELESS ART</h2> -->
             </div>
@@ -255,7 +255,7 @@ onMounted(() => {
    1. HERO SECTION (Existing Styles)
    ========================================= */
 .hero-section {
-    background-image: url('/public/images/hero-bg.jpg.png');
+    background-image: url('/public/images/hero-bg.jpg.webp');
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center top;

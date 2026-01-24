@@ -6,7 +6,8 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
-                <Card class="h-full"> <template #title>
+                <Card class="h-full">
+                    <template #title>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-cog text-xl"></i>
                             <span>General Configuration</span>
@@ -19,10 +20,20 @@
                             </label>
                             <span class="p-input-icon-left w-full">
                                 <i class="pi pi-envelope" />
-                                <InputText id="admin_email" v-model="form.admin_notification_email" class="w-full"
+                                <InputText id="admin_email" v-model="emailForm.admin_notification_email" class="w-full"
                                     placeholder="admin@example.com" />
                             </span>
                             <small class="text-gray-500 block mt-1">Order notifications are sent here.</small>
+                            <div v-if="emailForm.errors.admin_notification_email" class="text-red-500 text-xs mt-1">
+                                {{ emailForm.errors.admin_notification_email }}
+                            </div>
+                        </div>
+                    </template>
+                    <template #footer>
+                        <div class="flex justify-end">
+                            <Button label="Save Email" icon="pi pi-check" size="small" 
+                                :loading="emailForm.processing" 
+                                @click="submitEmail" />
                         </div>
                     </template>
                 </Card>
@@ -42,7 +53,8 @@
                                     Users must log in to view prices/cart.
                                 </div>
                             </div>
-                            <ToggleSwitch v-model="form.require_login_for_prices" />
+                            <ToggleSwitch v-model="toggles.require_login_for_prices" 
+                                @change="updateToggle('require_login_for_prices')" />
                         </div>
                         <Divider />
                         <div class="flex items-center justify-between p-2 rounded">
@@ -52,7 +64,8 @@
                                     If disabled, guests request access.
                                 </div>
                             </div>
-                            <ToggleSwitch v-model="form.allow_public_registration" />
+                            <ToggleSwitch v-model="toggles.allow_public_registration" 
+                                @change="updateToggle('allow_public_registration')" />
                         </div>
                     </template>
                 </Card>
@@ -74,24 +87,26 @@
                                 </TabList>
                                 <TabPanels>
                                     <TabPanel value="canvas_framed">
-                                        <PricingListEditor v-model="form.pricing_config.canvas_framed" />
+                                        <PricingListEditor v-model="pricingForm.pricing_config.canvas_framed" />
                                     </TabPanel>
                                     <TabPanel value="canvas_noframe">
-                                        <PricingListEditor v-model="form.pricing_config.canvas_noframe" />
+                                        <PricingListEditor v-model="pricingForm.pricing_config.canvas_noframe" />
                                     </TabPanel>
                                     <TabPanel value="poster_framed">
-                                        <PricingListEditor v-model="form.pricing_config.poster_framed" />
+                                        <PricingListEditor v-model="pricingForm.pricing_config.poster_framed" />
                                     </TabPanel>
                                 </TabPanels>
                             </Tabs>
                         </div>
                     </template>
+                    <template #footer>
+                        <div class="flex justify-end">
+                            <Button label="Save Prices" icon="pi pi-save" severity="success" size="small" 
+                                :loading="pricingForm.processing" 
+                                @click="submitPricing" />
+                        </div>
+                    </template>
                 </Card>
-
-                <div class="lg:col-span-2 mt-4 flex justify-end">
-                    <Button @click="submitAll" label="Save All Changes" icon="pi pi-check" :loading="form.processing"
-                        size="large" />
-                </div>
 
             </div>
         </Container>
@@ -99,14 +114,15 @@
 </template>
 
 <script setup>
-import { useForm } from '@inertiajs/vue3';
+import { ref, reactive } from 'vue';
+import { useForm, router } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head as InertiaHead } from '@inertiajs/vue3';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
 import ToggleSwitch from 'primevue/toggleswitch';
+import Divider from 'primevue/divider';
 import TabPanel from 'primevue/tabpanel';
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
@@ -123,44 +139,74 @@ const props = defineProps({
 
 const toast = useToast();
 
-const form = useForm({
-    admin_notification_email: props.settings.admin_notification_email || '',
-    require_login_for_prices: props.settings.require_login_for_prices || false,
-    allow_public_registration: props.settings.allow_public_registration || false,
-    pricing_config: props.settings.pricing_config || { materials: [], frames: [] },
+// ----------------------------------------------------------------
+// 1. Toggles (Auto-Save)
+// ----------------------------------------------------------------
+// We use a reactive object instead of useForm because these trigger
+// individual router requests on change.
+const toggles = reactive({
+    require_login_for_prices: !!props.settings.require_login_for_prices,
+    allow_public_registration: !!props.settings.allow_public_registration,
 });
 
-const submitAll = () => {
-    form.post(route('dashboard.settings.update'), {
+const updateToggle = (key) => {
+    router.post(route('dashboard.settings.update'), {
+        [key]: toggles[key]
+    }, {
         preserveScroll: true,
-        preserveState: true, // Keep the page state (scroll position etc)
-        onSuccess: (page) => {
-            // 1. FORCE UPDATE: Overwrite form data with the fresh sorted list from server
-            form.pricing_config = page.props.settings.pricing_config;
-
-            // 2. RESET DIRTY STATE: Tell Inertia this new data is the "clean" state
-            form.defaults({
-                admin_notification_email: page.props.settings.admin_notification_email,
-                require_login_for_prices: page.props.settings.require_login_for_prices,
-                pricing_config: page.props.settings.pricing_config,
-            });
-
-            // 3. MANUAL TOAST: Trigger it here so it works every time, even if message is same
-            // toast.add({ 
-            //     severity: 'success', 
-            //     summary: 'Success', 
-            //     detail: 'Settings saved and sorted successfully.', 
-            //     life: 3000 
-            // });
+        onSuccess: () => {
+            // toast.add({ severity: 'success', summary: 'Updated', detail: 'Access setting updated.', life: 3000 });
         },
         onError: () => {
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'Please check the form for errors.',
-                life: 3000
-            });
+            // Revert value if update fails
+            toggles[key] = !toggles[key];
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update setting.', life: 3000 });
         }
     });
 };
+
+// ----------------------------------------------------------------
+// 2. Admin Email Form
+// ----------------------------------------------------------------
+const emailForm = useForm({
+    admin_notification_email: props.settings.admin_notification_email || '',
+});
+
+const submitEmail = () => {
+    emailForm.post(route('dashboard.settings.update'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            // toast.add({ severity: 'success', summary: 'Saved', detail: 'Admin email updated.', life: 3000 });
+        }
+    });
+};
+
+// ----------------------------------------------------------------
+// 3. Pricing Configuration Form
+// ----------------------------------------------------------------
+const pricingForm = useForm({
+    pricing_config: props.settings.pricing_config || {},
+});
+
+const submitPricing = () => {
+    pricingForm.post(route('dashboard.settings.update'), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: (page) => {
+            // Force update form data with sorted list from server
+            pricingForm.pricing_config = page.props.settings.pricing_config;
+            
+            // Mark form as clean
+            pricingForm.defaults({
+                pricing_config: page.props.settings.pricing_config,
+            });
+
+            // toast.add({ severity: 'success', summary: 'Saved', detail: 'Price lists saved and sorted.', life: 3000 });
+        },
+        onError: () => {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Check prices for errors.', life: 3000 });
+        }
+    });
+};
+
 </script>
