@@ -78,7 +78,8 @@ trait BuildsArtworkQueries
             $query->where(function ($q) use ($term) {
                 $q->where('title', 'LIKE', "%{$term}%")
                     ->orWhere('artist', 'LIKE', "%{$term}%")
-                    ->orWhere('keywords', 'LIKE', "%{$term}%");
+                    ->orWhere('keywords', 'LIKE', "%{$term}%")
+                    ->orWhere('pictufy_id', 'LIKE', "%{$term}%");
             });
         }
 

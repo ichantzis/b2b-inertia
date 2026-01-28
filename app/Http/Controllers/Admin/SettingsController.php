@@ -101,12 +101,12 @@ class SettingsController extends Controller
         // Determine success message based on what was updated
         $message = 'Settings updated successfully.';
         if ($request->has('admin_notification_email')) $message = 'Admin email saved.';
-        if ($request->has('pricing_config')) $message = 'Price lists saved and sorted.';
+        if ($request->has('pricing_config')) $message = 'Price lists saved.';
         if ($request->has('require_login_for_prices') || $request->has('allow_public_registration')) {
             $message = 'Access settings updated.';
         }
 
-        return back()->with('success', $message);
+        return back();
     }
 
     /**

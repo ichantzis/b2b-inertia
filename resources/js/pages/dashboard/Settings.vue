@@ -3,7 +3,7 @@
         <InertiaHead title="Settings" />
         <Container>
             <PageTitleSection title="Settings" />
-
+            
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
                 <Card class="h-full">
@@ -129,23 +129,28 @@
                                 </TabList>
                                 <TabPanels>
                                     <TabPanel value="canvas_framed">
-                                        <PricingListEditor v-model="pricingForm.pricing_config.canvas_framed" />
+                                        <PricingListEditor 
+                                            v-model="pricingForm.pricing_config.canvas_framed" 
+                                            :is-saving="pricingForm.processing"
+                                            @save="(msg) => submitPricing(msg)"
+                                        />
                                     </TabPanel>
                                     <TabPanel value="canvas_noframe">
-                                        <PricingListEditor v-model="pricingForm.pricing_config.canvas_noframe" />
+                                        <PricingListEditor 
+                                            v-model="pricingForm.pricing_config.canvas_noframe" 
+                                            :is-saving="pricingForm.processing"
+                                            @save="(msg) => submitPricing(msg)"
+                                        />
                                     </TabPanel>
                                     <TabPanel value="poster_framed">
-                                        <PricingListEditor v-model="pricingForm.pricing_config.poster_framed" />
+                                        <PricingListEditor 
+                                            v-model="pricingForm.pricing_config.poster_framed" 
+                                            :is-saving="pricingForm.processing"
+                                            @save="(msg) => submitPricing(msg)"
+                                        />
                                     </TabPanel>
                                 </TabPanels>
                             </Tabs>
-                        </div>
-                    </template>
-                    <template #footer>
-                        <div class="flex justify-end">
-                            <Button label="Save Prices" icon="pi pi-save" severity="success" size="small" 
-                                :loading="pricingForm.processing" 
-                                @click="submitPricing" />
                         </div>
                     </template>
                 </Card>
@@ -184,8 +189,6 @@ const toast = useToast();
 // ----------------------------------------------------------------
 // 1. Toggles (Auto-Save)
 // ----------------------------------------------------------------
-// We use a reactive object instead of useForm because these trigger
-// individual router requests on change.
 const toggles = reactive({
     require_login_for_prices: !!props.settings.require_login_for_prices,
     allow_public_registration: !!props.settings.allow_public_registration,
@@ -197,10 +200,9 @@ const updateToggle = (key) => {
     }, {
         preserveScroll: true,
         onSuccess: () => {
-            // toast.add({ severity: 'success', summary: 'Updated', detail: 'Access setting updated.', life: 3000 });
+            toast.add({ severity: 'success', summary: 'Updated', detail: 'Setting updated.', life: 3000 });
         },
         onError: () => {
-            // Revert value if update fails
             toggles[key] = !toggles[key];
             toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update setting.', life: 3000 });
         }
@@ -218,35 +220,33 @@ const submitEmail = () => {
     emailForm.post(route('dashboard.settings.update'), {
         preserveScroll: true,
         onSuccess: () => {
-            // toast.add({ severity: 'success', summary: 'Saved', detail: 'Admin email updated.', life: 3000 });
+            toast.add({ severity: 'success', summary: 'Saved', detail: 'Admin email updated.', life: 3000 });
         }
     });
 };
 
 // ----------------------------------------------------------------
-// 3. Pricing Configuration Form
+// 3. Pricing Configuration (Auto-Save Logic)
 // ----------------------------------------------------------------
 const pricingForm = useForm({
     pricing_config: props.settings.pricing_config || {},
 });
 
-const submitPricing = () => {
+// Now accepts a custom success message
+const submitPricing = (successMessage = 'Price list saved.') => {
     pricingForm.post(route('dashboard.settings.update'), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: (page) => {
-            // Force update form data with sorted list from server
+            // Update local data with server sorted/processed data
             pricingForm.pricing_config = page.props.settings.pricing_config;
-            
-            // Mark form as clean
             pricingForm.defaults({
                 pricing_config: page.props.settings.pricing_config,
             });
-
-            // toast.add({ severity: 'success', summary: 'Saved', detail: 'Price lists saved and sorted.', life: 3000 });
+            toast.add({ severity: 'success', summary: 'Updated', detail: successMessage, life: 3000 });
         },
         onError: () => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'Check prices for errors.', life: 3000 });
+            toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save prices.', life: 3000 });
         }
     });
 };
@@ -265,9 +265,6 @@ const runCommand = (key) => {
         preserveScroll: true,
         onFinish: () => {
             processingCommand.value = null;
-        },
-        onSuccess: () => {
-            // Toast handled by backend redirect usually, or we can add here
         },
         onError: () => {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Operation failed.', life: 3000 });
