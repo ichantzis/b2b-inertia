@@ -121,7 +121,7 @@ class CartController extends Controller
 
         $validatedData = $request->validate([
             // Ensure the pictufy_id exists in our local artworks table
-            'artwork_id' => 'required|string|max:50|exists:artworks,pictufy_id', 
+            'artwork_id' => 'required|string|max:50|exists:artworks,pictufy_id',
             'quantity' => 'required|integer|min:1',
             'type' => 'required|string|max:20',
             'frame' => 'required|string|max:20',
@@ -133,6 +133,57 @@ class CartController extends Controller
 
         // 1. Fetch artwork details from DB to ensure consistency
         $artwork = Artwork::where('pictufy_id', $validatedData['artwork_id'])->first();
+
+        // -----------------------------------------------------------
+        // LOGIC FIX:  (Size Orientation)
+        // -----------------------------------------------------------
+        $rawSize = $validatedData['size'];
+
+        if (str_contains($rawSize, 'x')) {
+            // Break down the size into dimensions
+            [$d1, $d2] = explode('x', $rawSize);
+            $dim1 = (int)$d1;
+            $dim2 = (int)$d2;
+
+            // Find min and max
+            $min = min($dim1, $dim2);
+            $max = max($dim1, $dim2);
+
+            // Calculate geometry
+            $geometry = 'vertical'; // Default
+
+            // Check if artwork has geometry info
+            if (!empty($artwork->geometry)) {
+                $geo = strtolower(trim(explode(',', $artwork->geometry)[0]));
+                if (in_array($geo, ['vertical', 'horizontal', 'square'])) {
+                    $geometry = $geo;
+                }
+            }
+            // Fallback to dimensions if no geometry info
+            elseif ($artwork->width && $artwork->height) {
+                if ($artwork->width > $artwork->height) {
+                    $geometry = 'horizontal';
+                } elseif ($artwork->width < $artwork->height) {
+                    $geometry = 'vertical';
+                } else {
+                    $geometry = 'square';
+                }
+            }
+
+            // Adjust size based on geometry
+            if ($geometry === 'horizontal') {
+                // If is horizontal, then width (first number) should be the max
+                $validatedData['size'] = "{$max}x{$min}";
+            } elseif ($geometry === 'square') {
+                $validatedData['size'] = "{$min}x{$min}";
+            } else {
+                // If it's vertical or unknown, keep min first
+                $validatedData['size'] = "{$min}x{$max}";
+            }
+        }
+        // -----------------------------------------------------------
+        // END FIX
+        // -----------------------------------------------------------
 
         // Use DB data for title/thumb if available, otherwise frontend input (if passed)
         $title = $artwork ? $artwork->title : ($request->input('title') ?? 'Artwork');

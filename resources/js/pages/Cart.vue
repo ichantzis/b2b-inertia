@@ -12,6 +12,7 @@ import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import Container from '@/components/Container.vue'; // Assuming component exists
 import PageTitleSection from '@/components/PageTitleSection.vue'; // Assuming component exists
+import FramedArtworkPreview from '@/components/FramedArtworkPreview.vue';
 
 defineOptions({
     layout: HeaderLayout,
@@ -61,8 +62,8 @@ const updateQuantity = (itemId, newValue) => {
 
     // 4. Send Request
     // Note: Laravel Resource routes usually prefer PATCH for updates, but PUT works if configured.
-    router.put(route('cart.update', itemId), { 
-        quantity: newValue 
+    router.put(route('cart.update', itemId), {
+        quantity: newValue
     }, {
         preserveScroll: true,
         preserveState: true,
@@ -129,15 +130,23 @@ const formatCurrency = (value, showSymbol = true) => {
                         class="flex flex-row items-center gap-3 sm:gap-4 border dynamic-border p-3 sm:p-4 rounded-lg shadow-sm">
 
                         <div class="flex-shrink-0 w-16 sm:w-24">
-                            <Image :src="item.artwork_data?.img_thumb || '/images/placeholder.png'"
-                                :alt="item.artwork_data?.title || 'Artwork Image'" :width="96"
-                                imageClass="object-contain rounded border dynamic-border" preview />
+                            <FramedArtworkPreview 
+                                    :artwork-image="item.artwork_data?.img_thumb || '/images/placeholder.png'"
+                                    :frame="item.frame"
+                                    :size="item.size"
+                                    :type="item.type"
+                                />
                         </div>
 
                         <div class="flex-1 min-w-0">
-                            <h3 class="font-semibold text-sm sm:text-base mb-0 ">{{ item.artwork_data?.title ||
-                                'Untitled' }}
-                            </h3>
+                            <Link
+                                class="font-medium truncate hover:text-primary hover:underline transition-colors no-underline text-inherit"
+                                :href="route('artwork.details', { id: item.artwork_id, slug: item.artwork_data?.slug })">
+                                <h3>
+                                    {{ item.artwork_data?.title || 'Untitled' }}
+                                </h3>
+                            </Link>
+
                             <p class="text-xs text-muted-color mb-1 hidden sm:block">ID: {{ item.artwork_id }}</p>
                             <p class="text-xs sm:text-sm text-muted-color">Type: {{ item.type }}</p>
                             <p class="text-xs sm:text-sm text-muted-color">Frame: {{ item.frame }}</p>
@@ -146,7 +155,7 @@ const formatCurrency = (value, showSymbol = true) => {
                             <p class="block sm:hidden mt-1 text-sm text-muted-color">
                                 {{ itemQuantities[item.id] }} x <span class="font-semibold">€{{
                                     formatCurrency(item.artwork_data?.price || 0, false)
-                                    }}</span>
+                                }}</span>
                             </p>
                         </div>
 

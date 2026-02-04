@@ -18,15 +18,15 @@
                                 <template #content>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div class="mb-2"><strong>Order Date:</strong> {{ formatDate(order.created_at)
-                                            }}</div>
+                                        }}</div>
                                         <div class="mb-2"><strong>Last Updated:</strong> {{ formatDate(order.updated_at)
-                                            }}</div>
+                                        }}</div>
                                         <div class="border-t border-gray-100 pt-4 mt-4 space-y-3">
                                             <div class="flex justify-between text-sm">
                                                 <span class="text-gray-500">Subtotal</span>
                                                 <span class="font-medium text-gray-900">
                                                     {{ formatCurrency(parseFloat(order.total_amount) +
-                                                    parseFloat(order.discount_amount)) }}
+                                                        parseFloat(order.discount_amount)) }}
                                                 </span>
                                             </div>
 
@@ -418,7 +418,7 @@
                                         placeholder="Admin notes for this order..."
                                         :class="{ 'p-invalid': orderForm.errors.notes }" />
                                     <small v-if="orderForm.errors.notes" class="p-error">{{ orderForm.errors.notes
-                                        }}</small>
+                                    }}</small>
                                 </template>
                             </Card>
                         </div>
@@ -429,19 +429,28 @@
                                 <template #content>
                                     <div v-if="order.items && order.items.length > 0" class="space-y-4">
                                         <div v-for="item in order.items" :key="item.id"
-                                            class="border-b pb-3 mb-3 last:border-b-0 last:pb-0 last:mb-0">
-                                            <div class="font-semibold">{{ item.artwork_title || 'Artwork' }}</div>
-                                            <div class="text-sm text-gray-600 dark:text-gray-400">
-                                                ID: {{ item.artwork_id }} <br>
-                                                Type: {{ item.type }}, Frame: {{ item.frame }}, Size: {{ item.size }}
-                                                <br>
-                                                Qty: {{ item.quantity }} x {{ formatCurrency(item.price) }}
+                                            class="flex justify-between items-center">
+                                            <div class="flex-shrink-0 w-16 sm:w-20">
+                                                <FramedArtworkPreview
+                                                    :artwork-image="item.artwork_data?.img_thumb || item.artwork_data?.img_medium || '/images/placeholder.png'"
+                                                    :frame="item.frame" :size="item.size" :type="item.type" />
                                             </div>
-                                            <div class="text-sm font-medium">Subtotal: {{ formatCurrency(item.quantity *
-                                                item.price) }}</div>
-                                            <img v-if="item.artwork_data && item.artwork_data.img_thumb"
-                                                :src="item.artwork_data.img_thumb" alt="Thumbnail"
-                                                class="w-16 h-16 object-cover mt-2 rounded" />
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-medium text-sm text-surface-900 truncate">
+                                                    {{ item.artwork_data?.title || 'Untitled' }}
+                                                </p>
+                                                <p class="text-xs text-surface-500">
+                                                    ID: {{ item.artwork_id || item.pictufy_id || item.id }}
+                                                </p>
+                                                <p class="text-xs text-surface-500">
+                                                    {{ item.type }} | {{ item.frame }} | {{ item.size }}
+                                                </p>
+                                                <p class="text-sm font-semibold text-surface-700 mt-1">
+                                                {{ item.quantity }} x {{ formatCurrency(item.artwork_data?.price || 0)
+                                                }}
+                                            </p>
+                                            </div>
+                                            
                                         </div>
                                     </div>
                                     <p v-else>No items found for this order.</p>
@@ -477,6 +486,7 @@ import { Head as InertiaHead, useForm, Link, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import Container from '@/components/Container.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
+import FramedArtworkPreview from '@/components/FramedArtworkPreview.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
@@ -484,6 +494,7 @@ import Textarea from 'primevue/textarea';
 import Select from 'primevue/select';
 import Checkbox from 'primevue/checkbox';
 import { useToast } from 'primevue/usetoast';
+import { useCountries } from '@/composables/useCountries';
 
 const props = defineProps({
     order: Object,
@@ -492,6 +503,8 @@ const props = defineProps({
 const page = usePage();
 
 const toast = useToast();
+
+const { countries } = useCountries();
 
 const editModes = reactive({
     billing: false,
@@ -583,24 +596,6 @@ const orderForm = useForm({
     shipping_postal_code: props.order.shipping_postal_code,
     shipping_phone: props.order.shipping_phone,
 });
-
-const countries = ref([
-    { name: 'Greece', code: 'GR' },
-    { name: 'Austria', code: 'AT' }, { name: 'Belgium', code: 'BE' },
-    { name: 'Bulgaria', code: 'BG' }, { name: 'Croatia', code: 'HR' },
-    { name: 'Cyprus', code: 'CY' }, { name: 'Czech Republic', code: 'CZ' },
-    { name: 'Denmark', code: 'DK' }, { name: 'Estonia', code: 'EE' },
-    { name: 'Finland', code: 'FI' }, { name: 'France', code: 'FR' },
-    { name: 'Germany', code: 'DE' },
-    { name: 'Hungary', code: 'HU' }, { name: 'Ireland', code: 'IE' },
-    { name: 'Italy', code: 'IT' }, { name: 'Latvia', code: 'LV' },
-    { name: 'Lithuania', code: 'LT' }, { name: 'Luxembourg', code: 'LU' },
-    { name: 'Malta', code: 'MT' }, { name: 'Netherlands', code: 'NL' },
-    { name: 'Poland', code: 'PL' }, { name: 'Portugal', code: 'PT' },
-    { name: 'Romania', code: 'RO' }, { name: 'Slovakia', code: 'SK' },
-    { name: 'Slovenia', code: 'SI' }, { name: 'Spain', code: 'ES' },
-    { name: 'Sweden', code: 'SE' }, { name: 'United Kingdom', code: 'GB' },
-]);
 
 const orderStatusOptions = ref([
     { label: 'Pending', value: 'pending' }, { label: 'Processing', value: 'processing' },
