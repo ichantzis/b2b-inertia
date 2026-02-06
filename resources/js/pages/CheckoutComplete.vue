@@ -36,24 +36,37 @@
                             <ul class="list-none p-0 m-0">
                                 <li v-for="item in orderItems" :key="item.id"
                                     class="p-4 border-surface-200 dark:border-surface-700 flex items-start sm:items-center border-b last:border-b-0">
-                                    <img :src="item.artwork_data.img_thumb"
-                                        class="w-12 h-12 sm:w-24 sm:h-24 object-contain flex-shrink-0 mr-4 shadow-md"
-                                        :alt="item.artwork_data.title || 'Artwork image'">
-                                    <div class="flex flex-col flex-grow">
-                                        <span
-                                            class="text-surface-900 dark:text-surface-0 font-semibold text-lg sm:text-xl mb-1">{{
-                                                item.artwork_title || item.artwork_data.title }}</span>
-                                        <span class="text-surface-700 dark:text-surface-100 font-medium text-sm mb-2">
-                                            Type: {{ item.type || 'N/A' }} | Size: {{
-                                            item.size || 'N/A' }} | Frame: {{ item.frame ||
-                                            'N/A' }}
-                                        </span>
-                                        <span class="text-surface-900 dark:text-surface-0 font-medium text-sm">Quantity:
-                                            {{ item.quantity }}</span>
-                                    </div>
-                                    <span
-                                        class="text-surface-900 dark:text-surface-0 font-medium text-base sm:text-lg ml-auto">{{
-                                        formatCurrency(item.price * item.quantity) }}</span>
+                                    <div class="flex items-center w-full sm:w-auto mb-4 sm:mb-0">
+                    
+                    <div class="flex-shrink-0 w-16 sm:w-24 mr-4">
+                        <FramedArtworkPreview 
+                            :artwork-image="item.artwork_data?.img_thumb || item.artwork_data?.img_medium || '/images/placeholder.png'"
+                            :frame="item.frame"
+                            :size="item.size"
+                            :type="item.type"
+                        />
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-surface-900 dark:text-surface-0">
+                            {{ item.artwork_data?.title || 'Artwork' }}
+                        </h4>
+                        <div class="text-sm text-surface-600 dark:text-surface-400 mt-1 space-y-0.5">
+                            <p>ID: {{ item.artwork_id || item.pictufy_id || item.id }}</p>
+                            <p>Type: {{ item.type }}</p>
+                            <p>Frame: {{ item.frame }}</p>
+                            <p>Size: {{ item.size }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="w-full sm:w-auto sm:ml-auto text-left sm:text-right pt-2 sm:pt-0 mt-2 sm:mt-0">
+                    <span class="block text-sm text-surface-500 text-right">
+                        {{ item.quantity }} x {{ formatCurrency(item.price) }}
+                    </span>
+                    <span class="block font-bold text-lg text-surface-900 dark:text-surface-0 text-right">
+                        {{ formatCurrency(item.quantity*item.price) }}
+                    </span>
+                </div>
                                 </li>
                             </ul>
                         </div>
@@ -68,7 +81,7 @@
                                         <span>{{ order.billing_address }}</span>
                                         <span>{{ order.billing_city }}, {{ order.billing_state_or_county }} {{
                                             order.billing_postal_code }}</span>
-                                        <span>{{ order.billing_country_name }}</span> 
+                                        <span>{{ billingCountryName }}</span>
                                         <span>{{ order.billing_email }}</span>
                                         <span v-if="order.billing_phone">Phone: {{ order.billing_phone }}</span>
                                     </div>
@@ -76,7 +89,7 @@
 
                                 <div>
                                     <h3 class="font-semibold text-lg text-surface-900 dark:text-surface-0 mb-3">
-                                        {{ order.shipping_is_different ? 'Shipping Address' : 'Shipping (Same as Billing)' }}
+                                        {{ order.shipping_is_different ? 'Shipping Address' : 'Shipping (Same as Billing) ' }}
                                     </h3>
                                     <div v-if="order.shipping_is_different"
                                         class="flex flex-col text-surface-700 dark:text-surface-200 space-y-1">
@@ -84,7 +97,7 @@
                                         <span>{{ order.shipping_address }}</span>
                                         <span>{{ order.shipping_city }}, {{ order.shipping_state_or_county }} {{
                                             order.shipping_postal_code }}</span>
-                                        <span>{{ order.shipping_country_name }}</span>
+                                        <span>{{ shippingCountryName }}</span>
                                         <span v-if="order.shipping_phone">Phone: {{ order.shipping_phone }}</span>
                                         <span
                                             v-if="order.shipping_email && order.shipping_email !== order.billing_email">Email:
@@ -110,7 +123,7 @@
                                 </div>
                             </div>
 
-                            <div class="w-full lg:w-1/2 space-y-6">                              
+                            <div class="w-full lg:w-1/2 space-y-6">
 
                                 <div>
                                     <h3 class="font-semibold text-lg text-surface-900 dark:text-surface-0 mb-3">Payment
@@ -126,7 +139,7 @@
                                                 **** {{ order.card_last_four || 'XXXX' }}</span>
                                             <span class="text-sm capitalize">Status: <Tag :value="order.payment_status"
                                                     :severity="getPaymentStatusSeverity(order.payment_status)"></Tag>
-                                                </span>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -139,20 +152,22 @@
                                             <span class="text-surface-700 dark:text-surface-200">Subtotal</span>
                                             <span
                                                 class="text-surface-700 dark:text-surface-200 font-medium text-base">{{
-                                                formatCurrency(subtotal) }}</span>
+                                                    formatCurrency(subtotal) }}</span>
                                         </li>
                                         <li class="flex justify-between mb-2">
                                             <span class="text-surface-700 dark:text-surface-200">Shipping</span>
                                             <span
                                                 class="text-surface-700 dark:text-surface-200 font-medium text-base">{{
-                                                formatCurrency(shippingCost) }}</span>
+                                                    formatCurrency(shippingCost) }}</span>
                                         </li>
-                                        <li v-if="order.discount_amount > 0" class="flex justify-between text-green-600 font-medium">
+                                        <li v-if="order.discount_amount > 0"
+                                            class="flex justify-between text-green-600 font-medium">
                                             <span>
-                                            Discount 
-                                            <span v-if="order.coupon_code" class="text-xs ml-1 bg-green-100 px-2 py-0.5 rounded text-green-700">
-                                                {{ order.coupon_code }}
-                                            </span>
+                                                Discount
+                                                <span v-if="order.coupon_code"
+                                                    class="text-xs ml-1 bg-green-100 px-2 py-0.5 rounded text-green-700">
+                                                    {{ order.coupon_code }}
+                                                </span>
                                             </span>
                                             <span>-{{ formatCurrency(order.discount_amount) }}</span>
                                         </li>
@@ -184,15 +199,16 @@ import { Head, Link } from '@inertiajs/vue3'; // Added Link
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import Container from '@/components/Container.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
+import FramedArtworkPreview from '@/components/FramedArtworkPreview.vue';
 import Button from 'primevue/button'; // Added Button
 import Tag from 'primevue/tag';     // Added Tag
+import { useCountries } from '@/composables/useCountries';
 
 const props = defineProps({
     order: Object,
 });
 
-console.log('Order:', props.order); // Debugging line to check order data
-
+const { getCountryName } = useCountries();
 
 const showFullDetails = ref(false); // For a potential details toggle
 
@@ -210,17 +226,9 @@ const orderItems = computed(() => {
     return props.order?.items || []; // Added safe navigation
 });
 
-// Helper to convert country code to country name (you'll need a more comprehensive list or a library)
-const europeanCountries = { AT: 'Austria', BE: 'Belgium', BG: 'Bulgaria', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czech Republic', DK: 'Denmark', EE: 'Estonia', FI: 'Finland', FR: 'France', DE: 'Germany', GB: 'United Kingdom', GR: 'Greece', HU: 'Hungary', IE: 'Ireland', IT: 'Italy', LV: 'Latvia', LT: 'Lithuania', LU: 'Luxembourg', MT: 'Malta', NL: 'Netherlands', PL: 'Poland', PT: 'Portugal', RO: 'Romania', SK: 'Slovakia', SI: 'Slovenia', ES: 'Spain', SE: 'Sweden', /* Add other relevant countries */ };
-
-const getCountryName = (code) => {
-    return europeanCountries[code] || code; // Fallback to code if name not found
-};
-
 // Add these computed properties to display country names
 const billingCountryName = computed(() => getCountryName(props.order?.billing_country));
 const shippingCountryName = computed(() => getCountryName(props.order?.shipping_country));
-
 
 const subtotal = computed(() => {
     let total = 0;

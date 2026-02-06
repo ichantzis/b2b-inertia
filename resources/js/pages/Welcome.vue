@@ -158,7 +158,7 @@ onMounted(() => {
 
             <div class="curated-list-container">
                 <div v-for="list in curatedLists" :key="list.list_id" class="curated-banner-item">
-                    <Link :href="route('list.filtered', { list_id: list.list_id })" class="curated-banner-link group">
+                    <Link :href="route('lists.show', { slug: list.slug })" class="curated-banner-link group">
 
                         <div class="image-wrapper">
                             <img :src="list.cover || '/images/placeholder.png'" :alt="list.name"
@@ -189,11 +189,11 @@ onMounted(() => {
             <DataView :value="recentlyViewed" layout="grid">
                 <template #grid="slotProps">
                     <div class="grid grid-cols-12 gap-4 md:gap-8">
-                        <div v-for="(item, index) in slotProps.items" :key="item.artwork_id || index"
+                        <div v-for="(item, index) in slotProps.items" :key="item.pictufy_id || index"
                             class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
                             <div class="rounded flex flex-col artwork-container">
                                 <Link :href="route('artwork.details', {
-                                    id: item.artwork_id,
+                                    id: item.pictufy_id,
                                     slug: slugify(typeof item.title === 'string' ? item.title : (item.title?.en || 'artwork'))
                                 })" class="artwork-link">
                                     <div class="relative">
@@ -208,7 +208,7 @@ onMounted(() => {
                                                         'Untitled') }}
                                                 </span>
                                                 <Divider layout="vertical" />
-                                                <span class="artwork-id">ID: {{ item.artwork_id }}</span>
+                                                <span class="artwork-id">ID: {{ item.pictufy_id || item.artwork_id }}</span>
                                             </div>
                                         </div>
                                     </div>

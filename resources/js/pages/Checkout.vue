@@ -334,15 +334,26 @@
                         </template>
                         <template #content>
                             <div class="space-y-4">
-                                <div v-for="item in cartItems" :key="item.id" class="flex justify-between items-start">
-                                    <div>
-                                        <div class="font-medium">{{ item.artwork_data.title || 'Artwork' }}</div>
-                                        <div class="text-sm text-gray-600">Type: {{ item.type }}</div>
-                                        <div class="text-sm text-gray-600">Frame: {{ item.frame }}</div>
-                                        <div class="text-sm text-gray-600">Size: {{ item.size }}</div>
-                                        <div class="text-sm text-gray-600">Qty: {{ item.quantity }}</div>
+                                <div v-for="item in cartItems" :key="item.id" class="flex justify-between items-center">
+                                    <div class="flex-shrink-0 w-16 sm:w-20">
+                                        <FramedArtworkPreview
+                                            :artwork-image="item.artwork_data?.img_thumb || item.artwork_data?.img_medium || '/images/placeholder.png'"
+                                            :frame="item.frame" :size="item.size" :type="item.type" />
                                     </div>
-                                    <div>{{ formatCurrency(item.artwork_data.price * item.quantity) }}</div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-sm text-surface-900 truncate">
+                                            {{ item.artwork_data?.title || 'Untitled' }}
+                                        </p>
+                                        <p class="text-xs text-surface-500">
+                                            ID: {{ item.artwork_id || item.pictufy_id || item.id }}
+                                        </p>                                        
+                                        <p class="text-xs text-surface-500">
+                                            {{ item.type }} | {{ item.frame }} | {{ item.size }}
+                                        </p>                                        
+                                    </div>
+                                    <p class="text-sm font-semibold text-surface-700 mt-1">
+                                            {{ item.quantity }} x {{ formatCurrency(item.artwork_data?.price || 0) }}
+                                        </p>
                                 </div>
                             </div>
                             <Divider />
@@ -397,7 +408,8 @@
                                         <label for="pmBank" class="ml-2">Bank Transfer</label>
                                     </div>
                                 </div>
-                                <p class="text-sm italic text-gray-600">We'll contact you for further payment details.</p>
+                                <p class="text-sm italic text-gray-600">We'll contact you for further payment details.
+                                </p>
                                 <small v-if="form.errors.paymentMethod" class="p-error">{{ form.errors.paymentMethod
                                 }}</small>
                             </div>
@@ -419,6 +431,7 @@ import { Head } from '@inertiajs/vue3';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import Container from '@/components/Container.vue';
 import PageTitleSection from '@/components/PageTitleSection.vue';
+import FramedArtworkPreview from '@/components/FramedArtworkPreview.vue';
 import InputText from 'primevue/inputtext';
 import TextArea from 'primevue/textarea';
 import Select from 'primevue/select';
@@ -428,6 +441,7 @@ import Card from 'primevue/card';
 import Divider from 'primevue/divider';
 import Checkbox from 'primevue/checkbox';
 import Fieldset from 'primevue/fieldset';
+import { useCountries } from '@/composables/useCountries';
 
 // Props
 const { cartItems, cartTotal, user } = defineProps({
@@ -438,6 +452,8 @@ const { cartItems, cartTotal, user } = defineProps({
 
 const page = usePage();
 // const initialCountry = countries.value.find(c => c.code === user.country) || null;
+
+const { countries } = useCountries();
 
 const form = useForm({
     billingInfo: {
@@ -473,36 +489,36 @@ const form = useForm({
 });
 
 // European countries list
-const countries = ref([
-    { name: 'Greece', code: 'GR' },
-    { name: 'Austria', code: 'AT' },
-    { name: 'Belgium', code: 'BE' },
-    { name: 'Bulgaria', code: 'BG' },
-    { name: 'Croatia', code: 'HR' },
-    { name: 'Cyprus', code: 'CY' },
-    { name: 'Czech Republic', code: 'CZ' }, // Note: PrimeVue flag CSS might use 'cz'
-    { name: 'Denmark', code: 'DK' },
-    { name: 'Estonia', code: 'EE' },
-    { name: 'Finland', code: 'FI' },
-    { name: 'France', code: 'FR' },
-    { name: 'Germany', code: 'DE' },
-    { name: 'Hungary', code: 'HU' },
-    { name: 'Ireland', code: 'IE' },
-    { name: 'Italy', code: 'IT' },
-    { name: 'Latvia', value: 'LV' }, // Should be code: 'LV'
-    { name: 'Lithuania', code: 'LT' },
-    { name: 'Luxembourg', code: 'LU' },
-    { name: 'Malta', code: 'MT' },
-    { name: 'Netherlands', code: 'NL' },
-    { name: 'Poland', code: 'PL' },
-    { name: 'Portugal', code: 'PT' },
-    { name: 'Romania', code: 'RO' },
-    { name: 'Slovakia', code: 'SK' },
-    { name: 'Slovenia', code: 'SI' },
-    { name: 'Spain', code: 'ES' },
-    { name: 'Sweden', code: 'SE' },
-    // Add other countries as needed
-]);
+// const countries = ref([
+//     { name: 'Greece', code: 'GR' },
+//     { name: 'Austria', code: 'AT' },
+//     { name: 'Belgium', code: 'BE' },
+//     { name: 'Bulgaria', code: 'BG' },
+//     { name: 'Croatia', code: 'HR' },
+//     { name: 'Cyprus', code: 'CY' },
+//     { name: 'Czech Republic', code: 'CZ' }, // Note: PrimeVue flag CSS might use 'cz'
+//     { name: 'Denmark', code: 'DK' },
+//     { name: 'Estonia', code: 'EE' },
+//     { name: 'Finland', code: 'FI' },
+//     { name: 'France', code: 'FR' },
+//     { name: 'Germany', code: 'DE' },
+//     { name: 'Hungary', code: 'HU' },
+//     { name: 'Ireland', code: 'IE' },
+//     { name: 'Italy', code: 'IT' },
+//     { name: 'Latvia', value: 'LV' }, // Should be code: 'LV'
+//     { name: 'Lithuania', code: 'LT' },
+//     { name: 'Luxembourg', code: 'LU' },
+//     { name: 'Malta', code: 'MT' },
+//     { name: 'Netherlands', code: 'NL' },
+//     { name: 'Poland', code: 'PL' },
+//     { name: 'Portugal', code: 'PT' },
+//     { name: 'Romania', code: 'RO' },
+//     { name: 'Slovakia', code: 'SK' },
+//     { name: 'Slovenia', code: 'SI' },
+//     { name: 'Spain', code: 'ES' },
+//     { name: 'Sweden', code: 'SE' },
+//     // Add other countries as needed
+// ]);
 
 // Coupon code
 // Script Section

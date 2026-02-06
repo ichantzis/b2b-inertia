@@ -97,7 +97,7 @@ class AccountController extends Controller
                 // Items
                 'items' => $order->items->map(function ($item) {
                     return [
-                        'id' => $item->id,
+                        'id' => $item->artwork_id ?? $item->pictufy_id ?? $item->id,
                         'title' => $item->artwork_title ?? 'Artwork',
                         'subtitle' => $item->description ?? "{$item->size} • {$item->frame}", // e.g. "50x70 • Black Frame"
                         'quantity' => $item->quantity,

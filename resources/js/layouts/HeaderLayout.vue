@@ -100,15 +100,15 @@ const mainMenuItems = computed(() => {
             {
                 label: 'All Collections',
                 // icon: 'pi pi-fw pi-images',
-                route: route('lists'),
+                route: route('lists.index'),
                 command: () => {
                     mobileMenuOpen.value = false;
                 }
             },
-            ...(page.props.lists || []).map(list => ({
+            ...(page.props.global_data?.lists || []).map(list => ({
                 label: list.name,
                 icon: list.cover,
-                route: route('list.filtered', { list_id: list.list_id }),
+                route: route('lists.show', { slug: list.slug }),
                 command: () => {
                     mobileMenuOpen.value = false;
                 }
@@ -263,7 +263,7 @@ const homeMobileMenuItems = computed(() => {
             label: 'Home',
             route: route('welcome'),
             icon: 'pi pi-fw pi-home',
-            active: currentRoute.value === 'welcome', 
+            active: currentRoute.value === 'welcome',
             command: () => {
                 mobileMenuOpen.value = false;
             }
@@ -396,8 +396,8 @@ watch(() => page.props.flash, (flashMessages) => {
 const handlePopstate = () => {
     // Reload cart data only when navigating via browser back/forward buttons
     router.reload({
-        only: ['cartCount', 'cartItemsPreview'], 
-        preserveState: true, 
+        only: ['cartCount', 'cartItemsPreview'],
+        preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
             // console.log('Cart props reloaded successfully via popstate.');
@@ -417,7 +417,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     // window.removeEventListener('scroll', handleScroll);
-    
+
     // Αφαίρεση του listener όταν το component καταστρέφεται
     window.removeEventListener('popstate', handlePopstate);
 });
@@ -434,27 +434,21 @@ onUnmounted(() => {
 
 
                     <LinksMenuBar :model="mainMenuItems" :key="currentRoute"
-                        pt:root:class="px-0 py-4 border-0 rounded-none dynamic-bg"
-                        pt:button:class="hidden">
+                        pt:root:class="px-0 py-4 border-0 rounded-none dynamic-bg" pt:button:class="hidden">
                         <!-- Left Side - Hamburger Menu -->
                         <template #start>
                             <!-- Mobile Hamburger -->
                             <div class="flex items-center lg:hidden">
                                 <div class="relative">
-                                    <Button
-                                        severity="secondary"
-                                        icon="pi pi-bars"
-                                        pt:icon:class="text-xl"
-                                        text
-                                        @click="mobileMenuOpen = true"
-                                    />
+                                    <Button severity="secondary" icon="pi pi-bars" pt:icon:class="text-xl" text
+                                        @click="mobileMenuOpen = true" />
                                 </div>
                             </div>
                             <!-- Logo - Absolute Center -->
                             <div class="shrink-0 flex items-center mr-5">
                                 <Link :href="route('welcome')">
-                                <ApplicationLogo
-                                    class="block transition-transform duration-200 h-8 w-auto sm:h-10 md:h-12 lg:h-14" />
+                                    <ApplicationLogo
+                                        class="block transition-transform duration-200 h-8 w-auto sm:h-10 md:h-12 lg:h-14" />
                                 </Link>
                             </div>
                         </template>
@@ -468,12 +462,12 @@ onUnmounted(() => {
                                 <Link :href="route('cart.index')" class="ml-4" @mouseenter="showCartPopover"
                                     @mouseleave="hideCartPopover" aria-haspopup="true"
                                     aria-controls="cart-popover-content">
-                                <OverlayBadge v-if="cartCount > 0" :value="String(cartCount)">
-                                    <Button id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
+                                    <OverlayBadge v-if="cartCount > 0" :value="String(cartCount)">
+                                        <Button id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
+                                            pt:root:class="p-0" pt:icon:class="text-xl" text aria-label="Cart menu" />
+                                    </OverlayBadge>
+                                    <Button v-else id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
                                         pt:root:class="p-0" pt:icon:class="text-xl" text aria-label="Cart menu" />
-                                </OverlayBadge>
-                                <Button v-else id="cart-menu-btn" severity="secondary" icon="pi pi-shopping-cart"
-                                    pt:root:class="p-0" pt:icon:class="text-xl" text aria-label="Cart menu" />
                                 </Link>
                                 <Popover ref="op" target="#user-menu-btn" :showCloseIcon="false"
                                     @mouseenter="clearUserHideTimer" @mouseleave="hideUserPopover">
@@ -491,21 +485,36 @@ onUnmounted(() => {
                                         <div v-else class="flex flex-col gap-3">
                                             <div v-for="item in cartItemsPreview" :key="item.id"
                                                 class="flex items-center gap-2 border-b pb-2 dynamic-border last:border-b-0">
-                                                <img v-if="item.artwork_data?.img_thumb"
-                                                    :src="item.artwork_data.img_thumb" :alt="item.artwork_data.title"
-                                                    class="w-12 h-12 object-cover rounded flex-shrink-0" />
-                                                <div v-else
-                                                    class="w-12 h-12 bg-surface-100 rounded flex items-center justify-center text-muted-color text-xs flex-shrink-0">
-                                                    No Img</div>
+
+                                                <Link
+                                                    :href="route('artwork.details', { id: item.artwork_id, slug: item.artwork_data?.slug })"
+                                                    class="flex-shrink-0">
+                                                    <img v-if="item.artwork_data?.img_thumb"
+                                                        :src="item.artwork_data.img_thumb"
+                                                        :alt="item.artwork_data.title"
+                                                        class="w-12 h-12 object-cover rounded hover:opacity-80 transition-opacity" />
+                                                    <div v-else
+                                                        class="w-12 h-12 bg-surface-100 rounded flex items-center justify-center text-muted-color text-xs flex-shrink-0">
+                                                        No Img
+                                                    </div>
+                                                </Link>
+
                                                 <div class="flex-grow min-w-0">
-                                                    <p class="font-medium text-sm truncate">{{ item.artwork_data?.title
-                                                        || 'Untitled' }}</p>
+                                                    <Link
+                                                        class="font-medium text-sm truncate hover:text-primary hover:underline transition-colors no-underline text-inherit"
+                                                        :href="route('artwork.details', { id: item.artwork_id, slug: item.artwork_data?.slug })">
+                                                        <p>
+                                                            {{ item.artwork_data?.title || 'Untitled' }}
+                                                        </p>
+                                                    </Link>
+
                                                     <p class="text-sm text-muted-color">Type: {{ item.type }}</p>
                                                     <p class="text-sm text-muted-color">Frame: {{ item.frame }}</p>
                                                     <p class="text-sm text-muted-color">Size: {{ item.size }}</p>
                                                     <p class="text-sm text-muted-color">{{ item.quantity }} x €{{
                                                         item.formattedPrice }}</p>
                                                 </div>
+
                                                 <Button icon="pi pi-times-circle" text rounded aria-label="Delete item"
                                                     @click="handleDeleteItem(item.id)" />
                                             </div>
@@ -516,8 +525,8 @@ onUnmounted(() => {
                                                 </p>
                                             </div>
                                             <Link :href="route('cart.index')" class="block mt-2">
-                                            <Button label="View Full Cart" severity="primary" size="small"
-                                                class="w-full" />
+                                                <Button label="View Full Cart" severity="primary" size="small"
+                                                    class="w-full" />
                                             </Link>
                                         </div>
                                     </div>
@@ -569,5 +578,19 @@ nav {
     top: 0;
     transform-origin: top;
     backface-visibility: hidden;
+}
+
+/* Links inside header and popovers should not be blue or underlined */
+:deep(nav a),
+:deep(.p-popover a) {
+    color: inherit;
+    text-decoration: none !important;
+}
+
+/* Ensure hover states don't reintroduce underline or blue color */
+:deep(nav a:hover),
+:deep(.p-popover a:hover) {
+    color: inherit;
+    text-decoration: none !important;
 }
 </style>

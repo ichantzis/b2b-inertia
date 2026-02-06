@@ -3,9 +3,16 @@ import { ref, computed, watch } from 'vue'; // Added watch
 import { Link, usePage, router } from '@inertiajs/vue3';
 import PanelMenu from 'primevue/panelmenu'; // Ensuring correct import name
 
+const props = defineProps({
+  categories: {
+    type: Array,
+    default: () => []
+  }
+});
+
 const page = usePage();
 
-const collectionTreeData = computed(() => page.props.allCollectionCategoriesWithCollections || []);
+const collectionTreeData = computed(() => props.categories);
 
 // State for "Show More" functionality for each category's collection list
 const showMoreState = ref({}); // Key: category_id, Value: boolean for showing all collections

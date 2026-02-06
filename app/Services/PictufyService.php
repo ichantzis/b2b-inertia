@@ -18,15 +18,17 @@ class PictufyService
         $this->apiKey = config('services.pictufy.key');
     }
 
-    private function request($endpoint, $params = [])
+    private function request($endpoint, $params = [], $timeout = 30)
     {
-        // Log::info("Requesting $endpoint with params: " . json_encode($params)); // Can be verbose
-        $response = Http::withHeaders([
-            'X-AUTH-KEY' => $this->apiKey,
-            'Content-Type' => 'application/x-www-form-urlencoded',
-        ])->withOptions([
-            'verify' => false, // Consider true in production with valid SSL
-        ])->asForm()
+        // Log::info("Requesting $endpoint with params: " . json_encode($params)); 
+
+        $response = Http::timeout($timeout) // Ρύθμιση του timeout
+            ->withHeaders([
+                'X-AUTH-KEY' => $this->apiKey,
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ])->withOptions([
+                'verify' => false,
+            ])->asForm()
             ->post("$this->apiUrl/$endpoint", $params);
 
         if ($response->failed()) {
@@ -34,20 +36,23 @@ class PictufyService
                 'status' => $response->status(),
                 'response' => $response->body()
             ]);
-            return ['items' => [], 'status' => ['code' => $response->status(), 'returned_items' => 0]]; // Ensure consistent error structure
+            return ['items' => [], 'status' => ['code' => $response->status(), 'returned_items' => 0]];
         }
         return $response->json();
     }
 
     public function getCollections($params = [])
     {
-        // API docs params: collection_category, order, with_ids, skip_categories
         $cacheKey = 'pictufy_collections_' . md5(json_encode($params));
-        $cacheDuration = 60; // Cache for 60 minutes
+        $cacheDuration = 60; 
 
-        return Cache::remember($cacheKey, $cacheDuration, function () use ($params) {
+        // Αν ζητάμε IDs, το API αργεί, οπότε δίνουμε 3 λεπτά (180s)
+        $timeout = !empty($params['with_ids']) ? 180 : 30;
+
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($params, $timeout) {
             Log::info("Fetching collections from API with params: " . json_encode($params));
-            return $this->request('collections', $params);
+            // Περνάμε το timeout στη request
+            return $this->request('collections', $params, $timeout);
         });
     }
 
@@ -217,6 +222,7 @@ class PictufyService
         if (isset($params['nudity'])) $requestParams['nudity'] = $params['nudity'];
         if (isset($params['artwork_type'])) $requestParams['artwork_type'] = $params['artwork_type'];
         if (isset($params['artist_id'])) $requestParams['artist_id'] = $params['artist_id'];
+        if (isset($params['grade'])) $requestParams['grade'] = $params['grade'];
 
         // *** ADD SEARCH PARAMETER HERE ***
         if (!empty($params['search'])) { // Check if search term is provided and not empty
@@ -259,8 +265,8 @@ class PictufyService
         // We fetch a large list of artists sorted alphabetically to create a lookup directory.
         // Caching this response effectively creates our "Slug -> ID" database.
         // Adjust per_page if your artist count exceeds 2000.
-        $params = ['order' => 'alpha', 'per_page' => 2000]; 
-        
+        $params = ['order' => 'alpha', 'per_page' => 2000];
+
         $response = $this->getArtists($params);
         $artists = $response['items'] ?? [];
 
@@ -297,6 +303,16 @@ class PictufyService
         });
     }
 
+    /**
+     * Get list of expired artworks (licenses ended).
+     */
+    public function getExpired()
+    {
+        // No caching, as this data may change frequently
+        // Set a higher timeout in case the API takes longer to respond
+        return $this->request('expired', [], 60);
+    }
+
     public function refreshListsCache()
     {
         $cacheKey = 'pictufy_lists'; // Example for one list type
@@ -317,5 +333,25 @@ class PictufyService
         $cacheKey = 'pictufy_collections_' . md5(json_encode($params));
         Cache::forget($cacheKey);
         return $this->getCollections($params);
+    }
+
+    /**
+     * Get the download URL for a high-res artwork.
+     * * @param int|string $artworkId
+     * @return array|null
+     */
+    public function getDownloadUrl($artworkId)
+    {
+        Log::info("Requesting download URL for artwork ID: $artworkId");
+        $response = $this->request('download', ['artwork_id' => $artworkId]);
+        
+        // Log response for debugging if needed
+        // Log::info("Download API response", $response);
+        
+        if (isset($response['items'][0]['url'])) {
+            return $response['items'][0]; // Returns { url, filename, ... }
+        }
+
+        return null;
     }
 }

@@ -10,26 +10,23 @@ import { slugify } from '@/composables/utils.js';
 defineOptions({ layout: HeaderLayout });
 
 const props = defineProps({
-    // Assuming you are passing categorized collections from the controller
-    // This is needed for the "collections in every category" requirement
     categorized_collections: {
         type: Array,
         default: () => []
     },
-    // Fallback if you were to use a flat list (though the request implies categories)
-    collections: {
+    // NEW PROP: Full list for sidebar navigation
+    all_categories: {
         type: Array,
         default: () => []
+    },
+    // NEW PROP: Flag to toggle layout
+    is_category_view: {
+        type: Boolean,
+        default: false
     }
 });
 
 const page = usePage();
-
-// The sidebar will use page.props.allCollectionCategoriesWithCollections globally
-// This page's main content might display featured collections, or the same categorized view.
-// For this example, let's assume this page will show categories with horizontally scrollable collections.
-const categorizedCollectionsForMainView = computed(() => page.props.allCollectionCategoriesWithCollections || []);
-
 
 const decodeHTMLEntities = (text) => {
     if (typeof text !== 'string') return '';
@@ -38,26 +35,10 @@ const decodeHTMLEntities = (text) => {
     return textArea.value;
 };
 
-// This computed property is for categorized_collections
+// Process main content data
 const decodedCategorizedCollections = computed(() => {
-    if (!props.categorized_collections || props.categorized_collections.length === 0) {
-        // Handle the case where you might be using the flat 'collections' prop
-        // and group them here if necessary, or ensure controller sends categorized data.
-        // For this example, we assume categorized_collections is what we're working with.
-        if (props.collections.length > 0) {
-            // Simple fallback: treat all flat collections as one "General" category
-            return [{
-                category_id: 'all',
-                category_name: 'All Collections',
-                collections: props.collections.map(collection => ({
-                    ...collection,
-                    name: decodeHTMLEntities(collection.name),
-                    description: decodeHTMLEntities(collection.description),
-                }))
-            }];
-        }
-        return [];
-    }
+    if (!props.categorized_collections) return [];
+    
     return props.categorized_collections.map(category => ({
         ...category,
         category_name: decodeHTMLEntities(category.category_name),
@@ -65,8 +46,21 @@ const decodedCategorizedCollections = computed(() => {
             ...collection,
             name: decodeHTMLEntities(collection.name),
             description: decodeHTMLEntities(collection.description),
-            // slug is assumed to be prepared in controller
         }))
+    }));
+});
+
+// Process sidebar data (Use all_categories if available, fallback to main data)
+const sidebarCategories = computed(() => {
+    const source = (props.all_categories && props.all_categories.length > 0) 
+        ? props.all_categories 
+        : props.categorized_collections;
+
+    return source.map(category => ({
+        ...category,
+        category_name: decodeHTMLEntities(category.category_name),
+        // Ensure collections exists for the sidebar logic
+        collections: category.collections || [] 
     }));
 });
 
@@ -75,27 +69,33 @@ const decodedCategorizedCollections = computed(() => {
 <template>
     <InertiaHead title="Collections" />
     <div class="page-with-sidebar-layout">
-        <CollectionSidebar />
+        <CollectionSidebar :categories="sidebarCategories" />
+        
         <div class="main-content-area">
             <div class="content-wrapper">
-                <h1 class="text-3xl font-bold mb-10 text-center">Collections</h1>
+                <h1 class="text-3xl font-bold mb-10 text-center">
+                    {{ is_category_view && decodedCategorizedCollections[0] ? decodedCategorizedCollections[0].category_name : 'Collections' }}
+                </h1>
+                
                 <div v-if="decodedCategorizedCollections.length > 0">
                     <section v-for="category in decodedCategorizedCollections"
                         :key="category.category_id || category.category_name" class="category-section mb-12">
-                        <Link class="category-title text-2xl font-semibold mb-5 text-left"
+                        
+                        <Link v-if="!is_category_view" 
+                            class="category-title text-2xl font-semibold mb-5 text-left"
                             :href="route('collections.category.show', { category_collection_slug: slugify(category.category_name) })">
-                        {{ category.category_name }}
-                        <Divider />
+                            {{ category.category_name }}
+                            <Divider />
                         </Link>
-                        <div class="horizontal-scroll-wrapper">
-                            <div class="collections-row">
+
+                        <div :class="{ 'horizontal-scroll-wrapper': !is_category_view, 'grid-wrapper': is_category_view }">
+                            <div :class="{ 'collections-row': !is_category_view, 'collections-grid': is_category_view }">
                                 <div v-for="collection in category.collections" :key="collection.id"
                                     class="collection-item-wrapper">
                                     <Link :href="route('collection.show', { collection_slug: collection.slug })"
                                         class="block collection-link-wrapper">
                                     <Card class="collection-card p-0">
                                         <template #header>
-
                                             <div class="collection-image-wrapper">
                                                 <img v-if="collection.thumb" :src="collection.thumb"
                                                     :alt="collection.name" class="collection-image" loading="lazy" />
@@ -103,8 +103,7 @@ const decodedCategorizedCollections = computed(() => {
                                             </div>
                                         </template>
                                         <template #title>
-                                            <h3
-                                                class="collection-name-heading text-md font-semibold text-center block mt-3 mb-1 px-2">
+                                            <h3 class="collection-name-heading text-md font-semibold text-center block mt-3 mb-1 px-2">
                                                 {{ collection.name }}
                                             </h3>
                                         </template>
@@ -117,14 +116,13 @@ const decodedCategorizedCollections = computed(() => {
                                         </template>
                                     </Card>
                                     </Link>
-
                                 </div>
                             </div>
                         </div>
                     </section>
                 </div>
                 <div v-else class="text-center py-10">
-                    <p class="text-xl text-surface-700">No collections found at the moment.</p>
+                    <p class="text-xl text-surface-700">No collections found.</p>
                 </div>
             </div>
         </div>
@@ -316,6 +314,45 @@ const decodedCategorizedCollections = computed(() => {
 :deep(.p-card-title) { /* Controls padding around h3 title */
     padding: 0; /* Removed direct padding here, handle on h3 itself */
 }
+
+/* NEW STYLES FOR GRID VIEW */
+.grid-wrapper {
+    /* No overflow hidden, allow full height */
+}
+
+.collections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Responsive Grid */
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+}
+
+/* Ensure items fill the grid cell */
+.collections-grid .collection-item-wrapper {
+    width: 100%; 
+}
+
+/* ... (Keep the horizontal scroll styles from before) ... */
+.page-with-sidebar-layout { display: flex; }
+.main-content-area {
+    flex-grow: 1;
+    padding-left: 300px;
+    padding-top: 2rem; 
+    padding-right: 2rem;
+    padding-bottom: 2rem;
+}
+@media (max-width: 1199.98px) {
+    .main-content-area { padding-left: 2rem; }
+}
+.content-wrapper { margin: 0 auto; max-width: 100%; }
+.category-title { display: block; text-decoration: none; color: #374151; margin-bottom: 0.5rem; }
+.horizontal-scroll-wrapper { overflow-x: auto; white-space: nowrap; padding: 0.5rem 0 1rem 0.25rem; }
+.collections-row { display: inline-flex; flex-direction: row; gap: 1.5rem; }
+.collection-item-wrapper { flex: 0 0 auto; width: 160px; } /* Fixed width ONLY for slider */
+.collection-card { width: 100%; height: 100%; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.collection-image-wrapper { aspect-ratio: 1 / 1; width: 100%; background-color: #f0f0f0; overflow: hidden; }
+.collection-image { width: 100%; height: 100%; object-fit: cover; }
+.collection-name-heading { color: #1f2937; line-height: 1.4; white-space: normal; /* Allow wrap in card */ }
 
 /* Media queries for collection-item-wrapper if using fixed widths for different screen classes */
 /* Not strictly needed if using a single fixed width like 160px for horizontal scroll items,

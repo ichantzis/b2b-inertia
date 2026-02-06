@@ -62,20 +62,20 @@
                                 class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
                                 <div class="rounded flex flex-col artwork-container">
                                     <Link :href="route('artwork.details', {
-                                        id: artwork.id,
-                                        slug: slugify(artwork.title?.en || 'artwork')
+                                        id: artwork.pictufy_id,
+                                        slug: slugify(artwork.title || 'artwork')
                                     })" class="artwork-link">
                                         <div class="relative">
-                                            <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
-                                                :alt="artwork.title?.en || 'Untitled'"
+                                            <img v-if="artwork.img_thumb" :src="artwork.img_thumb"
+                                                :alt="artwork.title || 'Untitled'"
                                                 class="rounded w-full h-auto object-contain max-h-[300px]" />
                                             <div v-else class="no-image">No Image Available</div>
                                             <div class="artwork-overlay">
                                                 <div class="overlay-content">
-                                                    <span class="artwork-title">{{ artwork.title?.en || 'Untitled'
+                                                    <span class="artwork-title">{{ artwork.title || 'Untitled'
                                                     }}</span>
                                                     <Divider layout="vertical" />
-                                                    <span class="artwork-id">ID: {{ artwork.id }}</span>
+                                                    <span class="artwork-id">ID: {{ artwork.pictufy_id }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -164,7 +164,7 @@ const performSearchRequest = (searchVal) => {
     }
     if (baseRouteName === 'collection.show' && !routeParams.collection_slug && props.collectionSlug) {
         routeParams.collection_slug = props.collectionSlug;
-    } else if (baseRouteName === 'list.filtered' && !routeParams.list_id && props.collectionId) {
+    } else if (baseRouteName === 'lists.show' && !routeParams.list_id && props.collectionId) {
         routeParams.list_id = props.collectionId;
     } else if (baseRouteName === 'artist.show' && !routeParams.artist_id && props.collectionId) {
         routeParams.artist_id = props.collectionId;
@@ -242,7 +242,7 @@ const loadMoreArtworks = async () => {
                 page: localNextPage.value,
                 per_page: 30,
                 collection_id: baseRouteName === 'collection.show' ? props.collectionId : null,
-                list_id: baseRouteName === 'list.filtered' ? props.collectionId : null,
+                list_id: baseRouteName === 'lists.show' ? props.collectionId : null,
                 artist_id: baseRouteName === 'artist.show' ? props.collectionId : null,
                 filters: props.filters?.join('/'),
                 order: props.initialOrder,

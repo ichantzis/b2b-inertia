@@ -80,13 +80,13 @@
 
       <div class="artwork-information">
         <div class="artwork-header">
-          <h1 class="artwork-title-text">{{ currentArtwork.title?.en || 'Untitled' }}</h1>
+          <h1 class="artwork-title-text">{{ currentArtwork?.title || 'Untitled' }}</h1>
         </div>
 
         <div class="artwork-details-grid">
           <div class="detail-item">
             <span class="detail-label">ID</span>
-            <span class="detail-value">{{ currentArtwork.id }}</span>
+            <span class="detail-value">{{ currentArtwork.pictufy_id }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Category</span>
@@ -275,20 +275,20 @@
               class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
               <div class="rounded flex flex-col artwork-container">
                 <Link :href="route('artwork.details', {
-                  id: artwork.id,
-                  slug: slugify(artwork.title?.en || 'artwork')
+                  id: artwork.pictufy_id || artwork.id,
+                  slug: slugify(artwork.title || 'artwork')
                 })" class="artwork-link">
                   <div class="relative">
-                    <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
-                      :alt="artwork.title?.en || 'Untitled'"
+                    <img v-if="artwork?.img_thumb" :src="artwork.img_thumb"
+                      :alt="artwork.title || 'Untitled'"
                       class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]"
                       loading="lazy" decoding="async" />
                     <div v-else class="no-image">No Image Available</div>
                     <div class="artwork-overlay">
                       <div class="overlay-content">
-                        <span class="artwork-title">{{ artwork.title?.en || 'Untitled' }}</span>
+                        <span class="artwork-title">{{ artwork.title || 'Untitled' }}</span>
                         <Divider layout="vertical" />
-                        <span class="artwork-id">ID: {{ artwork.id }}</span>
+                        <span class="artwork-id">ID: {{ artwork.pictufy_id || artwork.id }}</span>
                       </div>
                     </div>
                   </div>
@@ -316,20 +316,20 @@
               class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
               <div class="rounded flex flex-col artwork-container">
                 <Link :href="route('artwork.details', {
-                  id: artwork.id,
-                  slug: slugify(artwork.title?.en || 'artwork')
+                  id: artwork.pictufy_id || artwork.id,
+                  slug: slugify(artwork.title || 'artwork')
                 })" class="artwork-link">
                   <div class="relative">
-                    <img v-if="artwork.urls?.img_thumb" :src="artwork.urls.img_thumb"
-                      :alt="artwork.title?.en || 'Untitled'"
+                    <img v-if="artwork?.img_thumb" :src="artwork.img_thumb"
+                      :alt="artwork.title || 'Untitled'"
                       class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]"
                       loading="lazy" decoding="async" />
                     <div v-else class="no-image">No Image Available</div>
                     <div class="artwork-overlay">
                       <div class="overlay-content">
-                        <span class="artwork-title">{{ artwork.title?.en || 'Untitled' }}</span>
+                        <span class="artwork-title">{{ artwork.title || 'Untitled' }}</span>
                         <Divider layout="vertical" />
-                        <span class="artwork-id">ID: {{ artwork.id }}</span>
+                        <span class="artwork-id">ID: {{ artwork.pictufy_id || artwork.id}}</span>
                       </div>
                     </div>
                   </div>
@@ -430,7 +430,7 @@ const metaDescription = computed(() => {
 
 const metaImage = computed(() => {
   // Prefer the middle image, otherwise the thumbnail
-  return currentArtwork.value?.urls?.img_medium || currentArtwork.value?.urls?.img_thumb || '';
+  return currentArtwork.value?.img_medium || currentArtwork.value?.img_thumb || '';
 });
 
 const canonicalUrl = computed(() => {
@@ -446,17 +446,17 @@ const jsonLd = computed(() => {
   return {
     "@context": "https://schema.org/",
     "@type": "Product",
-    "name": props.artwork?.title?.en,
+    "name": props.artwork?.title,
     "image": [
-      props.artwork?.urls?.img_high,
-      props.artwork?.urls?.img_medium
+      props.artwork?.img_high,
+      props.artwork?.img_medium
     ],
     "description": props.artwork?.description || `Artwork by ${props.artwork?.artist}`,
-    "sku": props.artwork?.id,
-    "brand": {
-      "@type": "Brand",
-      "name": "Pictufy"
-    },
+    "sku": props.artwork?.pictufy_id,
+    // "brand": {
+    //   "@type": "Brand",
+    //   "name": "Pictufy"
+    // },
     "offers": {
       "@type": "Offer",
       "url": window.location.href,
@@ -488,9 +488,11 @@ const fetchRelatedContent = async () => {
   isLoadingRelated.value = true;
   try {
     // Call our new internal API endpoint
-    const response = await axios.get(route('artwork.related', currentArtwork.value.id));
+    const response = await axios.get(route('artwork.related', currentArtwork.value.pictufy_id));
 
     if (response.data) {
+      console.log('Related artworks response:', response.data);
+      
       relatedArtworks.value = response.data.related || [];
       youMayLikeArtworks.value = response.data.youMayLike || [];
     }
@@ -668,7 +670,7 @@ const selectedCanvas = computed(() => {
 
 
 const parsedKeywords = computed(() => {
-  const raw = currentArtwork.value?.keywords?.en || '';
+  const raw = currentArtwork.value?.keywords || '';
   return raw.split(',').map(k => k.trim()).filter(Boolean).slice(0, 10);
 });
 
@@ -679,8 +681,8 @@ const galleryImages = computed(() => {
     // 1. Start with the Main Artwork Image
     const images = [
         {
-            itemImageSrc: currentArtwork.value.urls.img_medium || currentArtwork.value.urls.img_high,
-            thumbnailImageSrc: currentArtwork.value.urls.img_thumb || currentArtwork.value.urls.img_high,
+            itemImageSrc: currentArtwork.value.img_medium || currentArtwork.value.img_high,
+            thumbnailImageSrc: currentArtwork.value.img_thumb || currentArtwork.value.img_high,
             alt: currentArtwork.value.title?.en || 'Main Artwork',
             isPrimaryArtwork: true
         }
@@ -693,7 +695,7 @@ const galleryImages = computed(() => {
     const allowedIds = INTERIOR_WHITELIST[geometry] || [];
     
     // 4. Get the raw interiors object from API
-    const availableInteriors = currentArtwork.value.urls?.interiors || {};
+    const availableInteriors = currentArtwork.value.interiors || {};
 
     // 5. Loop through allowed IDs and add them if they exist in the API response
     allowedIds.forEach(id => {
@@ -783,40 +785,40 @@ const getColorValue = (name) => {
 };
 
 const artworkColors = computed(() => {
-  // 1. Get the color object (e.g., { red: false, green: true ... })
-  const colorObj = currentArtwork.value?.color;
+  const art = currentArtwork.value;
+  if (!art) return [];
 
-  // Safety check: ensure it exists and is an object
-  if (!colorObj || typeof colorObj !== 'object') {
-    return [];
-  }
+  const activeColors = [];
 
-  // 2. Filter keys where the value is TRUE
-  // Object.entries returns [['red', false], ['green', true], ...]
-  const activeKeys = Object.entries(colorObj)
-    .filter(([key, isActive]) => isActive === true)
-    .map(([key]) => key);
+  // Αντιστοίχιση των πεδίων της Βάσης Δεδομένων με τα values του availableColors
+  const dbMapping = {
+    'has_red': 'red',
+    'has_orange': 'orange',
+    'has_yellow': 'yellow',
+    'has_green': 'green',
+    'has_turquoise': 'turquoise',
+    'has_blue': 'blue',
+    'has_lilac': 'lilac',
+    'has_pink': 'pink',
+    'is_highkey': 'highkey',
+    'is_lowkey': 'lowkey'
+  };
 
-  // 3. Map these keys to our availableColors configuration to get Hex/Labels
-  return activeKeys.map(key => {
-    // Find the matching color config (key 'highkey' matches value 'highkey')
-    const found = availableColors.find(c => c.value === key);
-
-    if (found) {
-      return {
-        label: found.label,
-        value: found.value,
-        hex: found.hex
-      };
+  Object.entries(dbMapping).forEach(([dbColumn, colorValue]) => {
+    // Ελέγχουμε αν το πεδίο είναι true (ή 1)
+    if (art[dbColumn]) {
+      const colorConfig = availableColors.find(c => c.value === colorValue);
+      if (colorConfig) {
+        activeColors.push({
+          label: colorConfig.label,
+          value: colorConfig.value,
+          hex: colorConfig.hex
+        });
+      }
     }
-
-    // Fallback (just in case API returns a color we don't have defined)
-    return {
-      label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize
-      value: key,
-      hex: '#cccccc' // Default gray
-    };
   });
+
+  return activeColors;
 });
 
 const navigateToArtworksWithColor = (colorValue) => {
@@ -1010,13 +1012,12 @@ onMounted(() => {
 
 const addToRecentlyViewed = (item) => {
   // Console log to debug the actual structure if images still fail
-  console.log("Raw Artwork Item:", item);
 
   const key = 'recently_viewed_items';
   let viewed = JSON.parse(localStorage.getItem(key) || '[]');
 
   // 1. Fix ID: API usually returns 'id', not 'artwork_id'
-  const id = item.id || item.artwork_id;
+  const id = item.pictufy_id || item.id;
 
   if (!id) {
     console.warn("Skipping recently viewed: No ID found on item");
@@ -1031,17 +1032,17 @@ const addToRecentlyViewed = (item) => {
 
   // 3. Fix Image: Try multiple common API fields
   // We try 'thumb', then 'medium_url', then 'url' (if it's an image link), then 'files'
-  const image = item.urls.img_thumb ||
-    item.urls.img_medium ||
-    item.urls.img_high ||
+  const image = item.img_thumb ||
+    item.img_medium ||
+    item.img_high ||
     '/images/placeholder.png'; // Fallback
 
   // Remove if already exists to prevent duplicates
-  viewed = viewed.filter(i => i.artwork_id !== id);
+  viewed = viewed.filter(i => i.pictufy_id !== id);
 
   // Add new item
   viewed.unshift({
-    artwork_id: id,
+    pictufy_id: id,
     title: titleStr,
     artist: item.artist,
     image: image

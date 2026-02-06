@@ -43,7 +43,7 @@ const decodeHTMLEntities = (text) => {
                     >
                         <template #header>
                             <Link 
-                                :href="route('list.filtered', { list_id: list.list_id })"
+                                :href="route('lists.show', { slug: list.slug })"
                                 class="text-lg font-semibold hover:text-primary-500 text-center block"
                             >
                             <div class="collection-image-wrapper">

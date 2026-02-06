@@ -101,9 +101,52 @@ class SettingsController extends Controller
         // Determine success message based on what was updated
         $message = 'Settings updated successfully.';
         if ($request->has('admin_notification_email')) $message = 'Admin email saved.';
-        if ($request->has('pricing_config')) $message = 'Price lists saved and sorted.';
+        if ($request->has('pricing_config')) $message = 'Price lists saved.';
         if ($request->has('require_login_for_prices') || $request->has('allow_public_registration')) {
             $message = 'Access settings updated.';
+        }
+
+        return back();
+    }
+
+    /**
+     * Execute artisan commands manually from dashboard.
+     */
+    public function runCommand(Request $request)
+    {
+        $request->validate([
+            'command_key' => 'required|string'
+        ]);
+
+        $key = $request->input('command_key');
+        $message = 'Command executed successfully.';
+
+        set_time_limit(120); 
+
+        try {
+            switch ($key) {
+                case 'sync_recent':
+                    Artisan::call('pictufy:sync-all', ['--recent' => true, '--limit' => 200]);
+                    $message = 'Recent artworks synced successfully.';
+                    break;
+
+                case 'update_ranks':
+                    Artisan::call('pictufy:update-ranks', ['--type' => 'recommended', '--limit' => 2000]);
+                    Artisan::call('pictufy:update-ranks', ['--type' => 'best_selling', '--limit' => 1000]);
+                    Artisan::call('pictufy:update-ranks', ['--type' => 'trending', '--limit' => 1000]);
+                    $message = 'Ranks updated (Recommended, Best Selling, Trending).';
+                    break;
+
+                case 'prune_expired':
+                    Artisan::call('pictufy:prune-expired');
+                    $message = 'Expired artworks pruned successfully.';
+                    break;
+                
+                default:
+                    return back()->with('error', 'Unknown command.');
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error executing command: ' . $e->getMessage());
         }
 
         return back()->with('success', $message);
