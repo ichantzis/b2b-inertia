@@ -14,6 +14,9 @@ use Maatwebsite\Excel\Facades\Excel; // For Excel
 use App\Exports\OrdersExport; // We'll create this custom export class
 use Barryvdh\DomPDF\Facade\Pdf; // For PDF (using barryvdh/laravel-dompdf)
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use App\Services\PictufyService;
+use App\Models\OrderItem;
 
 class OrderController extends Controller
 {
@@ -301,5 +304,44 @@ class OrderController extends Controller
 
         // Should not reach here if validation is correct
         return redirect()->back()->withErrors(['format' => 'Invalid export format requested.']);
+    }
+
+    public function downloadArtwork($orderId, $itemId, PictufyService $pictufyService)
+    {
+        // Find the order item
+        $orderItem = OrderItem::where('order_id', $orderId)->where('id', $itemId)->firstOrFail();
+        $artworkId = $orderItem->artwork_id;
+
+        if (!$artworkId) {
+            return back()->with('error', 'No artwork ID associated with this item.');
+        }
+
+        // Get the download URL from the service
+        $downloadData = $pictufyService->getDownloadUrl($artworkId);
+
+        if (!$downloadData || empty($downloadData['url'])) {
+            return back()->with('error', 'Could not retrieve download URL from provider.');
+        }
+
+        $remoteUrl = $downloadData['url'];
+        // Use basename to ensure a valid filename
+        $filename = basename($downloadData['filename'] ?? $artworkId . '.jpg');
+
+        // Stream the download directly to output without loading into memory
+        return response()->streamDownload(function () use ($remoteUrl) {
+            // Open a stream to the remote URL
+            // We use standard fopen which supports http/https stream wrappers
+            // 'rb' = read binary
+            $stream = fopen($remoteUrl, 'rb');
+            
+            if ($stream) {
+                while (!feof($stream)) {
+                    // Read 8KB chunks and output immediately
+                    echo fread($stream, 8192);
+                    flush(); // Force output to browser
+                }
+                fclose($stream);
+            }
+        }, $filename);
     }
 }

@@ -95,6 +95,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     Route::get('/orders/export', [AdminOrderController::class, 'exportOrders'])->name('orders.export');
     Route::get('/orders/{order:id}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::put('/orders/{order:id}', [AdminOrderController::class, 'update'])->name('orders.update');
+    Route::get('/orders/{order}/items/{item}/download', [App\Http\Controllers\Admin\OrderController::class, 'downloadArtwork'])
+    ->name('orders.download-artwork');
     Route::resource('users', AdminUserController::class)->except(['show']);
     Route::patch('/coupons/{coupon}/toggle', [App\Http\Controllers\Admin\CouponController::class, 'toggleStatus'])->name('coupons.toggle');
     Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->names('coupons');

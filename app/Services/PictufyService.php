@@ -334,4 +334,24 @@ class PictufyService
         Cache::forget($cacheKey);
         return $this->getCollections($params);
     }
+
+    /**
+     * Get the download URL for a high-res artwork.
+     * * @param int|string $artworkId
+     * @return array|null
+     */
+    public function getDownloadUrl($artworkId)
+    {
+        Log::info("Requesting download URL for artwork ID: $artworkId");
+        $response = $this->request('download', ['artwork_id' => $artworkId]);
+        
+        // Log response for debugging if needed
+        // Log::info("Download API response", $response);
+        
+        if (isset($response['items'][0]['url'])) {
+            return $response['items'][0]; // Returns { url, filename, ... }
+        }
+
+        return null;
+    }
 }

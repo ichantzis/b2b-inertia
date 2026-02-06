@@ -428,30 +428,47 @@
                                 <template #title>Order Items ({{ order.items.length }})</template>
                                 <template #content>
                                     <div v-if="order.items && order.items.length > 0" class="space-y-4">
-                                        <div v-for="item in order.items" :key="item.id"
-                                            class="flex justify-between items-center">
-                                            <div class="flex-shrink-0 w-16 sm:w-20">
-                                                <FramedArtworkPreview
-                                                    :artwork-image="item.artwork_data?.img_thumb || item.artwork_data?.img_medium || '/images/placeholder.png'"
-                                                    :frame="item.frame" :size="item.size" :type="item.type" />
+                                        <div v-for="item in order.items" :key="item.id">
+                                            <Divider />
+                                            <div class="flex justify-between items-center">
+                                                <div class="flex-shrink-0 w-16 sm:w-20">
+                                                    <FramedArtworkPreview
+                                                        :artwork-image="item.artwork_data?.img_thumb || item.artwork_data?.img_medium || '/images/placeholder.png'"
+                                                        :frame="item.frame" :size="item.size" :type="item.type" />
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="font-medium text-sm text-surface-900 truncate">
+                                                        {{ item.artwork_data?.title || 'Untitled' }}
+                                                    </p>
+                                                    <p class="text-xs text-surface-500">
+                                                        ID: {{ item.artwork_id || item.pictufy_id || item.id }}
+                                                    </p>
+                                                    <p class="text-xs text-surface-500">
+                                                        {{ item.type }} | {{ item.frame }} | {{ item.size }}
+                                                    </p>
+                                                    <p class="text-sm font-semibold text-surface-700 mt-1">
+                                                        {{ item.quantity }} x {{ formatCurrency(item.artwork_data?.price
+                                                            ||
+                                                            0)
+                                                        }}
+                                                    </p>
+                                                </div>
+                                                <a :href="route('dashboard.orders.download-artwork', { order: order.id, item: item.id })"
+                                                    target="_blank" rel="noopener noreferrer" class="desktop-download">
+                                                    <Button icon="pi pi-download" label="High Res" size="small"
+                                                        severity="info" outlined />
+                                                </a>
                                             </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="font-medium text-sm text-surface-900 truncate">
-                                                    {{ item.artwork_data?.title || 'Untitled' }}
-                                                </p>
-                                                <p class="text-xs text-surface-500">
-                                                    ID: {{ item.artwork_id || item.pictufy_id || item.id }}
-                                                </p>
-                                                <p class="text-xs text-surface-500">
-                                                    {{ item.type }} | {{ item.frame }} | {{ item.size }}
-                                                </p>
-                                                <p class="text-sm font-semibold text-surface-700 mt-1">
-                                                {{ item.quantity }} x {{ formatCurrency(item.artwork_data?.price || 0)
-                                                }}
-                                            </p>
+                                            <!-- Mobile: show download button as its own block below the item on narrow screens -->
+                                            <div class="mobile-download mt-2">
+                                                <a :href="route('dashboard.orders.download-artwork', { order: order.id, item: item.id })"
+                                                    target="_blank" rel="noopener noreferrer">
+                                                    <Button icon="pi pi-download" label="High Res" size="small"
+                                                        severity="info" outlined class="w-full sm:w-auto" />
+                                                </a>
                                             </div>
-                                            
                                         </div>
+
                                     </div>
                                     <p v-else>No items found for this order.</p>
                                 </template>
@@ -766,4 +783,22 @@ watch(() => ({ ...orderForm.billingInfo }), (newBilling) => { // Watch a copy of
     /* Ensure title has good spacing if edit icon is added 
     @apply flex justify-between items-center;
 } */
+/* Responsive visibility for download button: hide mobile block on wide screens and show under 1200px */
+.desktop-download {
+    display: inline-block;
+}
+
+.mobile-download {
+    display: none;
+}
+
+@media (max-width: 1200px) {
+    .desktop-download {
+        display: none !important;
+    }
+
+    .mobile-download {
+        display: block !important;
+    }
+}
 </style>
