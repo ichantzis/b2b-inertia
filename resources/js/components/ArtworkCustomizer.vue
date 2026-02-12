@@ -344,10 +344,10 @@ watch([selectedType, selectedCanvas], () => {
             </div>
             <div class="print-type-wrapper">
                 <div v-for="pType in printTypes" :key="pType.id" class="relative group">
-                    <Button v-bind="getButtonProps(pType.id, selectedPrintType)" @click="selectedPrintType = pType.id">
+                    <Button v-bind="getButtonProps(pType.id, selectedPrintType)" @click="selectedPrintType = pType.id"
+                        class="min-w-[8rem]">
                         <div class="flex flex-col items-center">
-                            <img :src="pType.img" :alt="pType.label" class="canvas-icon w-16" />
-                            <span class="text-xs mt-1 font-semibold">{{ pType.label }}</span>
+                            <span class="font-semibold">{{ pType.label }}</span>
                         </div>
                     </Button>
                 </div>
@@ -358,15 +358,15 @@ watch([selectedType, selectedCanvas], () => {
             <span class="detail-label">Size</span>
         </div>
         <div class="sizes-wrapper" v-if="!isSquare">
-            <Button class="w-24" v-for="size in availableRectangularSizes" :key="size" v-bind="getButtonProps(size, selectedSize)"
-                @click="selectedSize = size" :label="size" />
+            <Button class="w-24" v-for="size in availableRectangularSizes" :key="size"
+                v-bind="getButtonProps(size, selectedSize)" @click="selectedSize = size" :label="size" />
             <div v-if="availableRectangularSizes.length === 0" class="text-sm text-gray-500 italic">
                 No sizes available for this selection.
             </div>
         </div>
         <div class="sizes-square-wrapper" v-if="isSquare">
-            <Button class="w-24" v-for="size in availableSquareSizes" :key="size" v-bind="getButtonProps(size, selectedSquareSize)"
-                @click="selectedSquareSize = size" :label="size" />
+            <Button class="w-24" v-for="size in availableSquareSizes" :key="size"
+                v-bind="getButtonProps(size, selectedSquareSize)" @click="selectedSquareSize = size" :label="size" />
             <div v-if="availableSquareSizes.length === 0" class="text-sm text-gray-500 italic">
                 No square sizes available.
             </div>
