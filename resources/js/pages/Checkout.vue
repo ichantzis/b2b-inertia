@@ -348,7 +348,7 @@
                                             ID: {{ item.artwork_id || item.pictufy_id || item.id }}
                                         </p>                                        
                                         <p class="text-xs text-surface-500">
-                                            {{ item.type }} | {{ item.frame }} | {{ item.size }}
+                                            {{ item.type }} | {{ item.print_type === 'oil' ? 'Oil Print' : 'Mono Print' }} | {{ item.frame }} | {{ item.size }}
                                         </p>                                        
                                     </div>
                                     <p class="text-sm font-semibold text-surface-700 mt-1">

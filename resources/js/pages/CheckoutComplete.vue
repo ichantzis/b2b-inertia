@@ -53,6 +53,7 @@
                         <div class="text-sm text-surface-600 dark:text-surface-400 mt-1 space-y-0.5">
                             <p>ID: {{ item.artwork_id || item.pictufy_id || item.id }}</p>
                             <p>Type: {{ item.type }}</p>
+                            <p>Print: {{ item.print_type === 'oil' ? 'Oil Print' : 'Mono Print' }}</p>
                             <p>Frame: {{ item.frame }}</p>
                             <p>Size: {{ item.size }}</p>
                         </div>

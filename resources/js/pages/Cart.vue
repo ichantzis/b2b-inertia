@@ -149,6 +149,7 @@ const formatCurrency = (value, showSymbol = true) => {
 
                             <p class="text-xs text-muted-color mb-1 hidden sm:block">ID: {{ item.artwork_id }}</p>
                             <p class="text-xs sm:text-sm text-muted-color">Type: {{ item.type }}</p>
+                            <p class="text-xs sm:text-sm text-muted-color">Print: {{ item.print_type === 'oil' ? 'Oil Print' : 'Mono Print' }}</p>
                             <p class="text-xs sm:text-sm text-muted-color">Frame: {{ item.frame }}</p>
                             <p class="text-xs sm:text-sm text-muted-color">Size: {{ item.size }}</p>
 

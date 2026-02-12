@@ -509,6 +509,7 @@ onUnmounted(() => {
                                                     </Link>
 
                                                     <p class="text-sm text-muted-color">Type: {{ item.type }}</p>
+                                                    <p class="text-sm text-muted-color">Print: {{ item.print_type === 'oil' ? 'Oil Print' : 'Mono Print' }}</p>
                                                     <p class="text-sm text-muted-color">Frame: {{ item.frame }}</p>
                                                     <p class="text-sm text-muted-color">Size: {{ item.size }}</p>
                                                     <p class="text-sm text-muted-color">{{ item.quantity }} x €{{

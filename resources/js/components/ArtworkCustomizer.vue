@@ -3,6 +3,9 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import { useToast } from 'primevue/usetoast';
 import Tooltip from 'primevue/tooltip';
+import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
+import Dialog from 'primevue/dialog'; // <--- Import Dialog
 
 const props = defineProps({
     artwork: Object,
@@ -23,10 +26,14 @@ const canViewPrice = computed(() => props.canViewPrice);
 
 const toast = useToast();
 
+// State for the Info Dialog
+const showPrintInfo = ref(false); // <--- New State
+
 const isSquare = computed(() => props.artwork?.width === props.artwork?.height);
 
 const selectedType = ref('canvas');
 const selectedCanvas = ref('black');
+const selectedPrintType = ref('mono');
 const selectedSize = ref('50x70');
 const selectedSquareSize = ref('50x50');
 
@@ -42,13 +49,21 @@ const frames = [
     { id: 'noframe', label: 'No Frame', img: '/images/frames/floatnoframe.jpg' },
 ];
 
-// ... (Pricing logic remains same) ...
+const printTypes = [
+    { id: 'mono', label: 'Mono Print', img: '/images/frames/mono-print.webp' },
+    { id: 'oil', label: 'Oil Print', img: '/images/frames/oil-print.webp' },
+];
+
+// Pricing Logic
 const prices = computed(() => {
     const arrayToObject = (arr) => {
         if (!Array.isArray(arr)) return {};
         return arr.reduce((acc, item) => {
             if (item.size && item.price) {
-                acc[item.size] = parseFloat(item.price);
+                acc[item.size] = {
+                    mono: parseFloat(item.price),
+                    oil: parseFloat(item.oil_price || item.price)
+                };
             }
             return acc;
         }, {});
@@ -109,16 +124,21 @@ const showSize = (size) => {
     if (isSquare.value && !isSquareSize) return false;
     if (!isSquare.value && isSquareSize) return false;
 
+    let priceObj = null;
+
     if (selectedType.value === 'canvas') {
-        return selectedCanvas.value === 'noframe'
-            ? (prices.value.frame.noframe[size] > 0)
-            : (prices.value.frame.canvas[size] > 0);
+        priceObj = selectedCanvas.value === 'noframe'
+            ? prices.value.frame.noframe[size]
+            : prices.value.frame.canvas[size];
     } else {
-        return prices.value.frame.poster[size] > 0;
+        priceObj = prices.value.frame.poster[size];
     }
+
+    return priceObj && priceObj.mono > 0;
 };
 
 const showCanvasFrames = computed(() => selectedType.value === 'canvas');
+const showPrintTypes = computed(() => selectedType.value === 'canvas');
 
 const getButtonProps = (currentValue, selectedValue) => ({
     variant: currentValue === selectedValue ? 'outlined' : 'text',
@@ -131,13 +151,19 @@ const quantity = ref(1);
 
 const currentPrice = computed(() => {
     const sizeToUse = isSquare.value ? selectedSquareSize.value : selectedSize.value;
+
     if (selectedType.value === 'canvas') {
         const frameTypePrices = selectedCanvas.value === 'noframe'
             ? prices.value.frame.noframe
             : prices.value.frame.canvas;
-        return frameTypePrices[sizeToUse] || 0;
+
+        const priceData = frameTypePrices[sizeToUse];
+        if (!priceData) return 0;
+        return selectedPrintType.value === 'oil' ? priceData.oil : priceData.mono;
     }
-    return 0; // Poster logic disabled based on previous code
+
+    const posterPrices = prices.value.frame.poster;
+    return posterPrices[sizeToUse]?.mono || 0;
 });
 
 const totalPrice = computed(() => {
@@ -152,23 +178,21 @@ const formattedTotalPrice = computed(() => {
     }).format(totalPrice.value);
 });
 
-// Helper to safely get the image thumb whether from DB (flat) or API (nested)
 const getArtworkThumb = () => {
     return props.artwork?.img_thumb || props.artwork?.urls?.img_thumb || null;
 };
 
-// Helper to get title safely
 const getArtworkTitle = () => {
-    // If it's a string (DB), return it. If it's localized (API), try English.
     if (typeof props.artwork?.title === 'string') return props.artwork.title;
     return props.artwork?.title?.en || 'Artwork';
 };
 
 const addToCartForm = useForm({
-    artwork_id: props.artwork?.pictufy_id || null, // <--- CHANGED: Use pictufy_id
+    artwork_id: props.artwork?.pictufy_id || null,
     title: null,
     type: selectedType.value,
     frame: selectedCanvas.value,
+    print_type: 'mono',
     size: isSquare.value ? selectedSquareSize.value : selectedSize.value,
     quantity: quantity.value,
     img_thumb: null,
@@ -177,11 +201,11 @@ const addToCartForm = useForm({
 });
 
 const addToCart = () => {
-    // Ensure we send the correct Pictufy ID
     addToCartForm.artwork_id = String(props.artwork.pictufy_id);
     addToCartForm.title = getArtworkTitle();
     addToCartForm.type = selectedType.value;
     addToCartForm.frame = selectedCanvas.value;
+    addToCartForm.print_type = selectedType.value === 'canvas' ? selectedPrintType.value : 'mono';
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
     addToCartForm.img_thumb = getArtworkThumb();
@@ -222,7 +246,7 @@ watch(selectedType, (newType) => {
         addToCartForm.type = newType;
         addToCartForm.frame = selectedCanvas.value;
     }
-    // ... (size reset logic remains same) ...
+
     const currentSize = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     if (!showSize(currentSize)) {
         const availablePrices = prices.value.frame[newType === 'canvas' ? (selectedCanvas.value === 'noframe' ? 'noframe' : 'canvas') : 'poster'];
@@ -242,22 +266,25 @@ watch(selectedType, (newType) => {
     }
 });
 
-watch([currentPrice, quantity, selectedSize, selectedSquareSize], () => {
+watch([currentPrice, quantity, selectedSize, selectedSquareSize, selectedPrintType], () => {
     addToCartForm.price = currentPrice.value;
     addToCartForm.total = totalPrice.value;
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
+    if (selectedType.value === 'canvas') {
+        addToCartForm.print_type = selectedPrintType.value;
+    }
 });
 
 onMounted(() => {
     if (selectedType.value === 'canvas') {
         emit('frameChange', selectedCanvas.value);
     }
-    // Initialize form with safe getters
     addToCartForm.artwork_id = props.artwork?.pictufy_id ? String(props.artwork.pictufy_id) : '';
     addToCartForm.title = getArtworkTitle();
     addToCartForm.type = selectedType.value;
     addToCartForm.frame = selectedCanvas.value;
+    addToCartForm.print_type = selectedType.value === 'canvas' ? selectedPrintType.value : 'mono';
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
     addToCartForm.img_thumb = getArtworkThumb();
@@ -279,16 +306,18 @@ watch([selectedType, selectedCanvas], () => {
 
 <template>
     <Form>
-        <h2 class="artwork-option">Choose an option:</h2>
         <div class="detail-item">
             <span class="detail-label">Type</span>
         </div>
-
         <div class="type-wrapper">
             <Button v-bind="getButtonProps('canvas', selectedType)" @click="selectedType = 'canvas'">
-                <img src="/images/frames/floating-frame.svg" alt="Floating Canvas" class="canvas-icon" />
+                <div class="flex flex-col items-center">
+                    <img src="/images/frames/floating-frame.svg" alt="Floating Canvas" class="canvas-icon" />
+                    <span class="text-xs mt-1 font-semibold">Canvas</span>
+                </div>
             </Button>
         </div>
+
         <div class="detail-item">
             <span class="detail-label">Frame</span>
         </div>
@@ -304,6 +333,26 @@ watch([selectedType, selectedCanvas], () => {
                 </span>
             </div>
         </div>
+
+        <template v-if="showPrintTypes">
+            <div class="detail-item">
+                <div class="flex items-center gap-2">
+                    <span class="detail-label !mb-0">Print Type</span>
+                    <i class="pi pi-info-circle text-gray-400 hover:text-blue-500 cursor-pointer transition-colors"
+                        @click="showPrintInfo = true" v-tooltip.top="'Click for details about print types'"></i>
+                </div>
+            </div>
+            <div class="print-type-wrapper">
+                <div v-for="pType in printTypes" :key="pType.id" class="relative group">
+                    <Button v-bind="getButtonProps(pType.id, selectedPrintType)" @click="selectedPrintType = pType.id">
+                        <div class="flex flex-col items-center">
+                            <img :src="pType.img" :alt="pType.label" class="canvas-icon w-16" />
+                            <span class="text-xs mt-1 font-semibold">{{ pType.label }}</span>
+                        </div>
+                    </Button>
+                </div>
+            </div>
+        </template>
 
         <div class="detail-item">
             <span class="detail-label">Size</span>
@@ -328,11 +377,16 @@ watch([selectedType, selectedCanvas], () => {
                 <h2 class="final-total">FINAL TOTAL</h2>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm sm:text-base text-muted-color"><span class="font-semibold">Type:</span> {{
-                        selectedType }}</p>
+                        selectedType }}
+                    </p>
                     <p class="text-sm sm:text-base text-muted-color" v-if="selectedType === 'canvas'"><span
                             class="font-semibold">Frame:</span> {{ selectedCanvas }}</p>
+                    <p class="text-sm sm:text-base text-muted-color" v-if="selectedType === 'canvas'"><span
+                            class="font-semibold">Print:</span> {{ selectedPrintType === 'oil' ? 'Oil Print' : 'Mono Print' }}
+                    </p>
                     <p v-if="!isSquare" class="text-sm sm:text-base text-muted-color"><span
-                            class="font-semibold">Size:</span> {{ selectedSize }}</p>
+                            class="font-semibold">Size:</span>
+                        {{ selectedSize }}</p>
                     <p v-else class="text-sm sm:text-base text-muted-color"><span class="font-semibold">Size:</span> {{
                         selectedSquareSize }}</p>
                 </div>
@@ -355,13 +409,38 @@ watch([selectedType, selectedCanvas], () => {
             </div>
         </div>
     </Form>
+
+    <Dialog v-model:visible="showPrintInfo" modal header="Canvas Print Types"
+        :style="{ width: '90vw', maxWidth: '500px' }" :dismissableMask="true">
+        <div class="flex flex-col gap-6">
+            <div>
+                <h3 class="font-bold text-lg text-gray-800 mb-2">Monoprint on Canvas</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Printed on 100% cotton canvas 420gsm with simple protective oil.
+                    It brings the colors to life and protects them from fading over time.
+                </p>
+            </div>
+
+            <div class="border-t pt-6">
+                <h3 class="font-bold text-lg text-gray-800 mb-2">Oil Print on Canvas</h3>
+                <p class="text-gray-600 leading-relaxed">
+                    Printed on 100% cotton canvas 420gsm with protective oil and <span class="font-bold">handmade
+                        three-dimensional texture.</span> <br>
+                    In addition to the monoprint, it makes the painting slightly <span class="font-bold">embossed</span>
+                    and
+                    gives <span class="font-bold">the feeling of painting</span> according to the brushstrokes of the
+                    work.
+                </p>
+            </div>
+        </div>
+    </Dialog>
 </template>
 
 <style scoped>
-/* Styles παραμένουν τα ίδια */
 .tags-wrapper,
 .type-wrapper,
 .canvas-wrapper,
+.print-type-wrapper,
 .poster-wrapper,
 .sizes-wrapper,
 .sizes-square-wrapper {
@@ -381,11 +460,6 @@ watch([selectedType, selectedCanvas], () => {
     display: block;
     width: 50px;
     height: 50px;
-}
-
-.size-icon {
-    width: 80px;
-    height: 35px;
 }
 
 .artwork-option {
@@ -417,16 +491,12 @@ watch([selectedType, selectedCanvas], () => {
 .cart-section {
     margin-top: 2rem;
     padding: 1.5rem;
-    /* background-color: #f9f9f9; */
-    /* border-radius: 8px; */
-    /* box-shadow: 0 2px 8px rgba(0,0,0,0.1); */
 }
 
 .total-section {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    /* Αυξήθηκε το κενό για καλύτερη οπτική διάκριση */
 }
 
 .price-container {
@@ -439,7 +509,6 @@ watch([selectedType, selectedCanvas], () => {
     font-size: 1rem;
     font-weight: 400;
     color: #64748b;
-    /* The utility classes 'cursor-help' and 'underline' handle the visual cues */
 }
 
 .total-amount {
@@ -447,7 +516,6 @@ watch([selectedType, selectedCanvas], () => {
     font-weight: 700;
     color: #2c3e50;
     line-height: 1;
-    /* Helps with baseline alignment */
 }
 
 .cart-actions {
@@ -455,76 +523,39 @@ watch([selectedType, selectedCanvas], () => {
     gap: 1rem;
     align-items: center;
     justify-content: flex-start;
-    /* Ευθυγράμμιση στην αρχή */
 }
 
 .quantity-wrapper {
-    /* Δεν χρειάζεται συγκεκριμένο πλάτος εδώ, το InputNumber θα το διαχειριστεί */
     width: auto;
-    /* Προσαρμόζεται στο περιεχόμενο */
     min-width: auto;
-    /* Αποφυγή υπερβολικά μικρού πλάτους */
 }
 
 .quantity-input {
     width: 100%;
-    /* Το InputNumber θα πάρει το πλάτος του wrapper του */
 }
 
-/* Στοχεύστε τα εσωτερικά στοιχεία του PrimeVue InputNumber αν χρειάζεται */
 .quantity-input :deep(.p-inputnumber) {
     width: auto;
-    /* Ή ένα συγκεκριμένο πλάτος αν προτιμάτε, π.χ., '120px' */
 }
 
 .quantity-input :deep(.p-inputnumber-button) {
     width: 2rem;
-    /* Ή όσο χρειάζεται για να φαίνονται καλά τα κουμπιά */
 }
 
 .quantity-input :deep(.p-inputtext) {
     padding: 0.25rem;
-    /* Μικρότερο padding για compact εμφάνιση */
 }
-
 
 .add-to-cart-btn {
-    /* Το κουμπί θα πάρει το υπόλοιπο διαθέσιμο πλάτος αν είναι το μόνο flex-grow στοιχείο,
-       ή μπορείτε να του δώσετε ένα συγκεκριμένο πλάτος/max-width */
     max-width: 150px;
-    /* Μέγιστο πλάτος για το κουμπί */
     flex: 1;
-    /* Επιτρέπει στο κουμπί να μεγαλώσει αν υπάρχει χώρος, αλλά όχι πάνω από το max-width */
 }
 
-
-/* Εάν έχετε αυτές τις κλάσεις για λεπτομέρειες τιμών, κρατήστε τις */
-.price-details {
-    display: grid;
-    gap: 1rem;
-}
-
-.detail-value.price,
-.detail-value.total {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #2196F3;
-    /* Παράδειγμα χρώματος */
-}
-
-.detail-value.total {
-    color: #4CAF50;
-    /* Παράδειγμα χρώματος για το σύνολο */
-}
-
-/* Text styling for summary below FINAL TOTAL */
 .text-muted-color {
     color: #555;
-    /* Ένα απαλό γκρι για τις λεπτομέρειες */
 }
 
 .font-semibold {
     font-weight: 600;
-    /* Για τις ετικέτες όπως Type, Frame, Size */
 }
 </style>

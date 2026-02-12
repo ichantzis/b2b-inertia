@@ -18,9 +18,9 @@
                                 <template #content>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div class="mb-2"><strong>Order Date:</strong> {{ formatDate(order.created_at)
-                                        }}</div>
+                                            }}</div>
                                         <div class="mb-2"><strong>Last Updated:</strong> {{ formatDate(order.updated_at)
-                                        }}</div>
+                                            }}</div>
                                         <div class="border-t border-gray-100 pt-4 mt-4 space-y-3">
                                             <div class="flex justify-between text-sm">
                                                 <span class="text-gray-500">Subtotal</span>
@@ -418,7 +418,7 @@
                                         placeholder="Admin notes for this order..."
                                         :class="{ 'p-invalid': orderForm.errors.notes }" />
                                     <small v-if="orderForm.errors.notes" class="p-error">{{ orderForm.errors.notes
-                                    }}</small>
+                                        }}</small>
                                 </template>
                             </Card>
                         </div>
@@ -444,7 +444,9 @@
                                                         ID: {{ item.artwork_id || item.pictufy_id || item.id }}
                                                     </p>
                                                     <p class="text-xs text-surface-500">
-                                                        {{ item.type }} | {{ item.frame }} | {{ item.size }}
+                                                        {{ item.type }} | {{
+                                                            item.print_type === 'oil' ? 'Oil Print' : 'Mono Print' }} | {{
+                                                        item.frame }} | {{ item.size }}
                                                     </p>
                                                     <p class="text-sm font-semibold text-surface-700 mt-1">
                                                         {{ item.quantity }} x {{ formatCurrency(item.artwork_data?.price

@@ -102,6 +102,7 @@ class AccountController extends Controller
                         'subtitle' => $item->description ?? "{$item->size} • {$item->frame}", // e.g. "50x70 • Black Frame"
                         'quantity' => $item->quantity,
                         'type' => $item->type,
+                        'print_type' => $item->print_type ?? 'mono',
                         'size' => $item->size,
                         'frame' => $item->frame,
                         'price' => $item->price,

@@ -99,6 +99,7 @@ class CartController extends Controller
                 'id' => $item->id,
                 'artwork_id' => $item->artwork_id, // This is the pictufy_id
                 'type' => $item->type,
+                'print_type' => $item->print_type ?? 'mono',
                 'frame' => $item->frame,
                 'size' => $item->size,
                 'quantity' => $item->quantity,
@@ -124,6 +125,7 @@ class CartController extends Controller
             'artwork_id' => 'required|string|max:50|exists:artworks,pictufy_id',
             'quantity' => 'required|integer|min:1',
             'type' => 'required|string|max:20',
+            'print_type' => 'nullable|string|in:mono,oil',
             'frame' => 'required|string|max:20',
             'size' => 'required|string|max:10',
             'price' => 'required|numeric|min:0',
@@ -199,6 +201,7 @@ class CartController extends Controller
         $cartItem = $cart->items()
             ->where('artwork_id', $validatedData['artwork_id']) // pictufy_id
             ->where('type', $validatedData['type'])
+            ->where('print_type', $validatedData['print_type'] ?? 'mono')
             ->where('frame', $validatedData['frame'])
             ->where('size', $validatedData['size'])
             ->first();
@@ -211,6 +214,7 @@ class CartController extends Controller
             $cart->items()->create([
                 'artwork_id' => $validatedData['artwork_id'], // pictufy_id
                 'type' => $validatedData['type'],
+                'print_type' => $validatedData['print_type'] ?? 'mono',
                 'frame' => $validatedData['frame'],
                 'size' => $validatedData['size'],
                 'quantity' => $validatedData['quantity'],
@@ -290,6 +294,7 @@ class CartController extends Controller
                     'artwork_id' => $item->artwork_id,
                     'quantity' => $item->quantity,
                     'type' => $item->type,
+                    'print_type' => $item->print_type ?? 'mono',
                     'frame' => $item->frame,
                     'size' => $item->size,
                     'artwork_data' => $item->artwork_data ?? [],

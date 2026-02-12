@@ -26,6 +26,12 @@
             border-bottom: 1px solid #eee;
         }
 
+        .logo {
+            max-height: 60px;
+            width: auto;
+            margin-bottom: 15px;
+        }
+
         .order-info {
             margin-top: 20px;
             margin-bottom: 20px;
@@ -123,6 +129,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <img src="{{ asset('images/Pinakothiki-Logo-Header.png') }}" alt="Pinakothiki" class="logo">
             <h1>Thank you for your order!</h1>
             <p>We'll contact you soon for further payment details.</p>
         </div>
@@ -146,7 +153,10 @@
                     <td>
                         <strong>{{ $item->artwork_title }}</strong><br>
                         <span style="font-size: 12px; color: #777;">
-                            {{ ucfirst($item->type) }} | {{ $item->size }} | {{ ucfirst($item->frame) }}
+                            {{ ucfirst($item->type) }} | {{ $item->size }} | @if($item->frame && $item->frame !== 'noframe') | {{ ucfirst($item->frame) }} @endif
+                            @if($item->type === 'canvas')
+                            <br>Print: {{ $item->print_type === 'oil' ? 'Oil Print' : 'Mono Print' }}
+                            @endif
                         </span>
                     </td>
                     <td>{{ $item->quantity }}</td>

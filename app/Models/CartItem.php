@@ -14,6 +14,7 @@ class CartItem extends Model
         'cart_id',
         'artwork_id',
         'type',
+        'print_type',
         'frame',
         'size',
         'quantity',

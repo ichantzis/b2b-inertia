@@ -44,7 +44,8 @@
                                         class="text-surface-700 dark:text-surface-100 font-medium text-sm mb-2">ID: {{
                                             item.artwork_id || item.pictufy_id || item.id }}</span>                                    
                                     <span class="text-surface-700 dark:text-surface-100 font-medium text-sm mb-2">
-                                        Type: {{ item.type || 'N/A' }} | Size: {{
+                                        Type: {{ item.type || 'N/A' }} | Print: {{
+                                            item.print_type === 'oil' ? 'Oil Print' : 'Mono Print' }} | Size: {{
                                             item.size || 'N/A' }} | Frame: {{ item.frame ||
                                             'N/A' }}
                                     </span>

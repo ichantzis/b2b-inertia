@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class SettingsController extends Controller
@@ -49,8 +50,10 @@ class SettingsController extends Controller
             'pricing_config' => 'sometimes|array',
             'pricing_config.canvas_framed.*.size' => 'required_with:pricing_config|string',
             'pricing_config.canvas_framed.*.price' => 'required_with:pricing_config|numeric|min:0',
+            'pricing_config.canvas_framed.*.oil_price' => 'nullable|numeric|min:0',
             'pricing_config.canvas_noframe.*.size' => 'required_with:pricing_config|string',
             'pricing_config.canvas_noframe.*.price' => 'required_with:pricing_config|numeric|min:0',
+            'pricing_config.canvas_noframe.*.oil_price' => 'nullable|numeric|min:0',
             'pricing_config.poster_framed.*.size' => 'required_with:pricing_config|string',
             'pricing_config.poster_framed.*.price' => 'required_with:pricing_config|numeric|min:0',
         ]);

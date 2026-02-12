@@ -13,7 +13,8 @@ class OrderItem extends Model
         'order_id',
         'artwork_id',
         'artwork_title',
-        'type',             // Added
+        'type',
+        'print_type',
         'frame',            // Added
         'size',             // Added
         'price',

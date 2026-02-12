@@ -129,6 +129,7 @@ class OrderController extends Controller
                     'artwork_id' => $item->artwork_id,
                     'artwork_title' => $item->artwork_title,
                     'type' => $item->type,
+                    'print_type' => $item->print_type ?? 'mono',
                     'frame' => $item->frame,
                     'size' => $item->size,
                     'price' => $item->price,

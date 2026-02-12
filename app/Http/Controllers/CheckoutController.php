@@ -36,6 +36,7 @@ class CheckoutController extends Controller
                 'id' => $item->id,
                 'artwork_id' => $item->artwork_id,
                 'type' => $item->type,
+                'print_type' => $item->print_type ?? 'mono',
                 'frame' => $item->frame,
                 'size' => $item->size,
                 'quantity' => $item->quantity,
@@ -201,6 +202,7 @@ class CheckoutController extends Controller
                     // Use the title stored in the Cart DB
                     'artwork_title' => $cartItem->artwork_data['title'] ?? 'Artwork', 
                     'type' => $cartItem->type,
+                    'print_type' => $cartItem->print_type ?? 'mono',
                     'frame' => $cartItem->frame,
                     'size' => $cartItem->size,
                     'price' => $cartItem->artwork_data['price'] ?? 0,

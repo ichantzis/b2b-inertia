@@ -132,6 +132,7 @@
                                         <PricingListEditor 
                                             v-model="pricingForm.pricing_config.canvas_framed" 
                                             :is-saving="pricingForm.processing"
+                                            :show-oil-price="true"
                                             @save="(msg) => submitPricing(msg)"
                                         />
                                     </TabPanel>
@@ -139,6 +140,7 @@
                                         <PricingListEditor 
                                             v-model="pricingForm.pricing_config.canvas_noframe" 
                                             :is-saving="pricingForm.processing"
+                                            :show-oil-price="true"
                                             @save="(msg) => submitPricing(msg)"
                                         />
                                     </TabPanel>
@@ -146,6 +148,7 @@
                                         <PricingListEditor 
                                             v-model="pricingForm.pricing_config.poster_framed" 
                                             :is-saving="pricingForm.processing"
+                                            :show-oil-price="false"
                                             @save="(msg) => submitPricing(msg)"
                                         />
                                     </TabPanel>
@@ -154,7 +157,7 @@
                         </div>
                     </template>
                     <template #footer>
-                        <div class="flex justify-end">
+                        <div class="flex justify-end"> <!-- Hidden because we rely on auto-saving, but can be shown if needed -->
                             <Button label="Save Prices" icon="pi pi-save" severity="success" size="small" 
                                 :loading="pricingForm.processing" 
                                 @click="submitPricing" />
@@ -240,7 +243,10 @@ const pricingForm = useForm({
 });
 
 // Now accepts a custom success message
-const submitPricing = (successMessage = 'Price list saved.') => {
+const submitPricing = (message = 'Price list saved.') => {
+    // Ensure we have a string. If 'message' is an event object, use the default.
+    const successMessage = typeof message === 'string' ? message : 'Price list saved.';
+
     pricingForm.post(route('dashboard.settings.update'), {
         preserveScroll: true,
         preserveState: true,

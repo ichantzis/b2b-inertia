@@ -1,54 +1,219 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; padding: 0; border-radius: 8px; margin-top: 30px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
-        .header { background-color: #2c3e50; color: #ffffff; padding: 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
-        
-        .content { padding: 30px; }
-        
-        .alert-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 15px; border-radius: 6px; margin-bottom: 25px; text-align: center; font-size: 16px; font-weight: 500; }
-        
-        .info-grid { display: flex; margin-bottom: 25px; }
-        .info-col { flex: 1; }
-        .label { font-size: 11px; text-transform: uppercase; color: #9ca3af; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .value { font-size: 15px; color: #1f2937; font-weight: 500; }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 0;
+            border-radius: 8px;
+            margin-top: 30px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .logo {
+            max-height: 50px;
+            width: auto;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .alert-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .info-grid {
+            display: flex;
+            margin-bottom: 25px;
+        }
+
+        .info-col {
+            flex: 1;
+        }
+
+        .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9ca3af;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .value {
+            font-size: 15px;
+            color: #1f2937;
+            font-weight: 500;
+        }
 
         /* Styles for Address & Invoice Sections */
-        .details-section { margin-bottom: 25px; padding-top: 15px; border-top: 1px solid #f3f4f6; }
-        .address-table { width: 100%; border-collapse: collapse; border: none; margin: 0; }
-        .address-td { width: 50%; vertical-align: top; border: none; padding: 0; }
-        .address-text { font-size: 13px; line-height: 1.5; color: #374151; }
-        
-        .invoice-box { margin-bottom: 25px; background-color: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb; }
-        .invoice-table td { padding: 3px 0; border: none; font-size: 13px; vertical-align: top; }
-        .invoice-label { color: #6b7280; width: 110px; }
-        .invoice-val { font-weight: 600; color: #1f2937; }
+        .details-section {
+            margin-bottom: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .address-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: none;
+            margin: 0;
+        }
+
+        .address-td {
+            width: 50%;
+            vertical-align: top;
+            border: none;
+            padding: 0;
+        }
+
+        .address-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .invoice-box {
+            margin-bottom: 25px;
+            background-color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .invoice-table td {
+            padding: 3px 0;
+            border: none;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        .invoice-label {
+            color: #6b7280;
+            width: 110px;
+        }
+
+        .invoice-val {
+            font-weight: 600;
+            color: #1f2937;
+        }
 
         /* Items Table */
-        .items-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
-        .items-table th { text-align: left; padding: 12px 10px; background: #f9fafb; color: #6b7280; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
-        .items-table td { padding: 12px 10px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #374151; vertical-align: top; }
-        
-        .totals { margin-top: 20px; text-align: right; }
-        .totals-row { margin-bottom: 5px; color: #6b7280; font-size: 14px; }
-        .totals-row.final { font-size: 18px; font-weight: bold; color: #111827; margin-top: 10px; }
-        .discount { color: #16a34a; }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
 
-        .btn-container { text-align: center; margin-top: 30px; }
-        .btn { display: inline-block; background-color: #3b82f6; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px; }
-        .btn:hover { background-color: #2563eb; }
+        .items-table th {
+            text-align: left;
+            padding: 12px 10px;
+            background: #f9fafb;
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e5e7eb;
+        }
 
-        .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
+        .items-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+            color: #374151;
+            vertical-align: top;
+        }
+
+        .totals {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .totals-row {
+            margin-bottom: 5px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .totals-row.final {
+            font-size: 18px;
+            font-weight: bold;
+            color: #111827;
+            margin-top: 10px;
+        }
+
+        .discount {
+            color: #16a34a;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: #ffffff;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+        }
+
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            border-top: 1px solid #e5e7eb;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
+            <img src="{{ asset('images/Pinakothiki-Logo-Header.png') }}" alt="Pinakothiki" class="logo">
             <h1>New Order Received</h1>
         </div>
 
@@ -84,7 +249,7 @@
                                 {{ $order->billing_address }}<br>
                                 {{ $order->billing_city }}
                                 @if(!empty($order->billing_state_or_county))
-                                    , {{ $order->billing_state_or_county }}
+                                , {{ $order->billing_state_or_county }}
                                 @endif
                                 , {{ $order->billing_postal_code }}<br>
                                 {{ $order->billing_country }}<br>
@@ -104,7 +269,7 @@
                                 {{ $order->shipping_address }}<br>
                                 {{ $order->shipping_city }}
                                 @if(!empty($order->shipping_state_or_county))
-                                    , {{ $order->shipping_state_or_county }}
+                                , {{ $order->shipping_state_or_county }}
                                 @endif
                                 , {{ $order->shipping_postal_code }}<br>
                                 {{ $order->shipping_country }}<br>
@@ -169,6 +334,9 @@
                             <span style="font-size: 12px; color: #6b7280;">
                                 {{ ucfirst($item->type) }} | {{ $item->size }}
                                 @if($item->frame && $item->frame !== 'noframe') | {{ ucfirst($item->frame) }} @endif
+                                @if($item->type === 'canvas')
+                                <br>Print: {{ $item->print_type === 'oil' ? 'Oil Print' : 'Mono Print' }}
+                                @endif
                             </span>
                         </td>
                         <td>{{ $item->quantity }}</td>
@@ -205,4 +373,5 @@
         </div>
     </div>
 </body>
+
 </html>
