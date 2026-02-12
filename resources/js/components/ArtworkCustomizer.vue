@@ -358,15 +358,15 @@ watch([selectedType, selectedCanvas], () => {
             <span class="detail-label">Size</span>
         </div>
         <div class="sizes-wrapper" v-if="!isSquare">
-            <Button v-for="size in availableRectangularSizes" :key="size" v-bind="getButtonProps(size, selectedSize)"
+            <Button class="w-24" v-for="size in availableRectangularSizes" :key="size" v-bind="getButtonProps(size, selectedSize)"
                 @click="selectedSize = size" :label="size" />
             <div v-if="availableRectangularSizes.length === 0" class="text-sm text-gray-500 italic">
                 No sizes available for this selection.
             </div>
         </div>
         <div class="sizes-square-wrapper" v-if="isSquare">
-            <Button v-for="size in availableSquareSizes" :key="size" v-bind="getButtonProps(size, selectedSquareSize)"
-                @click="selectedSquareSize = size" :label="size" severity="contrast" />
+            <Button class="w-24" v-for="size in availableSquareSizes" :key="size" v-bind="getButtonProps(size, selectedSquareSize)"
+                @click="selectedSquareSize = size" :label="size" />
             <div v-if="availableSquareSizes.length === 0" class="text-sm text-gray-500 italic">
                 No square sizes available.
             </div>

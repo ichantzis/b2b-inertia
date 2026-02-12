@@ -1122,7 +1122,7 @@ const addToRecentlyViewed = (item) => {
   }
 
   .artwork-information {
-    width: 40%;
+    width: 30%;
   }
 }
 
