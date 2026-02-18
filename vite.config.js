@@ -5,7 +5,6 @@ import tailwindcss from "@tailwindcss/vite";
 import Components from 'unplugin-vue-components/vite';
 import { PrimeVueResolver } from '@primevue/auto-import-resolver';
 
-// https://vitejs.dev/config/
 export default ({ mode }) => {
     const env = loadEnv(mode, process.cwd());
     const devPort = parseInt(env.VITE_PORT) || 5173;
@@ -15,6 +14,7 @@ export default ({ mode }) => {
         plugins: [
             laravel({
                 input: 'resources/js/app.js',
+                ssr: 'resources/js/ssr.js', // <--- Add this line
                 refresh: true,
             }),
             vue({
