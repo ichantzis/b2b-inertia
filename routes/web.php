@@ -14,19 +14,53 @@ use App\Http\Controllers\ArtistController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ListController;
 // -----------------------
+use App\Services\SettingsService;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // --- Homepage ---
 // You can keep this closure or move it to HomeController
-Route::get('/', function () {
+Route::get('/', function (SettingsService $settingsService) {
     // Fetch generic lists for homepage (e.g., 'best-sellers') or just pass empty
     // If you need specific lists for the homepage slider, fetch them here using Models.
-    $curatedLists = \App\Models\ArtworkList::orderByDesc('last_change')->get(); 
+    $curatedLists = \App\Models\ArtworkList::orderByDesc('last_change')->get();
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'curatedLists' => $curatedLists,
+        'heroSettings' => [
+            'image' => $settingsService->get('hero_image', '/images/hero-bg.jpg.png'),
+            'title' => $settingsService->get('hero_title', 'Premium Art on Canvas Custom Made by hand with Love'),
+            'subtitle' => $settingsService->get('hero_subtitle', 'Art Prints for Every Personality'),
+            'button1_text' => $settingsService->get('hero_button1_text', 'Shop Prints'),
+            'button1_link' => $settingsService->get('hero_button1_link', '/artworks?category=prints'),
+            'button2_text' => $settingsService->get('hero_button2_text', 'Shop Frames'),
+            'button2_link' => $settingsService->get('hero_button2_link', '/artworks?category=frames'),
+        ],
+        'featuredColumns' => [
+            'col1' => [
+                'title' => $settingsService->get('col1_title', 'Featured Title 1'),
+                'link'  => $settingsService->get('col1_link', '#'),
+                'image' => $settingsService->get('col1_image', '/images/placeholder.png'),
+            ],
+            'col2' => [
+                'title' => $settingsService->get('col2_title', 'Featured Title 2'),
+                'link'  => $settingsService->get('col2_link', '#'),
+                'image' => $settingsService->get('col2_image', '/images/placeholder.png'),
+            ],
+            'col3' => [
+                'title' => $settingsService->get('col3_title', 'Featured Title 3'),
+                'link'  => $settingsService->get('col3_link', '#'),
+                'image' => $settingsService->get('col3_image', '/images/placeholder.png'),
+            ]
+        ],
+        'editorSettings' => [
+            'title'       => $settingsService->get('editor_title', 'THE EDITOR\'S PICK - MAY'),
+            'description' => $settingsService->get('editor_description', 'Discover the world\'s top posters, handpicked by our editors. Curated from recent bestsellers and fresh favorites.'),
+            'button_text' => $settingsService->get('editor_button_text', 'Shop Collection'),
+            'button_link' => $settingsService->get('editor_button_link', '/artworks'),
+            'image'       => $settingsService->get('editor_image', null), // Προαιρετικά, μπορείς να βάλεις ένα placeholder image link εδώ
+        ],
     ]);
 })->name('welcome');
 
@@ -62,7 +96,7 @@ Route::get('/collections', [CollectionController::class, 'index'])->name('collec
 Route::get('/collection/{collection_slug}/{filters?}', [CollectionController::class, 'show'])
     ->where('filters', '.*')
     ->name('collection.show');
-    
+
 // Note: "Collections by Category" is tricky if we don't have a CollectionCategory model.
 // Only enable this if you have a way to query collections by a category SLUG.
 // For now, we point it to the controller to handle or 404.
@@ -96,7 +130,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     Route::get('/orders/{order:id}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::put('/orders/{order:id}', [AdminOrderController::class, 'update'])->name('orders.update');
     Route::get('/orders/{order}/items/{item}/download', [App\Http\Controllers\Admin\OrderController::class, 'downloadArtwork'])
-    ->name('orders.download-artwork');
+        ->name('orders.download-artwork');
     Route::resource('users', AdminUserController::class)->except(['show']);
     Route::patch('/coupons/{coupon}/toggle', [App\Http\Controllers\Admin\CouponController::class, 'toggleStatus'])->name('coupons.toggle');
     Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->names('coupons');

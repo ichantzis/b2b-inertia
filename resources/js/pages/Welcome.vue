@@ -1,7 +1,7 @@
 <script setup>
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 import { usePage, Link, Head as InertiaHead } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
 import DataView from 'primevue/dataview';
 import Divider from 'primevue/divider';
@@ -46,6 +46,64 @@ const features = [
 ];
 
 const page = usePage();
+
+const carouselResponsiveOptions = ref([
+    {
+        breakpoint: '1280px',
+        numVisible: 4,
+        numScroll: 1
+    },
+    {
+        breakpoint: '1024px',
+        numVisible: 3,
+        numScroll: 1
+    },
+    {
+        breakpoint: '768px',
+        numVisible: 2,
+        numScroll: 1
+    },
+    {
+        breakpoint: '560px',
+        numVisible: 1,
+        numScroll: 1
+    }
+]);
+
+// Προσωρινά δεδομένα (Mock Data) για να δοκιμάσουμε το Carousel (21 στοιχεία)
+const recentlyViewedItems = ref(
+    Array.from({ length: 21 }).map((_, index) => ({
+        id: index + 1,
+        title: `Artwork ${index + 1}`,
+        image: `https://picsum.photos/seed/${index + 1}/400/500` // Τυχαίες εικόνες
+    }))
+);
+
+const heroSettings = computed(() => {
+    return page.props.heroSettings || {
+        image: '/images/hero-bg.jpg.png', // Προεπιλεγμένη εικόνα
+        title: 'Premium Art on Canvas Custom Made by hand with Love',
+        subtitle: 'Art Prints for Every Personality',
+        button1_text: 'Shop Prints',
+        button1_link: '/artworks?category=prints',
+        button2_text: 'Shop Frames',
+        button2_link: '/artworks?category=frames'
+    };
+});
+
+const featuredColumns = computed(() => page.props.featuredColumns || {
+    col1: { title: 'Column 1', link: '#', image: '/images/placeholder.png' },
+    col2: { title: 'Column 2', link: '#', image: '/images/placeholder.png' },
+    col3: { title: 'Column 3', link: '#', image: '/images/placeholder.png' }
+});
+
+const editorSettings = computed(() => page.props.editorSettings || {
+    title: 'THE EDITOR\'S PICK - MAY',
+    description: 'Discover the world\'s top posters...',
+    button_text: 'Shop Collection',
+    button_link: '/artworks',
+    image: null
+});
 
 // JSON-LD για το Brand/E-shop
 const organizationSchema = {
@@ -96,31 +154,101 @@ onMounted(() => {
     </InertiaHead>
 
     <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">
-                Welcome to <span class="text-primary">Pinakothiki</span>
+    <section class="relative w-full bg-white flex items-center justify-center overflow-hidden">
+        <img :src="heroSettings.image" alt="Hero Banner"
+            class="w-full h-auto max-h-[calc(100vh-100px)] object-contain block" />
+
+        <div class="absolute inset-0"></div>
+
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4 md:px-8">
+
+            <h1
+                class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-sm max-w-4xl">
+                {{ heroSettings.title }}
             </h1>
-            <p class="hero-subtitle">
-                Unique artwork curated for B2B partners
+
+            <p class="text-base sm:text-lg md:text-xl lg:text-2xl text-white font-medium tracking-wide mt-2 md:mt-4">
+                {{ heroSettings.subtitle }}
             </p>
-            <div class="hero-actions">
-                <Link :href="route('collections.index')">
-                    <Button label="Explore Collections" icon="pi pi-images" class="p-button-lg" />
+
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 md:mt-8">
+                <Link :href="heroSettings.button1_link">
+                    <Button :label="heroSettings.button1_text"
+                        class="!bg-white !border-black !text-black  uppercase tracking-widest px-6 py-3 sm:px-8 sm:py-3 rounded-none font-semibold transition-colors text-sm" />
+                </Link>
+
+                <Link :href="heroSettings.button2_link">
+                    <Button :label="heroSettings.button2_text"
+                        class="!bg-white !border-black !text-black  uppercase tracking-widest px-6 py-3 sm:px-8 sm:py-3 rounded-none font-semibold transition-colors text-sm" />
                 </Link>
             </div>
         </div>
     </section>
 
+    <!-- Featured 3 Columns Section -->
+    <section class="w-full bg-white mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <!-- Column 1 -->
+            <!-- aspect-[4/5] ορίζει σταθερή αναλογία ώστε όλες οι εικόνες να έχουν το ίδιο ύψος και σχήμα (πορτρέτου) -->
+            <Link :href="featuredColumns.col1.link"
+                class="group relative block w-full overflow-hidden aspect-[4/5] bg-gray-100">
+                <img :src="featuredColumns.col1.image" :alt="featuredColumns.col1.title"
+                    class="absolute inset-0 w-full h-full object-cover" />
+                <!-- Gradient Overlay για να διαβάζεται καθαρά ο τίτλος -->
+                <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                </div>
+                <!-- Title -->
+                <div class="absolute bottom-6 left-6 pr-6">
+                    <h3 class="text-white text-2xl tracking-wider drop-shadow-md">
+                        {{ featuredColumns.col1.title }}
+                    </h3>
+                </div>
+            </Link>
+
+            <!-- Column 2 -->
+            <Link :href="featuredColumns.col2.link"
+                class="group relative block w-full overflow-hidden aspect-[4/5] bg-gray-100">
+                <img :src="featuredColumns.col2.image" :alt="featuredColumns.col2.title"
+                    class="absolute inset-0 w-full h-full object-cover" />
+                <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                </div>
+                <div class="absolute bottom-6 left-6 pr-6">
+                    <h3 class="text-white text-2xl tracking-wider drop-shadow-md">
+                        {{ featuredColumns.col2.title }}
+                    </h3>
+                </div>
+            </Link>
+
+            <!-- Column 3 -->
+            <Link :href="featuredColumns.col3.link"
+                class="group relative block w-full overflow-hidden aspect-[4/5] bg-gray-100">
+                <img :src="featuredColumns.col3.image" :alt="featuredColumns.col3.title"
+                    class="absolute inset-0 w-full h-full object-cover" />
+                <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                </div>
+                <div class="absolute bottom-6 left-6 pr-6">
+                    <h3 class="text-white text-2xl tracking-wider drop-shadow-md">
+                        {{ featuredColumns.col3.title }}
+                    </h3>
+                </div>
+            </Link>
+
+        </div>
+    </section>
+
     <!-- Secondary Banner -->
-    <section class="secondary-banner my-8 px-4">
+    <!-- <section class="secondary-banner my-8 px-4">
         <div class="promo-banner-container relative rounded-xl overflow-hidden shadow-lg">
             <img src="/images/banner2.webp" alt="Timeless Art" class="w-full object-cover h-[300px]" />
             <div class="absolute inset-0 bg-black/20 flex flex-col justify-center p-8 text-white">
-                <!-- <h2 class="text-4xl font-serif">TIMELESS ART</h2> -->
-            </div>
+                 <h2 class="text-4xl font-serif">TIMELESS ART</h2> -->
+    <!-- </div>
         </div>
-    </section>
+    </section> -->
 
     <!-- Trust Icons Section -->
     <section class="trust-icons-section py-12 bg-gray-50 border-y border-gray-200">
@@ -149,75 +277,116 @@ onMounted(() => {
         </div>
     </section>
 
-    <!-- Curated Lists Section -->
-    <section class="curated-section py-12 px-6">
-        <div class="max-w-7xl mx-auto">
-            <h2 class="text-4xl mb-8 text-center tracking-widest">
-                Curated by Art Collectors
-            </h2>
-
-            <div class="curated-list-container">
-                <div v-for="list in curatedLists" :key="list.list_id" class="curated-banner-item">
-                    <Link :href="route('lists.show', { slug: list.slug })" class="curated-banner-link group">
-
-                        <div class="image-wrapper">
-                            <img :src="list.cover || '/images/placeholder.png'" :alt="list.name"
-                                class="curated-banner-image" loading="lazy" />
-                        </div>
-
-                        <div class="curated-banner-overlay"></div>
-
-                        <div class="curated-banner-content">
-                            <h3 class="curated-banner-title">
-                                {{ list.name }}
-                            </h3>
-                            <span
-                                class="view-text group-hover:translate-x-2 transition-transform duration-300 inline-block">
-                                View Collection <i class="pi pi-arrow-right text-xs ml-1"></i>
-                            </span>
-                        </div>
+    <!-- Editor's Pick Section -->
+    <section class="w-full bg-[#F5F3E7]"> <!-- Το απαλό μπεζ χρώμα -->
+        <div class="grid grid-cols-1 md:grid-cols-2">
+            <!-- Κείμενο -->
+            <div class="flex items-center justify-end p-12 md:p-24">
+                <div class="max-w-md text-center md:text-right">
+                    <h2 class="text-xl font-bold tracking-widest uppercase mb-4">{{ editorSettings.title }}
+                    </h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed">{{ editorSettings.description }}</p>
+                    <Link :href="editorSettings.button_link">
+                        <Button :label="editorSettings.button_text" class="!bg-black !text-white !rounded-none !px-8" />
                     </Link>
                 </div>
+            </div>
+            <!-- Εικόνα -->
+            <div class="w-full h-[300px] md:h-[400px]">
+                <img :src="editorSettings.image" class="w-full h-full object-cover" />
             </div>
         </div>
     </section>
 
-    <section v-if="recentlyViewed.length > 0" class="recent-section">
-        <div class="max-w-7xl mx-auto px-4">
-            <h2 class="section-title">Recently Viewed Items</h2>
+    <!-- Curated Lists Section -->
+    <section class="py-16 px-4 md:px-8 bg-white border-t border-gray-100">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl md:text-4xl mb-12 text-center tracking-widest uppercase text-gray-900">
+                Curated by Art Collectors
+            </h2>
 
-            <DataView :value="recentlyViewed" layout="grid">
-                <template #grid="slotProps">
-                    <div class="grid grid-cols-12 gap-4 md:gap-8">
-                        <div v-for="(item, index) in slotProps.items" :key="item.pictufy_id || index"
-                            class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
-                            <div class="rounded flex flex-col artwork-container">
-                                <Link :href="route('artwork.details', {
-                                    id: item.pictufy_id,
-                                    slug: slugify(typeof item.title === 'string' ? item.title : (item.title?.en || 'artwork'))
-                                })" class="artwork-link">
-                                    <div class="relative">
-                                        <img :src="item.image || item.thumb || '/images/placeholder.png'"
-                                            :alt="typeof item.title === 'string' ? item.title : (item.title?.en || 'Untitled')"
-                                            class="rounded w-full h-auto object-contain max-h-[300px]" />
+            <!-- Grid 3 στηλών (Αυξήσαμε το gap σε 8 για να "αναπνέουν" τα κείμενα κάτω από τις εικόνες) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
 
-                                        <div class="artwork-overlay">
-                                            <div class="overlay-content">
-                                                <span class="artwork-title">
-                                                    {{ typeof item.title === 'string' ? item.title : (item.title?.en ||
-                                                        'Untitled') }}
-                                                </span>
-                                                <Divider layout="vertical" />
-                                                <span class="artwork-id">ID: {{ item.pictufy_id || item.artwork_id }}</span>
-                                            </div>
+                <!-- Loop στις πρώτες 21 λίστες -->
+                <div v-for="list in curatedLists.slice(0, 21)" :key="list.list_id" class="w-full">
+                    <Link :href="route('lists.show', { slug: list.slug })" class="block group no-underline">
+
+                        <!-- Image Container (Αυστηρά τετράγωνο, με κενό στο κάτω μέρος) -->
+                        <div class="relative w-full aspect-square overflow-hidden bg-gray-100 mb-4">
+                            <div class="absolute inset-0 bg-cover bg-center"
+                                :style="{ backgroundImage: `url(${list.cover || '/images/placeholder.png'})` }">
+                            </div>
+                        </div>
+
+                        <!-- Content Container (Κάτω από την εικόνα, Σκούρα και Έντονα γράμματα) -->
+                        <div class="w-full text-left">
+                            <h3 class="text-gray-900 text-lg text-center md:text-xl font-bold tracking-wider mb-2">
+                                {{ list.name }}
+                            </h3>
+                        </div>
+
+                    </Link>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Browse Collections Banner -->
+    <section class="w-full bg-[#EAE6D7] py-8 border-y border-gray-200">
+        <div class="flex justify-center items-center">
+            <Link href="/collections" class="block">
+                <button
+                    class="px-8 py-3 border border-black rounded-full bg-transparent hover:bg-black hover:text-white transition-colors duration-300 font-medium text-lg tracking-wide cursor-pointer">
+                    Browse all our Collections here
+                </button>
+            </Link>
+        </div>
+    </section>
+
+    <!-- Recently Viewed Items Section -->
+    <section class="py-16 px-4 md:px-8 bg-white">
+        <div class="max-w-7xl mx-auto">
+
+            <h2 class="text-2xl md:text-3xl mb-12 text-center tracking-widest text-gray-900">
+                Recently Viewed Items
+            </h2>
+
+            <!-- PrimeVue Carousel -->
+            <Carousel :value="recentlyViewed" :numVisible="4" :numScroll="1"
+                :responsiveOptions="carouselResponsiveOptions" circular>
+                <!-- Template για το κάθε artwork -->
+                <template #item="slotProps">
+                    <div class="p-2"> <!-- p-2 για να υπάρχει ένα μικρό κενό μεταξύ των καρτών του carousel -->
+                        <div class="rounded flex flex-col artwork-container">
+                            <Link :href="route('artwork.details', {
+                                id: slotProps.data.pictufy_id || slotProps.data.artwork_id,
+                                slug: slugify(typeof slotProps.data.title === 'string' ? slotProps.data.title : (slotProps.data.title?.en || 'artwork'))
+                            })" class="artwork-link">
+                                <div class="relative">
+                                    <img :src="slotProps.data.image || slotProps.data.thumb || '/images/placeholder.png'"
+                                        :alt="typeof slotProps.data.title === 'string' ? slotProps.data.title : (slotProps.data.title?.en || 'Untitled')"
+                                        class="rounded w-full h-auto object-contain max-h-[300px]" />
+
+                                    <div class="artwork-overlay">
+                                        <div class="overlay-content">
+                                            <span class="artwork-title">
+                                                {{ typeof slotProps.data.title === 'string' ? slotProps.data.title :
+                                                (slotProps.data.title?.en || 'Untitled') }}
+                                            </span>
+                                            <Divider layout="vertical" />
+                                            <span class="artwork-id">ID: {{ slotProps.data.pictufy_id ||
+                                                slotProps.data.artwork_id }}</span>
                                         </div>
                                     </div>
-                                </Link>
-                            </div>
+                                </div>
+                            </Link>
                         </div>
                     </div>
                 </template>
-            </DataView>
+            </Carousel>
+
         </div>
     </section>
 
@@ -375,102 +544,7 @@ onMounted(() => {
 /* =========================================
    4. CURATED LISTS (Grid Layout)
    ========================================= */
-.curated-section {
-    padding: 4rem 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
 
-.section-title {
-    font-size: 2rem;
-    font-weight: 500;
-    text-align: center;
-    margin-bottom: 3rem;
-    letter-spacing: 0.1em;
-    color: #333;
-}
-
-.curated-list-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    /* Mobile: 1 item per row */
-    gap: 2.5rem;
-}
-
-/* Tablet & Desktop: 2 items per row */
-@media (min-width: 768px) {
-    .curated-list-container {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-.curated-banner-item {
-    width: 100%;
-    position: relative;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.curated-banner-link {
-    display: block;
-    position: relative;
-    width: 100%;
-    height: 400px;
-    /* Fixed height as requested */
-}
-
-.curated-image-wrapper {
-    width: 100%;
-    height: 100%;
-}
-
-.curated-banner-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.7s ease;
-}
-
-.curated-banner-link:hover .curated-banner-image {
-    transform: scale(1.05);
-}
-
-/* Gradient Overlay */
-.curated-banner-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
-    pointer-events: none;
-}
-
-.curated-banner-content {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    padding: 2.5rem;
-    width: 100%;
-    color: white;
-    z-index: 10;
-}
-
-.curated-banner-title {
-    font-family: serif;
-    font-size: 2rem;
-    /* Adjusted slightly for 2-col layout */
-    font-weight: 400;
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.05em;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.view-text {
-    font-size: 0.9rem;
-    font-weight: 500;
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
 
 /* =========================================
    5. CLIENTS SECTION
@@ -575,8 +649,8 @@ onMounted(() => {
     max-width: 100%;
     height: auto;
     margin: 0 auto;
-    border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    /* border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
 }
 
 .artwork-overlay {
