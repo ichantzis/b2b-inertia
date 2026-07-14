@@ -635,8 +635,8 @@ onMounted(() => {
 }
 
 .artwork-container:hover {
-    transform: translateY(-5px);
-    /* Gentle lift effect */
+    /* transform: translateY(-5px);
+     Gentle lift effect */
 }
 
 .artwork-link {

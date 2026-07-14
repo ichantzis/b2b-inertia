@@ -123,31 +123,32 @@ class ArtworkController extends Controller
     public function getRelatedContent($id)
     {
         $artwork = Artwork::where('pictufy_id', $id)->first();
-        if (!$artwork) return response()->json(['related' => [], 'youMayLike' => []]);
 
-        // 1. Related: Same Category + First Keyword
-        $relatedQuery = Artwork::where('category_id', $artwork->category_id)
-            ->where('id', '!=', $artwork->id);
-
-        $keywords = explode(',', $artwork->keywords ?? '');
-        $firstKeyword = trim($keywords[0] ?? '');
-
-        if ($firstKeyword) {
-            $relatedQuery->where('keywords', 'LIKE', "%$firstKeyword%");
+        // Εάν δεν βρεθεί το έργο, επιστρέφουμε άδεια arrays για να μην "σπάσει" το Vue
+        if (!$artwork) {
+            return response()->json([
+                'moreFromArtist' => [],
+                'youMayAlsoLike' => []
+            ]);
         }
 
-        $related = $relatedQuery->take(12)->get(); // Fetch 12 like API
+        // 1. More from this Artist: Ίδιος καλλιτέχνης, τυχαία σειρά, όριο 4 έργα
+        $moreFromArtist = Artwork::where('artist_id', $artwork->artist_id)
+            ->where('id', '!=', $artwork->id) // Εξαιρούμε το έργο που ήδη βλέπει ο χρήστης
+            ->inRandomOrder()
+            ->take(4)
+            ->get();
 
-        // 2. You May Like: Trending (Highest Rank)
-        $youMayLike = Artwork::where('id', '!=', $artwork->id)
-            ->orderByRaw('trending_rank IS NULL ASC, trending_rank ASC') // Put NULLs last
-            ->take(6)
+        // 2. You May Also Like: Ίδια κατηγορία, τυχαία σειρά, όριο 21 έργα (για το Carousel)
+        $youMayAlsoLike = Artwork::where('category_id', $artwork->category_id)
+            ->where('id', '!=', $artwork->id)
+            ->inRandomOrder()
+            ->take(21)
             ->get();
 
         return response()->json([
-            'related' => $related,
-            'youMayLike' => $youMayLike
+            'moreFromArtist' => $moreFromArtist,
+            'youMayAlsoLike' => $youMayAlsoLike
         ]);
     }
-
 }

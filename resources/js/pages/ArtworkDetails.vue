@@ -265,80 +265,118 @@
     </Container>
   </section>
 
-  <section class="mt-16 mb-8 content-wrapper" v-if="relatedArtworks.length > 0 || youMayLikeArtworks.length > 0">
-    <div v-if="relatedArtworks.length > 0" class="mb-12">
-      <h3 class="text-2xl text-center font-bold mb-6 text-gray-800">Related Products</h3>
-      <DataView :value="relatedArtworks" layout="grid">
-        <template #grid="slotProps">
-          <div class="grid grid-cols-12 gap-4 md:gap-8">
-            <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
-              class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
-              <div class="rounded flex flex-col artwork-container">
-                <Link :href="route('artwork.details', {
-                  id: artwork.pictufy_id || artwork.id,
-                  slug: slugify(artwork.title || 'artwork')
-                })" class="artwork-link">
-                  <div class="relative">
-                    <img v-if="artwork?.img_thumb" :src="artwork.img_thumb"
-                      :alt="artwork.title || 'Untitled'"
-                      class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]"
-                      loading="lazy" decoding="async" />
-                    <div v-else class="no-image">No Image Available</div>
-                    <div class="artwork-overlay">
-                      <div class="overlay-content">
-                        <span class="artwork-title">{{ artwork.title || 'Untitled' }}</span>
-                        <Divider layout="vertical" />
-                        <span class="artwork-id">ID: {{ artwork.pictufy_id || artwork.id }}</span>
-                      </div>
-                    </div>
+  <!-- ==========================================
+     SECTION 1: MORE FROM THIS ARTIST (4 Items)
+     ========================================== -->
+  <section v-if="moreFromArtist && moreFromArtist.length > 0"
+    class="py-16 px-4 md:px-8 bg-white border-t border-gray-200">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-2xl md:text-3xl mb-8 text-center tracking-widest text-gray-900">
+        Related Products
+      </h2>
+
+      <!-- UI Consistency Grid (Match with Artworks.vue) -->
+      <div class="grid grid-cols-12 gap-4 md:gap-8">
+        <div v-for="(item, index) in moreFromArtist" :key="item.pictufy_id || item.id || index"
+          class="col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3 p-2">
+
+          <div class="rounded flex flex-col artwork-container">
+            <Link :href="route('artwork.details', {
+              id: item.pictufy_id || item.id,
+              slug: slugify(typeof item.title === 'string' ? item.title : (item.title?.en || 'artwork'))
+            })" class="artwork-link">
+              <div class="relative">
+
+                <!-- Image or Fallback -->
+                <img v-if="item.image || item.thumb || item.img_thumb" :src="item.image || item.thumb || item.img_thumb"
+                  :alt="typeof item.title === 'string' ? item.title : (item.title?.en || 'Untitled')"
+                  class="rounded w-full h-auto object-contain max-h-[300px]" />
+                <div v-else class="no-image">No Image Available</div>
+
+                <!-- Overlay Content -->
+                <div class="artwork-overlay">
+                  <div class="overlay-content">
+                    <span class="artwork-title">
+                      {{ typeof item.title === 'string' ? item.title : (item.title?.en || 'Untitled') }}
+                    </span>
+                    <Divider layout="vertical" />
+                    <span class="artwork-id">ID: {{ item.pictufy_id || item.id }}</span>
                   </div>
-                </Link>
+                </div>
+
               </div>
-            </div>
+            </Link>
           </div>
-        </template>
-      </DataView>
-      <div class="flex justify-center my-8">
-        <Button :label="`See all from ${currentArtwork.category}`" icon="pi pi-arrow-right" iconPos="right" outlined
-          severity="contrast" raised class="w-full md:w-auto px-8 py-3 font-semibold tracking-wide"
-          @click="navigateToCategoryTrending" />
+
+        </div>
+      </div>
+
+      <div class="mt-10 flex justify-center">
+        <Link :href="`/collections/${slugify(currentArtwork?.artist || 'artist')}`">
+          <button
+            class="px-8 py-3 border border-black text-black bg-transparent hover:bg-black hover:text-white transition-colors duration-300 font-medium tracking-widest text-sm cursor-pointer">
+            More from {{ currentArtwork?.artist || 'this Artist' }}
+          </button>
+        </Link>
       </div>
     </div>
+  </section>
 
-    <Divider />
+  <!-- ==========================================
+     SECTION 2: YOU MAY ALSO LIKE (Carousel)
+     ========================================== -->
+  <section v-if="youMayAlsoLike && youMayAlsoLike.length > 0"
+    class="py-16 px-4 md:px-8 bg-white border-t border-gray-200">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-2xl md:text-3xl mb-12 text-center tracking-widest text-gray-900">
+        You may also like
+      </h2>
 
-    <div v-if="youMayLikeArtworks.length > 0">
-      <h3 class="text-2xl text-center font-bold mb-6 text-gray-800">You May Also Like</h3>
-      <DataView :value="youMayLikeArtworks" layout="grid">
-        <template #grid="slotProps">
-          <div class="grid grid-cols-12 gap-4 md:gap-8">
-            <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
-              class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
-              <div class="rounded flex flex-col artwork-container">
-                <Link :href="route('artwork.details', {
-                  id: artwork.pictufy_id || artwork.id,
-                  slug: slugify(artwork.title || 'artwork')
-                })" class="artwork-link">
-                  <div class="relative">
-                    <img v-if="artwork?.img_thumb" :src="artwork.img_thumb"
-                      :alt="artwork.title || 'Untitled'"
-                      class="rounded w-full h-auto object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-[1.02]"
-                      loading="lazy" decoding="async" />
-                    <div v-else class="no-image">No Image Available</div>
-                    <div class="artwork-overlay">
-                      <div class="overlay-content">
-                        <span class="artwork-title">{{ artwork.title || 'Untitled' }}</span>
-                        <Divider layout="vertical" />
-                        <span class="artwork-id">ID: {{ artwork.pictufy_id || artwork.id}}</span>
-                      </div>
+      <!-- PrimeVue Carousel -->
+      <Carousel :value="youMayAlsoLike" :numVisible="4" :numScroll="1" :responsiveOptions="carouselResponsiveOptions"
+        circular>
+        <template #item="slotProps">
+          <div class="p-2">
+
+            <div class="rounded flex flex-col artwork-container">
+              <Link :href="route('artwork.details', {
+                id: slotProps.data.pictufy_id || slotProps.data.id,
+                slug: slugify(typeof slotProps.data.title === 'string' ? slotProps.data.title : (slotProps.data.title?.en || 'artwork'))
+              })" class="artwork-link">
+                <div class="relative">
+
+                  <!-- Image or Fallback -->
+                  <img v-if="slotProps.data.image || slotProps.data.thumb || slotProps.data.img_thumb"
+                    :src="slotProps.data.image || slotProps.data.thumb || slotProps.data.img_thumb"
+                    :alt="typeof slotProps.data.title === 'string' ? slotProps.data.title : (slotProps.data.title?.en || 'Untitled')"
+                    class="rounded w-full h-auto object-contain max-h-[300px]" />
+                  <div v-else class="no-image">No Image Available</div>
+
+                  <!-- Overlay Content -->
+                  <div class="artwork-overlay">
+                    <div class="overlay-content">
+                      <span class="artwork-title">
+                        {{ typeof slotProps.data.title === 'string' ? slotProps.data.title : (slotProps.data.title?.en
+                          || 'Untitled') }}
+                      </span>
+                      <Divider layout="vertical" />
+                      <span class="artwork-id">ID: {{ slotProps.data.pictufy_id || slotProps.data.id }}</span>
                     </div>
                   </div>
-                </Link>
-              </div>
+
+                </div>
+              </Link>
             </div>
+
           </div>
         </template>
-      </DataView>
+      </Carousel>
+      <div class="mt-10 flex justify-center">
+        <button severity="warn" @click="navigateToCategory(currentArtwork.category)"
+          class="px-8 py-3 border border-black text-black bg-transparent hover:bg-black hover:text-white transition-colors duration-300 font-medium tracking-widest text-sm cursor-pointer">
+          More from {{ currentArtwork?.category || 'this Category' }}
+        </button>
+      </div>
     </div>
   </section>
   <div v-else-if="isLoadingRelated" class="flex justify-center mt-12 mb-8">
@@ -478,8 +516,8 @@ const canViewPrice = computed(() => {
 const currentArtwork = computed(() => props.artwork);
 
 // --- RELATED PRODUCTS LOGIC ---
-const relatedArtworks = ref([]);
-const youMayLikeArtworks = ref([]);
+const moreFromArtist = ref([]);
+const youMayAlsoLike = ref([]);
 const isLoadingRelated = ref(false);
 
 const fetchRelatedContent = async () => {
@@ -487,19 +525,20 @@ const fetchRelatedContent = async () => {
 
   isLoadingRelated.value = true;
   try {
-    // Call our new internal API endpoint
+    // Κλήση στο internal API endpoint
     const response = await axios.get(route('artwork.related', currentArtwork.value.pictufy_id));
 
     if (response.data) {
       console.log('Related artworks response:', response.data);
-      
-      relatedArtworks.value = response.data.related || [];
-      youMayLikeArtworks.value = response.data.youMayLike || [];
+
+      // Αντιστοίχηση των δεδομένων στα σωστά (νέα) Vue refs
+      moreFromArtist.value = response.data.moreFromArtist || [];
+      youMayAlsoLike.value = response.data.youMayAlsoLike || [];
     }
   } catch (error) {
     console.error("Failed to fetch related artworks", error);
   } finally {
-    isLoadingRelated.value = false;
+    isLoadingRelated.value = false; // Τερματισμός του loading state
   }
 };
 
@@ -553,9 +592,9 @@ const frameColorImagePaths = {
 
 // Configuration for allowed Interior IDs per geometry
 const INTERIOR_WHITELIST = {
-    vertical:   ['31', '52', '75', '87', '94', '124', '1194', '1226', '1506', '1598'],
-    horizontal: ['36', '86', '645', '1162', '1600', '1870'],
-    square:     ['39', '64', '129', '170', '652', '899', '1041', '1596']
+  vertical: ['31', '52', '75', '87', '94', '124', '1194', '1226', '1506', '1598'],
+  horizontal: ['36', '86', '645', '1162', '1600', '1870'],
+  square: ['39', '64', '129', '170', '652', '899', '1041', '1596']
 };
 
 
@@ -676,44 +715,44 @@ const parsedKeywords = computed(() => {
 
 // Gallery Images Computed Property with Interior Whitelisting
 const galleryImages = computed(() => {
-    if (!currentArtwork.value) return [];
+  if (!currentArtwork.value) return [];
 
-    // 1. Start with the Main Artwork Image
-    const images = [
-        {
-            itemImageSrc: currentArtwork.value.img_medium || currentArtwork.value.img_high,
-            thumbnailImageSrc: currentArtwork.value.img_thumb || currentArtwork.value.img_high,
-            alt: currentArtwork.value.title?.en || 'Main Artwork',
-            isPrimaryArtwork: true
-        }
-    ];
+  // 1. Start with the Main Artwork Image
+  const images = [
+    {
+      itemImageSrc: currentArtwork.value.img_medium || currentArtwork.value.img_high,
+      thumbnailImageSrc: currentArtwork.value.img_thumb || currentArtwork.value.img_high,
+      alt: currentArtwork.value.title?.en || 'Main Artwork',
+      isPrimaryArtwork: true
+    }
+  ];
 
-    // 2. Get the geometry (default to 'vertical' if missing)
-    const geometry = currentArtwork.value.geometry ? currentArtwork.value.geometry.toLowerCase() : 'vertical';
-    
-    // 3. Get the list of allowed IDs for this geometry
-    const allowedIds = INTERIOR_WHITELIST[geometry] || [];
-    
-    // 4. Get the raw interiors object from API
-    const availableInteriors = currentArtwork.value.interiors || {};
+  // 2. Get the geometry (default to 'vertical' if missing)
+  const geometry = currentArtwork.value.geometry ? currentArtwork.value.geometry.toLowerCase() : 'vertical';
 
-    // 5. Loop through allowed IDs and add them if they exist in the API response
-    allowedIds.forEach(id => {
-        // We look up the ID in the available interiors object
-        // Note: Object keys are strings, so '31' matches key "31"
-        const interior = availableInteriors[id];
+  // 3. Get the list of allowed IDs for this geometry
+  const allowedIds = INTERIOR_WHITELIST[geometry] || [];
 
-        if (interior && interior.url) {
-            images.push({
-                itemImageSrc: interior.url,
-                thumbnailImageSrc: interior.url, // Using same URL for thumb as interiors usually load fast
-                alt: interior['short-name'] || 'Interior View',
-                isPrimaryArtwork: false
-            });
-        }
-    });
+  // 4. Get the raw interiors object from API
+  const availableInteriors = currentArtwork.value.interiors || {};
 
-    return images;
+  // 5. Loop through allowed IDs and add them if they exist in the API response
+  allowedIds.forEach(id => {
+    // We look up the ID in the available interiors object
+    // Note: Object keys are strings, so '31' matches key "31"
+    const interior = availableInteriors[id];
+
+    if (interior && interior.url) {
+      images.push({
+        itemImageSrc: interior.url,
+        thumbnailImageSrc: interior.url, // Using same URL for thumb as interiors usually load fast
+        alt: interior['short-name'] || 'Interior View',
+        isPrimaryArtwork: false
+      });
+    }
+  });
+
+  return images;
 });
 
 // const galleryImages = computed(() => {
