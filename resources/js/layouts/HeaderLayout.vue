@@ -93,16 +93,32 @@ const mainMenuItems = computed(() => {
     }
 
     items.push({
-        label: 'Product Collection',
-        route: route('collections.index'),
-        active: currentRoute.value === 'collections.index' || currentRoute.value === 'collection.show' || currentRoute.value === 'collections.category.show',
-        command: () => {
-            mobileMenuOpen.value = false;
-        },
+        label: 'Products Collection',
+        icon: 'pi pi-fw pi-images',
+        expanded: true, // Add this to show submenu by default
+        items: [
+            {
+                label: 'All Collections',
+                // icon: 'pi pi-fw pi-images',
+                route: route('lists.index'),
+                command: () => {
+                    mobileMenuOpen.value = false;
+                }
+            },
+            ...(page.props.global_data?.lists || []).map(list => ({
+                label: list.name,
+                icon: list.cover,
+                route: route('lists.show', { slug: list.slug }),
+                command: () => {
+                    mobileMenuOpen.value = false;
+                }
+            }))
+        ]
     });
 
     items.push({
         label: 'Frames',
+        icon: 'pi pi-fw pi-objects-column',
         route: route('artworks'),
         active: currentRoute.value == 'artworks',
         command: () => {
@@ -112,6 +128,7 @@ const mainMenuItems = computed(() => {
 
     items.push({
         label: 'Artists',
+        icon: 'pi pi-fw pi-palette',
         route: route('artists.overview'),
         active: currentRoute.value == 'artists.overview' || currentRoute.value == 'artists.illustrators' || currentRoute.value == 'artists.photographers' || currentRoute.value == 'artists.by_country' || currentRoute.value == 'artists.all',
         command: () => {
@@ -341,7 +358,7 @@ onUnmounted(() => {
     <div>
         <div class="min-h-screen">
             <nav :class="[
-                'fixed top-0 w-full bg-white shadow-sm transition-transform duration-300 z-50',
+                'dynamic-bg shadow-sm fixed w-full transition-transform duration-300 z-50',
                 { '-translate-y-full': !isHeaderVisible }
             ]">
 
@@ -371,8 +388,10 @@ onUnmounted(() => {
                         </div>
 
                         <div class="flex items-center justify-end gap-4 whitespace-nowrap">
-                            <a href="#" class="hidden sm:inline hover:text-gray-600 transition-colors">About us</a>
-                            <a href="#" class="hidden sm:inline hover:text-gray-600 transition-colors">Partners</a>
+                            <Link :href="route('about')" class="hover:text-gray-600 transition-colors">About Us
+                            </Link>
+                            <Link :href="route('collaborate')" class="hover:text-gray-600 transition-colors">Partners
+                            </Link>
                             <Link :href="route('contact.index')" class="hover:text-gray-600 transition-colors">Contact
                             </Link>
 
@@ -389,17 +408,16 @@ onUnmounted(() => {
                             </button>
                         </div>
                     </div>
-                <Container fluid flush-mobile class="relative">                    
+                <Container class="relative max-w-none">                    
 
                     <LinksMenuBar :model="mainMenuItems" :key="currentRoute"
-                        pt:root:class="art-main-menu relative min-h-16 border-0 rounded-none bg-white px-4 py-2 md:min-h-[72px] md:px-8"
-                        pt:button:class="hidden">
+                        pt:root:class="px-0 py-4 border-0 rounded-none dynamic-bg" pt:button:class="hidden">
                         <!-- Left Side - Hamburger Menu -->
                         <template #start>
                             <!-- Mobile Hamburger -->
                             <div class="flex items-center lg:hidden">
                                 <div class="relative">
-                                    <Button severity="secondary" icon="pi pi-bars" pt:icon:class="text-xl" text rounded
+                                    <Button severity="secondary" icon="pi pi-bars" pt:icon:class="text-xl" text
                                         @click="mobileMenuOpen = true" />
                                 </div>
                             </div>

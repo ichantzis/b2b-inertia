@@ -3,7 +3,7 @@ import { Head as InertiaHead, useForm } from '@inertiajs/vue3';
 import { useToast } from 'primevue/usetoast';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 
-// PrimeVue Components (Ensure these are imported if not auto-imported)
+// PrimeVue Components
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
@@ -25,7 +25,6 @@ const submit = () => {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
-            // toast.add({ severity: 'success', summary: 'Success', detail: 'Message sent successfully!', life: 3000 });
         },
         onError: () => {
             toast.add({ severity: 'error', summary: 'Error', detail: 'Please check the form for errors.', life: 3000 });
@@ -33,61 +32,81 @@ const submit = () => {
     });
 };
 
-// SEO Data
+// SEO Data (JSON-LD)
 const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ContactPage",
-    "description": "Contact Pinakothiki support team for inquiries about art prints and orders.",
+    "name": "Contact | PINAKOTHIKI",
+    "description": "Contact the PINAKOTHIKI team for custom artworks, handcrafted frames, bespoke applications, and creative collaborations.",
     "url": window.location.href
 };
 </script>
 
 <template>
     <InertiaHead>
-        <title>Contact Us</title>
-        <meta name="description"
-            content="Get in touch with Pinakothiki. We are here to help with your art print orders, custom requests, and general inquiries." />
+        <title>Contact | PINAKOTHIKI</title>
+        <meta name="description" content="Contact the PINAKOTHIKI team for custom artworks, handcrafted frames, bespoke applications, and creative collaborations." />
+        <meta name="keywords" content="contact Pinakothiki, custom frames Greece, handcrafted frames, art prints Greece, wholesale art order Greece, B2B art contact" />
+        
+        <!-- Social Meta Tags -->
+        <meta property="og:title" content="Contact PINAKOTHIKI" />
+        <meta property="og:description" content="For custom artworks, handcrafted frames, and creative collaborations, the PINAKOTHIKI team is here to help." />
+        
         <component is="script" type="application/ld+json">{{ JSON.stringify(jsonLd) }}</component>
     </InertiaHead>
 
-    <Container class="py-12 md:py-24">
+    <section class="bg-white p-12 md:p-24">
         <div class="flex flex-col lg:flex-row shadow-xl rounded-xl overflow-hidden bg-white dark:bg-surface-800">
 
-            <div
-                class="lg:w-5/12 bg-surface-900 text-white flex flex-col justify-center items-center text-center p-8 md:p-16">
+            <!-- Αριστερό Πάνελ (Πληροφορίες) -->
+            <div class="lg:w-5/12 bg-surface-900 text-white flex flex-col justify-center items-start text-left p-8 md:p-16">
 
-                <h1 class="text-3xl font-bold mb-6">PINAKOTHIKI</h1>
+                <h1 class="text-3xl font-bold mb-6 leading-tight">
+                    Let’s create something unique for your space.
+                </h1>
 
-                <p class="text-surface-300 mb-8 leading-relaxed text-lg">
-                    Paintings on canvas or poster <br>
-                    Discover Unique Art for your space! <br>
-                    Handmade • Free Shipping • Made in Greece
+                <div class="text-surface-300 mb-8 leading-relaxed text-base space-y-4">
+                    <p>
+                        The PINAKOTHIKI team is here to help you select the right artworks, frames, and custom art solutions for your space.
+                    </p>
+                    <p>
+                        From individual pieces to complete wall compositions and bespoke applications, we create tailored proposals designed around the character and aesthetic of every interior.
+                    </p>
+                    <p>
+                        Get in touch with us for price lists, custom orders, collaborations, or more information about our collections and services.
+                    </p>
+                </div>
+
+                <p class="text-surface-400 mb-10 font-semibold text-xs uppercase tracking-widest">
+                    Canvas prints & posters • Handcrafted frames • Made in Greece
                 </p>
 
-                <div class="flex gap-6 text-2xl">
+                <!-- Κοινωνικά Δίκτυα -->
+                <div class="flex gap-6 text-xl">
                     <a href="https://www.facebook.com/pinakothiki.FineArtPrints" target="_blank" rel="noopener nofollow"
-                        class="w-12 h-12 rounded-full border border-surface-600 flex items-center justify-center hover:bg-white hover:text-surface-900 transition-colors no-underline duration-300"
+                        class="w-10 h-10 rounded-full border border-surface-600 flex items-center justify-center hover:bg-white hover:text-surface-900 transition-colors no-underline duration-300"
                         aria-label="Facebook">
                         <i class="pi pi-facebook"></i>
                     </a>
                     <a href="https://www.instagram.com/pinakothiki/" target="_blank" rel="noopener nofollow"
-                        class="w-12 h-12 rounded-full border border-surface-600 flex items-center justify-center hover:bg-white hover:text-surface-900 transition-colors no-underline duration-300"
+                        class="w-10 h-10 rounded-full border border-surface-600 flex items-center justify-center hover:bg-white hover:text-surface-900 transition-colors no-underline duration-300"
                         aria-label="Instagram">
                         <i class="pi pi-instagram"></i>
                     </a>
                     <a href="mailto:info@pinakothiki.gr" target="_blank" rel="nofollow noopener"
-                        class="w-12 h-12 rounded-full border border-surface-600 flex items-center justify-center hover:bg-white hover:text-surface-900 transition-colors no-underline duration-300"
+                        class="w-10 h-10 rounded-full border border-surface-600 flex items-center justify-center hover:bg-white hover:text-surface-900 transition-colors no-underline duration-300"
                         aria-label="Email">
                         <i class="pi pi-envelope"></i>
                     </a>
                 </div>
             </div>
 
+            <!-- Δεξί Πάνελ (Φόρμα) -->
             <div class="lg:w-7/12 bg-white dark:bg-surface-800 p-8 md:p-16 flex flex-col justify-center">
 
                 <div class="text-center mb-10">
-                    <h2 class="text-2xl md:text-3xl font-medium text-surface-900 dark:text-surface-0">
-                        Contact Us
+                    <h2 class="text-2xl md:text-3xl font-medium tracking-wide uppercase text-surface-900 dark:text-surface-0">
+                        CONTACT FORM
                     </h2>
                 </div>
 
@@ -138,12 +157,12 @@ const jsonLd = {
             </div>
 
         </div>
-    </Container>
+    </section>
 </template>
+
 <style scoped>
 a {
     text-decoration: none;
     color: inherit;
-
 }
 </style>

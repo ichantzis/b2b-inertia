@@ -69,6 +69,13 @@ Route::get('/contact-us', [ContactController::class, 'index'])->name('contact.in
 Route::post('/contact-us', [ContactController::class, 'store'])->name('contact.store');
 Route::post('/request-access', [AccessRequestController::class, 'store'])->name('access.request');
 
+Route::get('/about-us', function () {
+    return Inertia::render('About');
+})->name('about');
+Route::get('/collaborate', function () {
+    return Inertia::render('Partners'); 
+})->name('collaborate');
+
 
 // --- LISTS ---
 Route::get('/lists', [ListController::class, 'index'])->name('lists.index');

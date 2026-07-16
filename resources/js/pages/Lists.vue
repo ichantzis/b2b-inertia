@@ -34,7 +34,7 @@ const decodeHTMLEntities = (text) => {
     <div class="layout-container">
         <div class="main-content">
             <div class="content-wrapper">
-                <h1 class="text-3xl font-bold mb-8 text-center">Lists</h1>
+                <h1 class="text-3xl font-bold mb-8 text-center">Product Collection</h1>
                 
                 <div class="collections-grid">
                     <Card v-for="list in decodedLists" 
@@ -112,8 +112,7 @@ const decodeHTMLEntities = (text) => {
 }
 
 .collection-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);  /* Add shadow only on hover */
+    
 }
 
 .collection-image-wrapper {
