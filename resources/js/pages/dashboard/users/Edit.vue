@@ -12,6 +12,7 @@
                     <UserForm 
                         :user="user"
                         :user-roles="userRoles" 
+                        :pricing-tiers="pricingTiers" 
                         :action="route('dashboard.users.update', user.id)"
                         method="put"
                     />
@@ -31,5 +32,6 @@ import UserForm from './Partials/UserForm.vue';
 defineProps({
     user: Object,
     userRoles: Array,
+    pricingTiers: Array,
 });
 </script>

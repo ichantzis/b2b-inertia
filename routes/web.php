@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\ArtworkListController;
 use App\Http\Controllers\Auth\AccessRequestController;
+use App\Http\Controllers\Admin\PricingTierController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CartController;
@@ -148,11 +149,14 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
         Route::get('/general', [App\Http\Controllers\Admin\SettingsController::class, 'general'])->name('general');
         Route::get('/homepage', [App\Http\Controllers\Admin\SettingsController::class, 'homepage'])->name('homepage');
         Route::get('/pricing', [App\Http\Controllers\Admin\SettingsController::class, 'pricing'])->name('pricing');
+        Route::post('/pricing-tiers', [PricingTierController::class, 'store'])->name('pricing-tiers.store');
+        Route::put('/pricing-tiers/{pricingTier}', [PricingTierController::class, 'update'])->name('pricing-tiers.update');
+        Route::delete('/pricing-tiers/{pricingTier}', [PricingTierController::class, 'destroy'])->name('pricing-tiers.destroy');
 
         // POST Routes για αποθήκευση και εκτέλεση εντολών
         Route::post('/', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('update');
         Route::post('/run-command', [App\Http\Controllers\Admin\SettingsController::class, 'runCommand'])->name('command');
-        
+
         Route::get('/lists', [ArtworkListController::class, 'index'])->name('lists.index');
         Route::post('/lists/{artworkList}', [ArtworkListController::class, 'update'])->name('lists.update');
     });

@@ -102,7 +102,7 @@
         <Divider />
 
         <ArtworkCustomizer :artwork="currentArtwork" :pricing-config="pricingConfig" :can-view-price="canViewPrice"
-          :require-login-for-prices="requireLoginForPrices" @frame-change="handleFrameStyleChange" />
+          :require-login-for-prices="requireLoginForPrices" :user-discount="userDiscount" @frame-change="handleFrameStyleChange" />
 
         <Divider class="my-8" />
 
@@ -446,6 +446,10 @@ const props = defineProps({
   error: String,
   requireLoginForPrices: Boolean,
   pricingConfig: Object,
+  userDiscount: {
+    type: Number,
+    default: 0
+  }
 });
 
 const page = usePage();

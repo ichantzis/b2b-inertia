@@ -92,7 +92,7 @@ const heroSettings = computed(() => {
 });
 
 const featuredColumns = computed(() => page.props.featuredColumns || {
-    col1: { title: 'Japanese Designs', link: '#', image: '/images/column_1.webp' },
+    col1: { title: 'Japanese Designs', link: '# ', image: '/images/column_1.webp' },
     col2: { title: 'Summer Vibes', link: '#', image: '/images/column_2.webp' },
     col3: { title: 'Artist', link: '#', image: '/images/column_3.webp' }
 });
@@ -110,8 +110,8 @@ const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "Pinakothiki",
-    "url": "https://b2b.pinakothiki.gr/", // Άλλαξε το με το domain σου
-    "logo": "https://b2b.pinakothiki.gr/build/assets/PInakothiki-Logo-Header-CDixsy5W.png",
+    "url": "https://artcollector.gr/.gr/", // Άλλαξε το με το domain σου
+    "logo": "https://artcollector.gr/.gr/build/assets/PInakothiki-Logo-Header-CDixsy5W.png",
     "sameAs": [
         "https://www.facebook.com/pinakothiki.FineArtPrints",
         "https://www.instagram.com/pinakothiki/"
@@ -147,7 +147,7 @@ onMounted(() => {
         <meta property="og:description"
             content="Discover curated art prints and posters from independent artists worldwide. Transform your space with high-quality framed art." />
         <meta property="og:image"
-            content="https://b2b.pinakothiki.gr/build/assets/PInakothiki-Logo-Header-CDixsy5W.png" />
+            content="https://artcollector.gr//build/assets/PInakothiki-Logo-Header-CDixsy5W.png" />
         <component is="script" type="application/ld+json">
             {{ JSON.stringify(organizationSchema) }}
         </component>

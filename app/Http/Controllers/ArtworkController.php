@@ -110,10 +110,19 @@ class ArtworkController extends Controller
         $requireLogin = $this->settings->get('require_login_for_prices', false);
         $pricingConfig = $this->settings->get('pricing_config', []);
 
+        // Υπολογισμός Έκπτωσης Χρήστη (Μέσω της σχέσης pricingTier)
+        $userDiscount = 0;
+        if (auth()->check()) {
+            // Φορτώνουμε τη σχέση για να αποφύγουμε σφάλματα
+            $user = auth()->user()->load('pricingTier'); 
+            $userDiscount = $user->pricingTier ? $user->pricingTier->discount_percentage : 0;
+        }
+
         return Inertia::render('ArtworkDetails', [
             'artwork' => $artwork,
             'requireLoginForPrices' => $requireLogin,
-            'pricingConfig' => $pricingConfig
+            'pricingConfig' => $pricingConfig,
+            'userDiscount' => $userDiscount,
         ]);
     }
 

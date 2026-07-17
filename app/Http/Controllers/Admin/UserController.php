@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\PricingTier; // Προσθήκη του μοντέλου
 use App\Mail\WelcomeUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,7 +24,8 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::latest();
+        // Φόρτωση της σχέσης pricingTier
+        $query = User::with('pricingTier')->latest();
 
         // Search functionality
         if ($request->filled('search')) {
@@ -39,6 +41,17 @@ class UserController extends Controller
             $query->where('role', $request->input('role'));
         }
 
+        // ΝΕΟ: Filter by Pricing Tier
+        if ($request->filled('pricing_tier_id')) {
+            $tierId = $request->input('pricing_tier_id');
+            // Αν επιλέξει "Default", ψάχνουμε χρήστες χωρίς tier (null)
+            if ($tierId === 'default') {
+                $query->whereNull('pricing_tier_id');
+            } else {
+                $query->where('pricing_tier_id', $tierId);
+            }
+        }
+
         $users = $query->paginate(15)
             ->withQueryString()
             ->through(fn($user) => [
@@ -46,13 +59,20 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'pricing_tier' => $user->pricingTier ? [
+                    'name' => $user->pricingTier->name,
+                    'discount_percentage' => $user->pricingTier->discount_percentage,
+                ] : null,
                 'created_at' => $user->created_at->format('Y-m-d H:i:s'),
             ]);
 
         return Inertia::render('dashboard/users/Index', [
             'users' => $users,
-            'filters' => $request->only(['search', 'role']),
-            'userRoles' => config('app.user_roles', ['user', 'admin'])
+            // Προσθήκη του pricing_tier_id στα φίλτρα που επιστρέφονται
+            'filters' => $request->only(['search', 'role', 'pricing_tier_id']), 
+            'userRoles' => config('app.user_roles', ['user', 'admin']),
+            // ΝΕΟ: Στέλνουμε τις βαθμίδες για το dropdown του φίλτρου
+            'pricingTiers' => PricingTier::orderBy('discount_percentage')->get(), 
         ]);
     }
 
@@ -62,7 +82,9 @@ class UserController extends Controller
     public function create()
     {
         return Inertia::render('dashboard/users/Create', [
-            'userRoles' => config('app.user_roles', ['user', 'admin'])
+            'userRoles' => config('app.user_roles', ['user', 'admin']),
+            // Στέλνουμε τις διαθέσιμες βαθμίδες στη φόρμα
+            'pricingTiers' => PricingTier::orderBy('discount_percentage')->get(), 
         ]);
     }
 
@@ -71,18 +93,21 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validation (Password is optional/random if admin creates it)
+        // 1. Validation 
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required','confirmed', PasswordRules::defaults()],
             'role' => ['required', Rule::in(config('app.user_roles', ['user', 'admin']))],
+            
+            // Επικύρωση για το Pricing Tier
+            'pricing_tier_id' => 'nullable|exists:pricing_tiers,id',
 
             // Contact & Address
             'phone' => 'nullable|string|max:30',
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100', // Ensure this stores the code (e.g. GR)
+            'country' => 'nullable|string|max:100', 
             'postal_code' => 'nullable|string|max:20',
 
             // New Billing Fields
@@ -98,6 +123,7 @@ class UserController extends Controller
             'email' => $validatedData['email'],
             'password' => Hash::make($validatedData['password'] || Str::random(10)),
             'role' => $validatedData['role'],
+            'pricing_tier_id' => $validatedData['pricing_tier_id'] ?? null, // Αποθήκευση του tier
             'phone' => $validatedData['phone'],
             'address' => $validatedData['address'],
             'city' => $validatedData['city'],
@@ -136,6 +162,7 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'pricing_tier_id' => $user->pricing_tier_id, // Πέρασμα του tier για να δεθεί στη φόρμα
                 'phone' => $user->phone,
                 'address' => $user->address,
                 'city' => $user->city,
@@ -146,12 +173,13 @@ class UserController extends Controller
                 'company_name' => $user->company_name,
                 'profession'   => $user->profession,
                 'vat_number'   => $user->vat_number,
-                'tax_office'   => $user->tax_office, // Ensure this matches DB column (was doy/tax_office)
+                'tax_office'   => $user->tax_office, 
 
                 'created_at' => $user->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $user->updated_at->format('Y-m-d H:i:s'),
             ],
-            'userRoles' => config('app.user_roles', ['user', 'admin'])
+            'userRoles' => config('app.user_roles', ['user', 'admin']),
+            'pricingTiers' => PricingTier::orderBy('discount_percentage')->get(), // Στέλνουμε τις βαθμίδες
         ]);
     }
 
@@ -165,6 +193,9 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', PasswordRules::defaults()],
             'role' => ['required', Rule::in(config('app.user_roles', ['user', 'admin']))],
+            
+            // Επικύρωση για το Pricing Tier
+            'pricing_tier_id' => 'nullable|exists:pricing_tiers,id',
 
             // Contact & Address
             'phone' => 'nullable|string|max:30',
@@ -191,6 +222,7 @@ class UserController extends Controller
         $user->name = $validatedData['name'];
         $user->email = $validatedData['email'];
         $user->role = $validatedData['role'];
+        $user->pricing_tier_id = $validatedData['pricing_tier_id'] ?? null; // Ενημέρωση του tier
         $user->phone = $validatedData['phone'];
         $user->address = $validatedData['address'];
         $user->city = $validatedData['city'];

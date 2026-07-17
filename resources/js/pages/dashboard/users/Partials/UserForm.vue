@@ -27,6 +27,14 @@
                     </div>
 
                     <div>
+                        <label for="pricing_tier_id" class="block text-sm font-medium mb-1">Pricing Tier</label>
+                        <Select id="pricing_tier_id" v-model="form.pricing_tier_id" :options="tierOptions" optionLabel="label"
+                            optionValue="value" placeholder="Select Pricing Tier" class="w-full"
+                            :class="{ 'p-invalid': form.errors.pricing_tier_id }" />
+                        <small v-if="form.errors.pricing_tier_id" class="p-error">{{ form.errors.pricing_tier_id }}</small>
+                    </div>
+
+                    <div>
                         <label for="phone" class="block text-sm font-medium mb-1">Phone</label>
                         <InputText id="phone" v-model="form.phone" class="w-full"
                             :class="{ 'p-invalid': form.errors.phone }" />
@@ -37,16 +45,14 @@
 
                 <Divider />
                 <div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ isEditMode ? 'Leave password fields blank to keep current password.' : 'Set a password for the new user. A password reset link will be sent to the user' }}
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ isEditMode ? 'Leave password fields blank to keep current password.' : 'Set a password for the new user.A password reset link will be sent to the user' }}
                     </p>
                     <label for="password" class="block text-sm font-medium mb-1">
                         {{ isEditMode ? 'New Password (Optional)' : 'Password' }}
                     </label>
                     <Password id="password" v-model="form.password" class="w-full"
                         :inputProps="{ autocomplete: 'new-password' }" :class="{ 'p-invalid': form.errors.password }"
-                        toggleMask :feedback="!isEditMode"
-                        />
+                        toggleMask :feedback="!isEditMode" />
                     <small v-if="form.errors.password" class="p-error">{{ form.errors.password }}</small>
                 </div>
 
@@ -172,6 +178,10 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    pricingTiers: { 
+        type: Array, 
+        default: () => [] 
+    },
     // The specific Inertia URL to submit to
     action: {
         type: String,
@@ -200,6 +210,7 @@ const form = useForm({
     name: props.user?.name || '',
     email: props.user?.email || '',
     role: props.user?.role || (props.userRoles.includes('customer') ? 'customer' : props.userRoles[0]),
+    pricing_tier_id: props.user?.pricing_tier_id ?? 0,
     password: '',
     password_confirmation: '',
 
@@ -224,6 +235,17 @@ const roleOptions = computed(() =>
     props.userRoles.map(role => ({ label: role.charAt(0).toUpperCase() + role.slice(1), value: role }))
 );
 
+const tierOptions = computed(() => {
+    const options = props.pricingTiers.map(tier => ({
+        label: `${tier.name} (${tier.discount_percentage}% OFF)`,
+        value: tier.id
+    }));
+    
+    options.unshift({ label: 'Default Pricing (0% OFF)', value: 0 });
+    
+    return options;
+});
+
 const onCountryChange = () => {
     form.country = form.country_object?.code || '';
 };
@@ -238,7 +260,10 @@ const submit = () => {
         // Simpler approach: The backend handles nullable password logic.
     }
 
-    form.submit(props.method, props.action, {
+    form.transform((data) => ({
+        ...data,
+        pricing_tier_id: data.pricing_tier_id === 0 ? null : data.pricing_tier_id
+    })).submit(props.method, props.action, {
         onSuccess: () => {
             if (!isEditMode.value) form.reset();
         }

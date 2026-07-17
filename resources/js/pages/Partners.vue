@@ -157,7 +157,7 @@ const submit = () => {
 
                 <!-- ΑΤΤΙΚΗ -->
                 <div>
-                    <h3 class="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-3 mb-8 tracking-wide">ΑΤΤΙΚΗ
+                    <h3 class="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-3 mb-8 tracking-wide">Attica
                     </h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div
@@ -175,7 +175,7 @@ const submit = () => {
 
                 <!-- ΚΡΗΤΗ -->
                 <div>
-                    <h3 class="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-3 mb-8 tracking-wide">ΚΡΗΤΗ
+                    <h3 class="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-3 mb-8 tracking-wide">Crete
                     </h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div
@@ -199,7 +199,7 @@ const submit = () => {
                 <!-- ΥΠΟΛΟΙΠΟ ΕΛΛΑΔΑ -->
                 <div>
                     <h3 class="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-3 mb-8 tracking-wide">
-                        ΥΠΟΛΟΙΠΟ ΕΛΛΑΔΑ</h3>
+                        Rest Greece</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div
                             class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">

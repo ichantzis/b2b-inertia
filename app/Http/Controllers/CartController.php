@@ -191,8 +191,26 @@ class CartController extends Controller
         $title = $artwork ? $artwork->title : ($request->input('title') ?? 'Artwork');
         $img_thumb = $artwork ? $artwork->img_thumb : ($request->input('img_thumb') ?? null);
 
+        // 1. Υπολογισμός τελικής τιμής βάσει της βαθμίδας (Tier) του χρήστη
+        $discountPercentage = 0;
+        if (Auth::check()) {
+            $user = Auth::user()->load('pricingTier');
+            $discountPercentage = $user->pricingTier ? $user->pricingTier->discount_percentage : 0;
+        }
+
+        $basePrice = (float)$validatedData['price'];
+        $finalPrice = $basePrice;
+
+        if ($discountPercentage > 0) {
+            // Αν υπάρχει έκπτωση, αφαιρούμε το ποσοστό από την αρχική τιμή
+            $finalPrice = round($basePrice * (1 - ($discountPercentage / 100)), 2);
+        }
+
+        // 2. Αποθήκευση και των δύο τιμών στα δεδομένα του καλαθιού
         $artworkDataForJson = [
-            'price' => (float)$validatedData['price'],
+            'base_price' => $basePrice,
+            'price' => $finalPrice, // Η τελική τιμή που θα υπολογίσει τα σύνολα
+            'discount_percentage' => $discountPercentage, // Αποθηκεύουμε το % για το UI
             'img_thumb' => $img_thumb,
             'title' => $title,
         ];

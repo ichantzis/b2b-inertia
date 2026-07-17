@@ -46,7 +46,7 @@
                             <h4 class="text-white font-medium text-lg mb-6 tracking-wide">PINAKOTHIKI</h4>
                             
                             <div class="mb-6 text-gray-400 leading-relaxed">
-                                || b2b.pinakothiki.gr - Gallery || <br>
+                                || artcollector.gr - Gallery || <br>
                                 Paintings on canvas or poster <br>
                                 Discover Unique Art for your space! <br>
                                 Handmade • Free Shipping • Made in Greece

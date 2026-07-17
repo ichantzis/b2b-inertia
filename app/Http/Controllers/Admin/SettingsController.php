@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\SettingsService;
 use App\Models\Setting;
+use App\Models\PricingTier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -127,10 +128,13 @@ class SettingsController extends Controller
             'poster_framed' => []
         ];
 
+        $tiers = PricingTier::orderBy('discount_percentage', 'asc')->get();
+
         return Inertia::render('dashboard/settings/Pricing', [
             'settings' => [
                 'pricing_config' => $this->settings->get('pricing_config', $defaultPricing),
-            ]
+            ],
+            'pricingTiers' => $tiers,
         ]);
     }
 

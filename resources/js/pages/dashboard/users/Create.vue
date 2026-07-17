@@ -11,6 +11,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <UserForm 
                         :user-roles="userRoles" 
+                        :pricing-tiers="pricingTiers"
                         :action="route('dashboard.users.store')"
                         method="post"
                     />
@@ -29,5 +30,6 @@ import UserForm from './Partials/UserForm.vue';
 
 defineProps({
     userRoles: Array,
+    pricingTiers: Array, // Προσθέτουμε ΜΟΝΟ τα tiers εδώ, όχι το user
 });
 </script>

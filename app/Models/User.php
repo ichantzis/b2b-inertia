@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'pricing_tier_id',
         'phone',
         'address',
         'city',
@@ -65,6 +66,18 @@ class User extends Authenticatable
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    // Ο χρήστης ανήκει σε μία βαθμίδα τιμολόγησης
+    public function pricingTier()
+    {
+        return $this->belongsTo(PricingTier::class);
+    }
+
+    // Ένα χρήσιμο Accessor για να παίρνεις την έκπτωση απευθείας (π.χ. $user->active_discount)
+    public function getActiveDiscountAttribute()
+    {
+        return $this->pricingTier ? $this->pricingTier->discount_percentage : 0;
     }
 
     /**

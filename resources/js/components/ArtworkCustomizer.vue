@@ -5,7 +5,7 @@ import { useToast } from 'primevue/usetoast';
 import Tooltip from 'primevue/tooltip';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
-import Dialog from 'primevue/dialog'; // <--- Import Dialog
+import Dialog from 'primevue/dialog';
 
 const props = defineProps({
     artwork: Object,
@@ -16,6 +16,11 @@ const props = defineProps({
     canViewPrice: {
         type: Boolean,
         default: false
+    },
+    // ΝΕΟ PROP: Δέχεται το ποσοστό έκπτωσης του χρήστη (π.χ. 15 για 15%)
+    userDiscount: {
+        type: Number,
+        default: 0
     }
 });
 
@@ -26,8 +31,7 @@ const canViewPrice = computed(() => props.canViewPrice);
 
 const toast = useToast();
 
-// State for the Info Dialog
-const showPrintInfo = ref(false); // <--- New State
+const showPrintInfo = ref(false); 
 
 const isSquare = computed(() => props.artwork?.width === props.artwork?.height);
 
@@ -149,7 +153,8 @@ const getButtonProps = (currentValue, selectedValue) => ({
 
 const quantity = ref(1);
 
-const currentPrice = computed(() => {
+// ΝΕΟ: Υπολογισμός της αρχικής (καταλόγου) τιμής
+const basePrice = computed(() => {
     const sizeToUse = isSquare.value ? selectedSquareSize.value : selectedSize.value;
 
     if (selectedType.value === 'canvas') {
@@ -166,8 +171,17 @@ const currentPrice = computed(() => {
     return posterPrices[sizeToUse]?.mono || 0;
 });
 
+// ΝΕΟ: Υπολογισμός της εκπτωτικής τιμής (αυτό που πληρώνει τελικά ο πελάτης)
+const discountedPrice = computed(() => {
+    if (props.userDiscount > 0) {
+        return basePrice.value * (1 - (props.userDiscount / 100));
+    }
+    return basePrice.value;
+});
+
+// ΝΕΟ: Το συνολικό ποσό υπολογίζεται με βάση την εκπτωτική τιμή
 const totalPrice = computed(() => {
-    return currentPrice.value * quantity.value;
+    return discountedPrice.value * quantity.value;
 });
 
 const formattedTotalPrice = computed(() => {
@@ -196,7 +210,7 @@ const addToCartForm = useForm({
     size: isSquare.value ? selectedSquareSize.value : selectedSize.value,
     quantity: quantity.value,
     img_thumb: null,
-    price: currentPrice.value,
+    price: basePrice.value, // ΣΗΜΑΝΤΙΚΟ: Στέλνουμε την αρχική τιμή στο Backend!
     total: totalPrice.value
 });
 
@@ -209,7 +223,7 @@ const addToCart = () => {
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
     addToCartForm.img_thumb = getArtworkThumb();
-    addToCartForm.price = currentPrice.value;
+    addToCartForm.price = basePrice.value; // ΣΗΜΑΝΤΙΚΟ: Στέλνουμε την αρχική τιμή
     addToCartForm.total = totalPrice.value;
 
     addToCartForm.post(route('cart.store'), {
@@ -266,8 +280,8 @@ watch(selectedType, (newType) => {
     }
 });
 
-watch([currentPrice, quantity, selectedSize, selectedSquareSize, selectedPrintType], () => {
-    addToCartForm.price = currentPrice.value;
+watch([basePrice, quantity, selectedSize, selectedSquareSize, selectedPrintType], () => {
+    addToCartForm.price = basePrice.value; // Ενημερώνουμε με την αρχική τιμή
     addToCartForm.total = totalPrice.value;
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
@@ -288,7 +302,7 @@ onMounted(() => {
     addToCartForm.size = isSquare.value ? selectedSquareSize.value : selectedSize.value;
     addToCartForm.quantity = quantity.value;
     addToCartForm.img_thumb = getArtworkThumb();
-    addToCartForm.price = currentPrice.value;
+    addToCartForm.price = basePrice.value;
     addToCartForm.total = totalPrice.value;
 });
 
