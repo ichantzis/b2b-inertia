@@ -20,26 +20,73 @@ class SettingsController extends Controller
         $this->settings = $settings;
     }
 
-    public function index()
+    // public function index()
+    // {
+    //     // Default pricing structure for fallback
+    //     $defaultPricing = [
+    //         'canvas_framed' => [
+    //             ['size' => '40x60', 'price' => 144],
+    //             // ... (abbreviated for brevity, same as before)
+    //         ],
+    //         'canvas_noframe' => [],
+    //         'poster_framed' => []
+    //     ];
+
+    //     $settings = Setting::pluck('value', 'key')->toArray();
+
+    //     return Inertia::render('dashboard/Settings', [
+    //         'settings' => [
+    //             'admin_notification_email' => $this->settings->get('admin_notification_email', config('mail.from.address')),
+    //             'require_login_for_prices' => (bool) $this->settings->get('require_login_for_prices', false),
+    //             'allow_public_registration' => (bool) $this->settings->get('allow_public_registration', false),
+    //             'pricing_config' => $this->settings->get('pricing_config', $defaultPricing),
+    //             // ΝΕΑ ΠΕΔΙΑ: Hero Banner Configuration
+    //             'hero_title' => $this->settings->get('hero_title', ''),
+    //             'hero_subtitle' => $this->settings->get('hero_subtitle', ''),
+    //             'hero_button1_text' => $this->settings->get('hero_button1_text', ''),
+    //             'hero_button1_link' => $this->settings->get('hero_button1_link', ''),
+    //             'hero_button2_text' => $this->settings->get('hero_button2_text', ''),
+    //             'hero_button2_link' => $this->settings->get('hero_button2_link', ''),
+    //             'hero_image' => $this->settings->get('hero_image', null),
+
+    //             // ΝΕΑ ΠΕΔΙΑ: Featured Layout (3 Columns)
+    //             'col1_title' => $this->settings->get('col1_title', ''),
+    //             'col1_link' => $this->settings->get('col1_link', ''),
+    //             'col1_image' => $this->settings->get('col1_image', null),
+
+    //             'col2_title' => $this->settings->get('col2_title', ''),
+    //             'col2_link' => $this->settings->get('col2_link', ''),
+    //             'col2_image' => $this->settings->get('col2_image', null),
+
+    //             'col3_title' => $this->settings->get('col3_title', ''),
+    //             'col3_link' => $this->settings->get('col3_link', ''),
+    //             'col3_image' => $this->settings->get('col3_image', null),
+
+    //             // Editor's pick Layout
+    //             'editor_title'       => $this->settings->get('editor_title', 'THE EDITOR\'S PICK - MAY'),
+    //             'editor_description' => $this->settings->get('editor_description', 'Discover the world\'s top posters...'),
+    //             'editor_button_text' => $this->settings->get('editor_button_text', 'Shop Collection'),
+    //             'editor_button_link' => $this->settings->get('editor_button_link', '#'),
+    //             'editor_image'       => $this->settings->get('editor_image', null),
+    //         ]
+    //     ]);
+    // }
+
+    public function general()
     {
-        // Default pricing structure for fallback
-        $defaultPricing = [
-            'canvas_framed' => [
-                ['size' => '40x60', 'price' => 144],
-                // ... (abbreviated for brevity, same as before)
-            ],
-            'canvas_noframe' => [],
-            'poster_framed' => []
-        ];
-
-        $settings = Setting::pluck('value', 'key')->toArray();
-
-        return Inertia::render('dashboard/Settings', [
+        return Inertia::render('dashboard/settings/General', [
             'settings' => [
                 'admin_notification_email' => $this->settings->get('admin_notification_email', config('mail.from.address')),
                 'require_login_for_prices' => (bool) $this->settings->get('require_login_for_prices', false),
                 'allow_public_registration' => (bool) $this->settings->get('allow_public_registration', false),
-                'pricing_config' => $this->settings->get('pricing_config', $defaultPricing),
+            ]
+        ]);
+    }
+
+    public function homepage()
+    {
+        return Inertia::render('dashboard/settings/Homepage', [
+            'settings' => [
                 // ΝΕΑ ΠΕΔΙΑ: Hero Banner Configuration
                 'hero_title' => $this->settings->get('hero_title', ''),
                 'hero_subtitle' => $this->settings->get('hero_subtitle', ''),
@@ -68,6 +115,21 @@ class SettingsController extends Controller
                 'editor_button_text' => $this->settings->get('editor_button_text', 'Shop Collection'),
                 'editor_button_link' => $this->settings->get('editor_button_link', '#'),
                 'editor_image'       => $this->settings->get('editor_image', null),
+            ]
+        ]);
+    }
+
+    public function pricing()
+    {
+        $defaultPricing = [
+            'canvas_framed' => [['size' => '40x60', 'price' => 144]],
+            'canvas_noframe' => [],
+            'poster_framed' => []
+        ];
+
+        return Inertia::render('dashboard/settings/Pricing', [
+            'settings' => [
+                'pricing_config' => $this->settings->get('pricing_config', $defaultPricing),
             ]
         ]);
     }

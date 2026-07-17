@@ -38,8 +38,10 @@ class ListController extends Controller
             'artworks' => $artworks->items(),
             'collectionId' => $list->id,
             'collectionName' => $list->name,
+            'collectionCover' => $list->resolved_cover, // Προσθήκη του resolved_cover
+            'collectionDescription' => $list->resolved_description, // Προσθήκη του resolved_description
             'isListPage' => true, 
-            'collectionSlug' => $slug, // Important for FilterSidebar URL building
+            'collectionSlug' => $slug, 
             'currentSearchTerm' => $request->input('search'),
             'filters' => $filters ? explode('/', $filters) : [],
             'nextPage' => $artworks->hasMorePages() ? $artworks->currentPage() + 1 : null,

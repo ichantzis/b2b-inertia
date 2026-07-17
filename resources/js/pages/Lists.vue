@@ -4,7 +4,7 @@ import { Link } from '@inertiajs/vue3';
 import Card from 'primevue/card';
 import HeaderLayout from '@/layouts/HeaderLayout.vue';
 
-defineOptions({ layout: HeaderLayout});
+defineOptions({ layout: HeaderLayout });
 
 const props = defineProps({
     lists: {
@@ -35,27 +35,19 @@ const decodeHTMLEntities = (text) => {
         <div class="main-content">
             <div class="content-wrapper">
                 <h1 class="text-3xl font-bold mb-8 text-center">Product Collection</h1>
-                
+
                 <div class="collections-grid">
-                    <Card v-for="list in decodedLists" 
-                          :key="list.list_id" 
-                          class="collection-card p-0"
-                    >
+                    <Card v-for="list in decodedLists" :key="list.list_id" class="collection-card p-0">
                         <template #header>
-                            <Link 
-                                :href="route('lists.show', { slug: list.slug })"
-                                class="text-lg font-semibold hover:text-primary-500 text-center block"
-                            >
-                            <div class="collection-image-wrapper">
-                                <img :src="list.cover" 
-                                     :alt="list.name"
-                                     class="collection-image"
-                                />
-                            </div>
-                        </Link>
+                            <Link :href="route('lists.show', { slug: list.slug })"
+                                class="text-lg font-semibold hover:text-primary-500 text-center block">
+                                <div class="collection-image-wrapper">
+                                    <img :src="list.resolved_cover" :alt="list.name" class="collection-image" />
+                                </div>
+                            </Link>
                         </template>
                         <template #title>
-                            <h3 class="text-center">{{ list.name }}</h3>                            
+                            <h3 class="text-center">{{ list.name }}</h3>
                         </template>
                         <!-- <template #content>
                             <div class="text-center">
@@ -108,12 +100,11 @@ const decodeHTMLEntities = (text) => {
     max-width: 400px;
     transition: transform 0.2s, box-shadow 0.2s;
     border-radius: 8px;
-    box-shadow: none;  /* Remove default shadow */
+    box-shadow: none;
+    /* Remove default shadow */
 }
 
-.collection-card:hover {
-    
-}
+.collection-card:hover {}
 
 .collection-image-wrapper {
     aspect-ratio: 1;

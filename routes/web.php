@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\ArtworkListController;
 use App\Http\Controllers\Auth\AccessRequestController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -73,7 +74,7 @@ Route::get('/about-us', function () {
     return Inertia::render('About');
 })->name('about');
 Route::get('/collaborate', function () {
-    return Inertia::render('Partners'); 
+    return Inertia::render('Partners');
 })->name('collaborate');
 
 
@@ -141,9 +142,20 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     Route::resource('users', AdminUserController::class)->except(['show']);
     Route::patch('/coupons/{coupon}/toggle', [App\Http\Controllers\Admin\CouponController::class, 'toggleStatus'])->name('coupons.toggle');
     Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->names('coupons');
-    Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
-    Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
-    Route::post('/settings/run-command', [App\Http\Controllers\Admin\SettingsController::class, 'runCommand'])->name('settings.command');
+    // --- SETTINGS ---
+    Route::prefix('settings')->name('settings.')->group(function () {
+        // GET Routes για τις 3 νέες σελίδες ρυθμίσεων
+        Route::get('/general', [App\Http\Controllers\Admin\SettingsController::class, 'general'])->name('general');
+        Route::get('/homepage', [App\Http\Controllers\Admin\SettingsController::class, 'homepage'])->name('homepage');
+        Route::get('/pricing', [App\Http\Controllers\Admin\SettingsController::class, 'pricing'])->name('pricing');
+
+        // POST Routes για αποθήκευση και εκτέλεση εντολών
+        Route::post('/', [App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('update');
+        Route::post('/run-command', [App\Http\Controllers\Admin\SettingsController::class, 'runCommand'])->name('command');
+        
+        Route::get('/lists', [ArtworkListController::class, 'index'])->name('lists.index');
+        Route::post('/lists/{artworkList}', [ArtworkListController::class, 'update'])->name('lists.update');
+    });
 });
 
 Route::middleware('auth')->group(function () {

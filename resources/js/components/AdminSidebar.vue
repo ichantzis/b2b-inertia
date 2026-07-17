@@ -1,64 +1,73 @@
 <script setup>
-import { computed, defineEmits } from 'vue'; // Import defineEmits
+import { ref, computed, watch, defineEmits } from 'vue';
 import { usePage, Link } from '@inertiajs/vue3';
 import PanelMenu from 'primevue/panelmenu';
 import ApplicationLogo from '@/components/ApplicationLogo.vue';
 
 const page = usePage();
-const emit = defineEmits(['navigate']); // Define the event
+const emit = defineEmits(['navigate']);
 
 const currentRoute = computed(() => page.props.ziggy?.current_route_name);
 
-const adminMenuItems = computed(() => [
+// 1. Ορίζουμε ένα reactive αντικείμενο για τον έλεγχο των ανοιχτών μενού
+const expandedKeys = ref({});
+
+const baseMenuItems = [
     {
         label: 'Overview',
         icon: 'pi pi-fw pi-home',
+        routeName: 'dashboard.index',
         route: route('dashboard.index'),
-        active: currentRoute.value === 'dashboard.index'
     },
     {
         label: 'Orders',
         icon: 'pi pi-fw pi-shopping-cart',
+        routeName: 'dashboard.orders',
         route: route('dashboard.orders.index'),
-        active: currentRoute.value && currentRoute.value.startsWith('dashboard.orders')
     },
-    { // Add this for Users
+    {
         label: 'Users',
         icon: 'pi pi-fw pi-users',
+        routeName: 'dashboard.users',
         route: route('dashboard.users.index'),
-        active: currentRoute.value && currentRoute.value.startsWith('dashboard.users')
     },
     { 
         label: 'Coupons',
         icon: 'pi pi-fw pi-tags',
+        routeName: 'dashboard.coupons',
         route: route('dashboard.coupons.index'),
-        active: currentRoute.value && currentRoute.value.startsWith('dashboard.coupons')
     },
     {
-        label: 'Settings',
+        key: 'settings-content', // Το μοναδικό κλειδί για το group των ρυθμίσεων
+        label: 'Settings & Content',
         icon: 'pi pi-fw pi-cog',
-        route: route('dashboard.settings.index'),
-        active: currentRoute.value && currentRoute.value.startsWith('dashboard.settings')
+        items: [
+            {
+                label: 'General Settings',
+                icon: 'pi pi-fw pi-sliders-h',
+                routeName: 'dashboard.settings.general',
+                route: route('dashboard.settings.general'),
+            },
+            {
+                label: 'Homepage Design',
+                icon: 'pi pi-fw pi-image',
+                routeName: 'dashboard.settings.homepage',
+                route: route('dashboard.settings.homepage'),
+            },
+            {
+                label: 'Pricing Rules',
+                icon: 'pi pi-fw pi-dollar',
+                routeName: 'dashboard.settings.pricing',
+                route: route('dashboard.settings.pricing'),
+            },
+            {
+                label: 'Curated Lists',
+                icon: 'pi pi-fw pi-list',
+                routeName: 'dashboard.settings.lists',
+                route: route('dashboard.settings.lists.index'),
+            }
+        ]
     },
-    // {
-    //     label: 'Management',
-    //     icon: 'pi pi-fw pi-cog',
-    //     expanded: currentRoute.value?.startsWith('dashboard.orders') || currentRoute.value?.startsWith('dashboard.users'), // Example expansion logic
-    //     items: [
-    //         {
-    //             label: 'Orders',
-    //             icon: 'pi pi-fw pi-shopping-cart',
-    //             route: route('dashboard.orders.index'),
-    //             active: currentRoute.value && currentRoute.value.startsWith('dashboard.orders')
-    //         },
-    //         // {
-    //         //     label: 'Users',
-    //         //     icon: 'pi pi-fw pi-users',
-    //         //     route: route('dashboard.users.index'), // Example
-    //         //     active: currentRoute.value === 'dashboard.users.index'
-    //         // }
-    //     ]
-    // },
     {
         separator: true
     },
@@ -67,29 +76,39 @@ const adminMenuItems = computed(() => [
         icon: 'pi pi-fw pi-arrow-left',
         route: route('welcome'),
     }
-]);
+];
 
-const handleNavigation = () => {
-    emit('navigate'); // Emit event on navigation
-};
-
+// 2. Υπολογισμός μόνο του active state για τα απλά links
 const panelMenuItems = computed(() => {
-    const mapItems = (items) => {
+    const current = currentRoute.value || '';
+
+    const buildMenu = (items) => {
         return items.map(item => {
             const newItem = { ...item };
-            if (item.route) {
-                // The command will be handled by the Link component's click
-                // and our handleNavigation for emitting the event.
-            }
-            if (item.items) {
-                newItem.items = mapItems(item.items);
+            if (newItem.items) {
+                newItem.items = buildMenu(newItem.items);
+            } else if (newItem.routeName) {
+                newItem.active = current.startsWith(newItem.routeName);
             }
             return newItem;
         });
     };
-    return mapItems(adminMenuItems.value);
+
+    return buildMenu(baseMenuItems);
 });
 
+// 3. Watcher που ανοίγει αυτόματα το μενού αν βρισκόμαστε σε σελίδα ρυθμίσεων/λιστών
+watch(currentRoute, (current) => {
+    if (current && (current.startsWith('dashboard.settings') || current.startsWith('dashboard.lists'))) {
+        expandedKeys.value = { 'settings-content': true };
+    } else {
+        expandedKeys.value = {};
+    }
+}, { immediate: true });
+
+const handleNavigation = () => {
+    emit('navigate');
+};
 </script>
 
 <template>
@@ -97,12 +116,12 @@ const panelMenuItems = computed(() => {
         <div class="mb-6 text-center">
             <Link :href="route('dashboard.index')" @click="handleNavigation" class="no-underline">
                 <ApplicationLogo class="h-10 sm:h-12 mx-auto" />
-                <h1 class="text-lg sm:text-xl font-semibold mt-2 text-primary-500 dark:text-primary-400">Admin Panel
-                </h1>
+                <h1 class="text-lg sm:text-xl font-semibold mt-2 text-primary-500 dark:text-primary-400">Admin Panel</h1>
             </Link>
         </div>
 
-        <PanelMenu :model="panelMenuItems" class="w-full">
+        <!-- Συνδέουμε το v-model:expandedKeys -->
+        <PanelMenu :model="panelMenuItems" v-model:expandedKeys="expandedKeys" class="w-full">
             <template #item="{ item }">
                 <Link v-if="item.route" :href="item.route" @click="handleNavigation"
                     class="p-menuitem-link flex items-center p-2 my-1 rounded-md transition-colors duration-150 text-sm sm:text-base"
@@ -134,16 +153,10 @@ const panelMenuItems = computed(() => {
     height: auto;
 }
 
-:deep(.p-panelmenu .p-panelmenu-header-action) {
-    /* Styles for headers if you make them clickable for expansion */
-    /* This targets the clickable area of a sub-menu header */
-}
-
 :deep(.p-panelmenu .p-menuitem-link) {
     text-decoration: none;
 }
 
-/* Ensure PanelMenu itself doesn't have unwanted borders or padding if Sidebar adds its own */
 :deep(.p-panelmenu) {
     border: none;
     background: transparent;

@@ -92,9 +92,9 @@ const heroSettings = computed(() => {
 });
 
 const featuredColumns = computed(() => page.props.featuredColumns || {
-    col1: { title: 'Column 1', link: '#', image: '/images/placeholder.png' },
-    col2: { title: 'Column 2', link: '#', image: '/images/placeholder.png' },
-    col3: { title: 'Column 3', link: '#', image: '/images/placeholder.png' }
+    col1: { title: 'Japanese Designs', link: '#', image: '/images/column_1.webp' },
+    col2: { title: 'Summer Vibes', link: '#', image: '/images/column_2.webp' },
+    col3: { title: 'Artist', link: '#', image: '/images/column_3.webp' }
 });
 
 const editorSettings = computed(() => page.props.editorSettings || {
@@ -315,7 +315,7 @@ onMounted(() => {
                         <!-- Image Container (Αυστηρά τετράγωνο, με κενό στο κάτω μέρος) -->
                         <div class="relative w-full aspect-square overflow-hidden bg-gray-100 mb-4">
                             <div class="absolute inset-0 bg-cover bg-center"
-                                :style="{ backgroundImage: `url(${list.cover || '/images/placeholder.png'})` }">
+                                :style="{ backgroundImage: `url(${list.resolved_cover || '/images/placeholder.png'})` }">
                             </div>
                         </div>
 
@@ -373,7 +373,7 @@ onMounted(() => {
                                         <div class="overlay-content">
                                             <span class="artwork-title">
                                                 {{ typeof slotProps.data.title === 'string' ? slotProps.data.title :
-                                                (slotProps.data.title?.en || 'Untitled') }}
+                                                    (slotProps.data.title?.en || 'Untitled') }}
                                             </span>
                                             <Divider layout="vertical" />
                                             <span class="artwork-id">ID: {{ slotProps.data.pictufy_id ||
