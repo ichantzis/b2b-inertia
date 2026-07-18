@@ -55,7 +55,7 @@ const jsonLd = {
         <component is="script" type="application/ld+json">{{ JSON.stringify(jsonLd) }}</component>
     </InertiaHead>
 
-    <section class="bg-white p-12 md:p-24">
+    <section class="bg-white p-2 sm:p-12 md:p-24">
         <div class="flex flex-col lg:flex-row shadow-xl rounded-xl overflow-hidden bg-white dark:bg-surface-800">
 
             <!-- Αριστερό Πάνελ (Πληροφορίες) -->

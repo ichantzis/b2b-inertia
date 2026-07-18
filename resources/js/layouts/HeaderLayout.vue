@@ -214,6 +214,15 @@ const homeMobileMenuItems = computed(() => {
                 mobileMenuOpen.value = false;
             }
         },
+        {
+            label: 'Search',
+            route: route('artworks'),
+            icon: 'pi pi-fw pi-search',
+            active: currentRoute.value === 'artworks',
+            command: () => {
+                mobileMenuOpen.value = false;
+            }
+        },
         ...mainMenuItems.value
     ];
 });
@@ -411,7 +420,7 @@ onUnmounted(() => {
                 <Container class="relative max-w-none">                    
 
                     <LinksMenuBar :model="mainMenuItems" :key="currentRoute"
-                        pt:root:class="px-0 py-4 border-0 rounded-none dynamic-bg" pt:button:class="hidden">
+                        pt:root:class="px-0 py-8 border-0 rounded-none dynamic-bg" pt:button:class="hidden">
                         <!-- Left Side - Hamburger Menu -->
                         <template #start>
                             <!-- Mobile Hamburger -->
@@ -422,7 +431,7 @@ onUnmounted(() => {
                                 </div>
                             </div>
                             <Link :href="route('welcome')"
-                                class="brand-link absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-normal leading-none text-black no-underline md:text-2xl"
+                                class="brand-link absolute z-10 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-normal leading-none text-black no-underline md:text-2xl"
                                 aria-label="ART Collector home">
                                 ART Collector
                             </Link>
@@ -431,24 +440,25 @@ onUnmounted(() => {
                         <!-- Right Side - User Menu -->
                         <template #end>
                             <div class="flex items-center gap-3">
-                                <div class="relative flex items-center justify-end h-10 w-64">
+                                <div class="relative hidden sm:flex items-center justify-end h-10 w-auto md:w-64">
                                     <button v-if="!isSearchExpanded" @click="toggleSearch"
                                         class="absolute right-0 flex items-center gap-2 text-sm tracking-wider font-medium hover:text-gray-500 transition-colors cursor-pointer bg-transparent border-none p-0 focus:outline-none">
                                         <span class="hidden md:inline">Search</span>
                                         <i class="pi pi-search"></i>
                                     </button>
 
+                                    <!-- ΑΛΛΑΓΗ 2: Προσθήκη z-20 και δυναμικού πλάτους (w-[75vw] sm:w-[300px] md:w-full) -->
                                     <form v-show="isSearchExpanded" @submit.prevent="submitSearch"
-                                        class="absolute right-0 flex items-center w-full transform origin-right transition-all duration-300">
-                                        <div
-                                            class="relative w-full flex items-center border-b border-gray-300 bg-white">
-                                            <i class="pi pi-search text-gray-400 absolute left-0"></i>
+                                        class="absolute right-0 z-20 flex items-center w-[75vw] sm:w-[300px] md:w-full transform origin-right transition-all duration-300">
+                                        <div class="relative w-full flex items-center border-b border-gray-300 bg-white shadow-sm md:shadow-none">
+                                            <!-- ΑΛΛΑΓΗ 3: Τοποθέτηση των εικονιδίων με left-2 και right-2 για να μην ακουμπούν στα άκρα -->
+                                            <i class="pi pi-search text-gray-400 absolute left-2"></i>
                                             <input ref="searchInput" v-model="searchQuery" type="text"
                                                 placeholder="Search artworks..."
-                                                class="w-full py-2 pl-8 pr-8 border-none focus:ring-0 text-sm outline-none"
+                                                class="w-full py-2 pl-8 pr-8 border-none focus:ring-0 text-sm outline-none bg-white"
                                                 @blur="closeSearch" />
                                             <button type="button" @mousedown.prevent="closeSearch"
-                                                class="absolute right-0 hover:text-gray-500 curson-pointer">
+                                                class="absolute right-2 hover:text-gray-500 cursor-pointer bg-transparent border-none p-1">
                                                 <i class="pi pi-times"></i>
                                             </button>
                                         </div>
@@ -544,7 +554,7 @@ onUnmounted(() => {
             </nav>
 
             <!-- Add padding to prevent content from going under fixed header -->
-            <div class="h-[104px]"></div>
+            <div class="h-[120px]"></div>
 
             <!-- Drawer Menu (now used for all screen sizes) -->
             <Drawer v-model:visible="mobileMenuOpen" position="left">

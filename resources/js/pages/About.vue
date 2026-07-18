@@ -39,7 +39,7 @@ defineOptions({ layout: HeaderLayout })
 
             <!-- Row 1: Text Left, Image Right -->
             <div
-                class="bg-white shadow-sm rounded-xl p-8 md:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                class="bg-white shadow-sm rounded-xl p-2 sm:p-8 md:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
                 <!-- Κείμενο -->
                 <div class="space-y-6">
                     <p>
@@ -68,7 +68,7 @@ defineOptions({ layout: HeaderLayout })
 
             <!-- Row 2: Image Left, Text Right -->
             <div
-                class="bg-white shadow-sm rounded-xl p-8 md:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                class="bg-white shadow-sm rounded-xl p-2 sm:p-8 md:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
                 <!-- Εικόνα (Στα κινητά θα εμφανιστεί δεύτερη, αλλά στα desktop αριστερά) -->
                 <div
                     class="relative w-full h-72 lg:h-full min-h-[350px] rounded-lg overflow-hidden shadow-inner order-2 lg:order-1">

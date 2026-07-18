@@ -59,7 +59,7 @@
                     <template #grid="slotProps">
                         <div class="grid grid-cols-12 gap-4 md:gap-8">
                             <div v-for="(artwork, index) in slotProps.items" :key="artwork.id || index"
-                                class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
+                                class="col-span-6 sm:col-span-4 md:col-span-4 xl:col-span-3 p-2">
                                 <div class="rounded flex flex-col artwork-container">
                                     <Link :href="route('artwork.details', {
                                         id: artwork.pictufy_id,

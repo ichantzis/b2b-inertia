@@ -187,7 +187,7 @@ onMounted(() => {
 
     <!-- Featured 3 Columns Section -->
     <section class="w-full bg-white mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 gap-1 sm:gap-6">
 
             <!-- Column 1 -->
             <!-- aspect-[4/5] ορίζει σταθερή αναλογία ώστε όλες οι εικόνες να έχουν το ίδιο ύψος και σχήμα (πορτρέτου) -->
@@ -201,7 +201,7 @@ onMounted(() => {
                 </div>
                 <!-- Title -->
                 <div class="absolute bottom-6 left-6 pr-6">
-                    <h3 class="text-white text-2xl tracking-wider drop-shadow-md">
+                    <h3 class="text-white text-sm sm:text-xl md:text-2xl tracking-wider drop-shadow-md">
                         {{ featuredColumns.col1.title }}
                     </h3>
                 </div>
@@ -216,7 +216,7 @@ onMounted(() => {
                     class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300">
                 </div>
                 <div class="absolute bottom-6 left-6 pr-6">
-                    <h3 class="text-white text-2xl tracking-wider drop-shadow-md">
+                    <h3 class="text-white text-sm sm:text-xl md:text-2xl tracking-wider drop-shadow-md">
                         {{ featuredColumns.col2.title }}
                     </h3>
                 </div>
@@ -231,7 +231,7 @@ onMounted(() => {
                     class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300">
                 </div>
                 <div class="absolute bottom-6 left-6 pr-6">
-                    <h3 class="text-white text-2xl tracking-wider drop-shadow-md">
+                    <h3 class="text-white text-sm sm:text-xl md:text-2xl tracking-wider drop-shadow-md">
                         {{ featuredColumns.col3.title }}
                     </h3>
                 </div>
@@ -306,7 +306,7 @@ onMounted(() => {
             </h2>
 
             <!-- Grid 3 στηλών (Αυξήσαμε το gap σε 8 για να "αναπνέουν" τα κείμενα κάτω από τις εικόνες) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
 
                 <!-- Loop στις πρώτες 21 λίστες -->
                 <div v-for="list in curatedLists.slice(0, 21)" :key="list.list_id" class="w-full">

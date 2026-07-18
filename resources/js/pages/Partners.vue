@@ -52,7 +52,7 @@ const submit = () => {
 
         <!-- ΕΝΟΤΗΤΑ 1: Κείμενο και CTA (Δίπλα - Δίπλα σε μεγάλες οθόνες) -->
         <div
-            class=" max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 mb-24 bg-white p-8 md:p-12 shadow-sm rounded-xl">
+            class=" max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 mb-24 bg-white p-2 sm:p-8 md:p-12 shadow-sm rounded-xl">
 
             <!-- Αριστερή Στήλη: Κείμενο -->
             <div>
@@ -77,7 +77,7 @@ const submit = () => {
             </div>
 
             <!-- Δεξιά Στήλη: Φόρμα ή CTA Buttons -->
-            <div class="bg-gray-50 p-8 rounded-lg border border-gray-100 flex flex-col space-y-4">
+            <div class="bg-gray-50 p-2 sm:p-8 rounded-lg border border-gray-100 flex flex-col space-y-4">
                 <h3 class="text-xl font-bold text-gray-900 mb-4 text-center">Get in Touch</h3>
                 <button
                     class="w-full bg-gray-900 text-white font-semibold py-3 px-4 rounded hover:bg-gray-800 transition duration-150 shadow-sm">
