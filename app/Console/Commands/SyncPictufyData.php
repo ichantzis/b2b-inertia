@@ -38,6 +38,8 @@ class SyncPictufyData extends Command
 
     protected $description = 'Syncs all data from Pictufy API. Handles large datasets with memory optimization.';
 
+    public $timeout = 3600;
+    
     protected $pictufy;
 
     public function __construct(PictufyService $pictufy)
@@ -66,7 +68,7 @@ class SyncPictufyData extends Command
             $this->syncMetadata();
             return;
         }
-         if ($this->option('update-categories')) {
+        if ($this->option('update-categories')) {
             $this->syncCategories();
             return;
         }
@@ -76,12 +78,12 @@ class SyncPictufyData extends Command
         }
         if ($this->option('update-collections')) {
             $this->syncCollections();
-            // $this->syncCollectionContents();
+            $this->syncCollectionContents();
             return;
         }
         if ($this->option('update-lists')) {
             $this->syncLists();
-            // $this->syncListContents();
+            $this->syncListContents();
             return;
         }
 
@@ -106,12 +108,12 @@ class SyncPictufyData extends Command
         if (!$this->option('skip-artworks')) {
             $startPage = (int) $this->option('start-page');
             $limit = $this->option('limit') ? (int) $this->option('limit') : 300000; // Default max 300k
-            
+
             // Mode selection
             $order = $this->option('recent') ? 'recently_added' : 'recommended';
-            
+
             $this->info("Syncing Artworks... (Order: $order, Start Page: $startPage)");
-            
+
             $this->syncArtworks($order, $limit, $startPage);
 
             // 4. SYNC RELATIONSHIPS
@@ -129,12 +131,12 @@ class SyncPictufyData extends Command
     private function pruneLowGradeArtworks()
     {
         $this->info('Pruning artworks with Grade < 1 (Quality Control)...');
-        
+
         // Σβήνουμε όσα έχουν grade 0 ή NULL
         $deleted = Artwork::where('grade', '<', 1)
-                    ->orWhereNull('grade')
-                    ->delete();
-        
+            ->orWhereNull('grade')
+            ->delete();
+
         $this->info("Deleted $deleted low-grade artworks from database.");
     }
 
@@ -165,7 +167,7 @@ class SyncPictufyData extends Command
         $this->info('Syncing Categories...');
         $response = $this->pictufy->getCategories();
         $items = $response['items'] ?? [];
-        
+
         foreach ($items as $section => $categories) {
             foreach ($categories as $cat) {
                 Category::updateOrCreate(
@@ -173,7 +175,7 @@ class SyncPictufyData extends Command
                     [
                         'name' => html_entity_decode($cat['category_name']),
                         'slug' => Str::slug(html_entity_decode($cat['category_name'])),
-                        'parent_slug' => $section 
+                        'parent_slug' => $section
                     ]
                 );
             }
@@ -184,9 +186,9 @@ class SyncPictufyData extends Command
     private function syncArtists()
     {
         $this->info('Syncing Featured Artists...');
-        $response = $this->pictufy->getArtists(['order' => 'trending']); 
+        $response = $this->pictufy->getArtists(['order' => 'trending']);
         $items = $response['items'] ?? [];
-        
+
         $bar = $this->output->createProgressBar(count($items));
         $bar->start();
 
@@ -221,9 +223,9 @@ class SyncPictufyData extends Command
                 [
                     'name' => html_entity_decode($item['name']),
                     'slug' => $item['slug'] ?? Str::slug($item['name']),
-                    'cover' => $item['cover'] ?? null, 
+                    'cover' => $item['cover'] ?? null,
                     'description' => $item['description'] ?? null,
-                    'last_change' => $item['last_change'] ?? null, 
+                    'last_change' => $item['last_change'] ?? null,
                 ]
             );
         }
@@ -233,7 +235,7 @@ class SyncPictufyData extends Command
     private function syncCollections()
     {
         $this->info('Syncing Collections & Categories...');
-        $response = $this->pictufy->getCollections(); 
+        $response = $this->pictufy->getCollections();
         $groups = $response['items'] ?? [];
 
         foreach ($groups as $group) {
@@ -257,8 +259,8 @@ class SyncPictufyData extends Command
                     if (empty($item['id'])) continue;
 
                     $name = $item['name'] ?? 'Untitled';
-                    $slug = !empty($item['url']) 
-                        ? basename(parse_url($item['url'], PHP_URL_PATH)) 
+                    $slug = !empty($item['url'])
+                        ? basename(parse_url($item['url'], PHP_URL_PATH))
                         : Str::slug($name);
 
                     // Update Collection itself
@@ -291,9 +293,9 @@ class SyncPictufyData extends Command
         $page = $startPage;
         $perPage = 100;
         $totalSynced = 0;
-        
+
         // Approx total for progress bar (291400 based on your file)
-        $approxTotal = 292000; 
+        $approxTotal = 292000;
         $remaining = $approxTotal - (($startPage - 1) * $perPage);
         $bar = $this->output->createProgressBar(ceil($remaining / $perPage));
         $bar->start();
@@ -313,80 +315,23 @@ class SyncPictufyData extends Command
             }
 
             foreach ($items as $item) {
-                // 1. Ensure Artist Exists (Harvesting)
-                // Sometimes artworks belong to artists not in the main /artists list
-                if (!empty($item['artist_id'])) {
-                    // Using firstOrCreate to avoid overhead of updating every time
-                    Artist::firstOrCreate(
-                        ['pictufy_id' => $item['artist_id']],
-                        [
-                            'name' => html_entity_decode($item['artist']),
-                            'slug' => Str::slug($item['artist']), // Fallback slug
-                            'artwork_count' => 1 // Placeholder
-                        ]
-                    );
-                }
-
-                // 2. Clean Data
-                $keywords = $item['keywords']['en'] ?? '';
-                if (!empty($keywords) && str_starts_with($keywords, $item['id'] . ',')) {
-                    $keywords = substr($keywords, strlen($item['id']) + 1);
-                }
-
-                $publishedAt = $item['artwork_published'] ?? null;
-                if (!$publishedAt || str_starts_with($publishedAt, '1970')) {
-                    $publishedAt = null;
-                }
-
-                $colors = $item['color'] ?? [];
-
-                // 3. Save Artwork
-                Artwork::updateOrCreate(
-                    ['pictufy_id' => $item['id']],
-                    [
-                        'title' => html_entity_decode($item['title']['en'] ?? 'Untitled'),
-                        'artist' => html_entity_decode($item['artist']),
-                        'artist_id' => $item['artist_id'],
-                        'category' => html_entity_decode($item['category']),
-                        'category_id' => $item['category_id'],
-                        'keywords' => $keywords,
-                        'geometry' => $item['geometry'],
-                        'width' => $item['width'],
-                        'height' => $item['height'],
-                        'grade' => $item['grade'] ?? 0,
-                        'img_thumb' => $item['urls']['img_thumb'] ?? null,
-                        'img_medium' => $item['urls']['img_medium'] ?? null,
-                        'img_high' => $item['urls']['img_high'] ?? null,
-                        'has_red' => $colors['red'] ?? false,
-                        'has_orange' => $colors['orange'] ?? false,
-                        'has_yellow' => $colors['yellow'] ?? false,
-                        'has_green' => $colors['green'] ?? false,
-                        'has_turquoise' => $colors['turquoise'] ?? false,
-                        'has_blue' => $colors['blue'] ?? false,
-                        'has_lilac' => $colors['lilac'] ?? false,
-                        'has_pink' => $colors['pink'] ?? false,
-                        'is_highkey' => $colors['highkey'] ?? false,
-                        'is_lowkey' => $colors['lowkey'] ?? false,
-                        'artwork_published_at' => $publishedAt,
-                    ]
-                );
+                $this->saveArtworkData($item);
             }
 
             $totalSynced += count($items);
             $bar->advance();
-            
+
             // Log progress every 10 pages so user knows where to resume if it crashes
             if ($page % 10 === 0) {
                 // Optional: $this->info("Reached page $page...");
             }
 
             $page++;
-            
+
             // Memory Cleanup
             gc_collect_cycles();
 
             if ($totalSynced >= $limit) break;
-
         } while (count($items) >= $perPage);
 
         $bar->finish();
@@ -394,15 +339,76 @@ class SyncPictufyData extends Command
         $this->info("Synced $totalSynced artworks.");
     }
 
+    /**
+     * Επαναχρησιμοποιήσιμη μέθοδος για δημιουργία/ενημέρωση ενός Artwork.
+     */
+    private function saveArtworkData($item)
+    {
+        if (empty($item['artist_id'])) return null;
+
+        Artist::firstOrCreate(
+            ['pictufy_id' => $item['artist_id']],
+            [
+                'name' => html_entity_decode($item['artist']),
+                'slug' => Str::slug($item['artist']),
+                'artwork_count' => 1
+            ]
+        );
+
+        $keywords = $item['keywords']['en'] ?? '';
+        if (!empty($keywords) && str_starts_with($keywords, $item['id'] . ',')) {
+            $keywords = substr($keywords, strlen($item['id']) + 1);
+        }
+
+        $publishedAt = $item['artwork_published'] ?? null;
+        if (!$publishedAt || str_starts_with($publishedAt, '1970')) {
+            $publishedAt = null;
+        }
+
+        $colors = $item['color'] ?? [];
+
+        return Artwork::updateOrCreate(
+            ['pictufy_id' => $item['id']],
+            [
+                'title' => html_entity_decode($item['title']['en'] ?? 'Untitled'),
+                'artist' => html_entity_decode($item['artist']),
+                'artist_id' => $item['artist_id'],
+                'category' => html_entity_decode($item['category']),
+                'category_id' => $item['category_id'],
+                'keywords' => $keywords,
+                'geometry' => $item['geometry'],
+                'width' => $item['width'],
+                'height' => $item['height'],
+                'grade' => $item['grade'] ?? 0,
+                'img_thumb' => $item['urls']['img_thumb'] ?? null,
+                'img_medium' => $item['urls']['img_medium'] ?? null,
+                'img_high' => $item['urls']['img_high'] ?? null,
+                'has_red' => $colors['red'] ?? false,
+                'has_orange' => $colors['orange'] ?? false,
+                'has_yellow' => $colors['yellow'] ?? false,
+                'has_green' => $colors['green'] ?? false,
+                'has_turquoise' => $colors['turquoise'] ?? false,
+                'has_blue' => $colors['blue'] ?? false,
+                'has_lilac' => $colors['lilac'] ?? false,
+                'has_pink' => $colors['pink'] ?? false,
+                'is_highkey' => $colors['highkey'] ?? false,
+                'is_lowkey' => $colors['lowkey'] ?? false,
+                'artwork_published_at' => $publishedAt,
+            ]
+        );
+    }
+
     private function syncListContents()
     {
-        $this->info('Mapping Artworks to Lists...');
+        $this->info('Mapping Artworks to Lists (with dynamic creation)...');
         $lists = ArtworkList::all();
         $bar = $this->output->createProgressBar($lists->count());
         $bar->start();
 
         foreach ($lists as $list) {
             $page = 1;
+            $syncedLocalIds = []; // Πίνακας για να κρατήσουμε ΟΛΑ τα local IDs αυτής της λίστας
+
             do {
                 $response = $this->pictufy->getArtworks([
                     'list_id' => $list->pictufy_id,
@@ -412,15 +418,23 @@ class SyncPictufyData extends Command
                 $items = $response['items'] ?? [];
                 if (empty($items)) break;
 
-                $artworkPictufyIds = collect($items)->pluck('id')->toArray();
-                $localIds = Artwork::whereIn('pictufy_id', $artworkPictufyIds)->pluck('id')->toArray();
+                foreach ($items as $item) {
+                    // Δημιουργεί ή ενημερώνει το έργο τέχνης απευθείας από τα δεδομένα της λίστας
+                    $artwork = $this->saveArtworkData($item);
 
-                $list->artworks()->syncWithoutDetaching($localIds);
+                    if ($artwork) {
+                        $syncedLocalIds[] = $artwork->id;
+                    }
+                }
                 $page++;
             } while (count($items) >= 100);
-            
+
+            // Το sync() (αντί για syncWithoutDetaching) εγγυάται ότι η τοπική λίστα 
+            // θα έχει ΑΚΡΙΒΩΣ τα ίδια στοιχεία με το API. Όσα αφαιρέθηκαν στο API, διαγράφονται και εδώ.
+            $list->artworks()->sync($syncedLocalIds);
+
             $bar->advance();
-            gc_collect_cycles(); 
+            gc_collect_cycles();
         }
         $bar->finish();
         $this->newLine();
@@ -433,7 +447,7 @@ class SyncPictufyData extends Command
         // 1. Ζητάμε όλες τις συλλογές ΜΑΖΙ με τα artwork_ids (with_ids=1)
         // Αυτό το request μπορεί να πάρει ώρα (~30s), οπότε αυξάνουμε το timeout αν χρειάζεται
         $this->info('Fetching collection structures with artwork IDs from API...');
-        
+
         try {
             $response = $this->pictufy->getCollections(['with_ids' => 1]);
         } catch (\Exception $e) {
@@ -467,10 +481,10 @@ class SyncPictufyData extends Command
                     }
 
                     $localCollectionId = $localCollections[$pictufyCollectionId];
-                    $apiArtworkIds = $item['artwork_ids'] ?? []; 
+                    $apiArtworkIds = $item['artwork_ids'] ?? [];
                     // Σημείωση: Το API μπορεί να επιστρέφει 'artwork_ids' ή 'artworks' ως array από IDs. 
                     // Στο doc λέει "get all artwork ids". Συνήθως είναι array.
-                    
+
                     if (empty($apiArtworkIds) || !is_array($apiArtworkIds)) {
                         continue;
                     }

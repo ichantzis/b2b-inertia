@@ -78,6 +78,23 @@ Route::get('/collaborate', function () {
     return Inertia::render('Partners');
 })->name('collaborate');
 
+// Policy Pages
+Route::get('/shipping-policy', function () {
+    return Inertia::render('policies/ShippingPolicy');
+})->name('policy.shipping');
+
+Route::get('/returns-refunds', function () {
+    return Inertia::render('policies/ReturnsPolicy');
+})->name('policy.returns');
+
+Route::get('/terms-of-service', function () {
+    return Inertia::render('policies/TermsOfService');
+})->name('policy.terms');
+
+Route::get('/privacy-policy', function () {
+    return Inertia::render('policies/PrivacyPolicy');
+})->name('policy.privacy');
+
 
 // --- LISTS ---
 Route::get('/lists', [ListController::class, 'index'])->name('lists.index');

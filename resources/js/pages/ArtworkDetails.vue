@@ -102,7 +102,8 @@
         <Divider />
 
         <ArtworkCustomizer :artwork="currentArtwork" :pricing-config="pricingConfig" :can-view-price="canViewPrice"
-          :require-login-for-prices="requireLoginForPrices" :user-discount="userDiscount" @frame-change="handleFrameStyleChange" />
+          :require-login-for-prices="requireLoginForPrices" :user-discount="userDiscount"
+          @frame-change="handleFrameStyleChange" />
 
         <Divider class="my-8" />
 
@@ -312,12 +313,10 @@
       </div>
 
       <div class="mt-10 flex justify-center">
-        <Link :href="`/collections/${slugify(currentArtwork?.artist || 'artist')}`">
-          <button
-            class="px-8 py-3 border border-black text-black bg-transparent hover:bg-black hover:text-white transition-colors duration-300 font-medium tracking-widest text-sm cursor-pointer">
-            More from {{ currentArtwork?.artist || 'this Artist' }}
-          </button>
-        </Link>
+        <button @click="navigateToArtist(currentArtwork.artist_username)"
+          class="px-8 py-3 border border-black text-black bg-transparent hover:bg-black hover:text-white transition-colors duration-300 font-medium tracking-widest text-sm cursor-pointer">
+          More from this Artist
+        </button>
       </div>
     </div>
   </section>
@@ -374,7 +373,7 @@
       <div class="mt-10 flex justify-center">
         <button severity="warn" @click="navigateToCategory(currentArtwork.category)"
           class="px-8 py-3 border border-black text-black bg-transparent hover:bg-black hover:text-white transition-colors duration-300 font-medium tracking-widest text-sm cursor-pointer">
-          More from {{ currentArtwork?.category || 'this Category' }}
+          More from this Category
         </button>
       </div>
     </div>

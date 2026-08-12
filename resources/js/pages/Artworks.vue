@@ -20,7 +20,7 @@
                     </div>
 
                     <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName
-                    }}</h1>
+                        }}</h1>
                     <p v-if="props.collectionDescription"
                         class="collection-description text-center text-gray-600 text-sm md:text-base max-w-3xl mx-auto">
                         {{ props.collectionDescription }}
@@ -39,7 +39,9 @@
                     </IconField>
                 </div>
 
-                <div class="flex justify-center items-center mb-6">
+                <!-- 1. Το αόρατο σημάδι παρακολούθησης -->
+                <div ref="stickySentinel" class="h-px w-full pointer-events-none"></div>
+                <div :class="['sticky-filter-bar', { 'is-stuck': isStuck }]">
                     <Button icon="pi pi-filter" @click="layout?.toggleFilters()"
                         :label="layout?.isFiltersVisible?.value ? 'Hide Filters' : 'Filters'" severity="info"
                         size="large" class="filter-button" variant="outlined" raised />
@@ -73,7 +75,7 @@
                                             <div class="artwork-overlay">
                                                 <div class="overlay-content">
                                                     <span class="artwork-title">{{ artwork.title || 'Untitled'
-                                                    }}</span>
+                                                        }}</span>
                                                     <Divider layout="vertical" />
                                                     <span class="artwork-id">ID: {{ artwork.pictufy_id }}</span>
                                                 </div>
@@ -143,6 +145,8 @@ const localCurrentPageForLoadMore = ref(1);
 
 const searchQuery = ref('');
 const localCurrentSearchTerm = ref('');
+const stickySentinel = ref(null); // Αναφορά στο αόρατο <div>
+const isStuck = ref(false);       // Κατάσταση για το αν η μπάρα έχει κολλήσει
 
 const unregisterStartListener = router.on('start', () => artworksLoading.value = true);
 const unregisterFinishListener = router.on('finish', () => artworksLoading.value = false);
@@ -205,6 +209,21 @@ onMounted(() => {
     localCurrentSearchTerm.value = props.currentSearchTerm || '';
 
     window.addEventListener('scroll', handleScroll);
+
+    // --- Κώδικας για το Sticky Shadow ---
+    const stickyObserver = new IntersectionObserver((entries) => {
+        // Όταν το isIntersecting γίνεται false, σημαίνει ότι το σημάδι πέρασε
+        // τα -104px της οθόνης, άρα η μπάρα έχει κολλήσει.
+        isStuck.value = !entries[0].isIntersecting;
+    }, {
+        // Τοποθετούμε το περιθώριο παρακολούθησης στα 104px (όσο το Header σου)
+        rootMargin: '-120px 0px 0px 0px',
+        threshold: 0
+    });
+
+    if (stickySentinel.value) {
+        stickyObserver.observe(stickySentinel.value);
+    }
 });
 
 onUnmounted(() => {
@@ -267,7 +286,7 @@ const loadMoreArtworks = async () => {
 const handleScroll = debounce(() => {
     const bottomOfWindow = window.innerHeight + window.pageYOffset;
     const documentHeight = document.documentElement.offsetHeight;
-    if (bottomOfWindow >= documentHeight - 500 && localNextPage.value && !loading.value) {
+    if (bottomOfWindow >= documentHeight - 1500 && localNextPage.value && !loading.value) {
         loadMoreArtworks();
     }
 }, 200);
@@ -285,7 +304,7 @@ const artworks = computed(() => localArtworks.value);
 .main-content {
     flex: 1;
     padding: 2rem 2rem;
-    overflow-y: auto;
+    /* overflow-y: auto; */
 }
 
 .content-wrapper {
@@ -505,6 +524,51 @@ const artworks = computed(() => localArtworks.value);
     .artwork-id,
     .artwork-title {
         font-size: 0.75rem;
+    }
+}
+
+/* --- Sticky Filter Bar Styles --- */
+.sticky-filter-bar {
+    position: sticky;
+    /* 
+       Depending on your scrolling container, you may need to adjust the 'top' value.
+       If the page scrolls within the window and you have a fixed header, change 
+       this to match your header height (e.g., top: 104px). 
+       If '.main-content' is the scroll container, use top: -2rem to offset its padding.
+    */
+    top: 120px;
+    z-index: 40;
+    /* High enough to overlay artworks, but below the main navigation */
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 1rem;
+    margin: 0 -2rem 2rem -2rem;
+    /* Stretches across the content-wrapper's padding */
+    border-bottom: 1px solid transparent;
+    box-shadow: none;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+/* Κατάσταση "κολλημένη": Εμφάνιση περιγράμματος και σκιάς */
+.sticky-filter-bar.is-stuck {
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive adjustments to match your existing media queries */
+@media (max-width: 768px) {
+    .sticky-filter-bar {
+        margin: 0 -1.5rem 1.5rem -1.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .sticky-filter-bar {
+        margin: 0 -1rem 1.5rem -1rem;
     }
 }
 </style>

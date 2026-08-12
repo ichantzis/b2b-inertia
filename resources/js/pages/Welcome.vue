@@ -251,27 +251,27 @@ onMounted(() => {
     </section> -->
 
     <!-- Trust Icons Section -->
-    <section class="trust-icons-section py-12 bg-gray-50 border-y border-gray-200">
+    <section class="trust-icons-section py-12 bg-white border-y border-gray-200">
         <div class="max-w-7xl mx-auto px-4 text-center">
             <h2 class="text-xl mb-10 text-gray-700 font-medium italic">
-                Πινακοθήκη – Πίνακες σε καμβά ή poster | Ανακαλύψτε Μοναδική Τέχνη για τον χώρο σας!
+                Pinakothiki – Paintings on canvas or poster | Discover Unique Art for Your Space!
             </h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div class="icon-box">
-                    <i class="pi pi-shield text-4xl mb-3 text-primary"></i>
-                    <p class="font-semibold uppercase text-sm">Ασφαλείς Πληρωμές</p>
+                    <i class="pi pi-shield text-4xl mb-3"></i>
+                    <p class="font-semibold uppercase text-sm">Secure Payments</p>
                 </div>
                 <div class="icon-box">
-                    <i class="pi pi-star text-4xl mb-3 text-primary"></i>
-                    <p class="font-semibold uppercase text-sm">Ξεχωριστά Χειροποίητο</p>
+                    <i class="pi pi-star text-4xl mb-3"></i>
+                    <p class="font-semibold uppercase text-sm">Unique Handcrafted Artwork</p>
                 </div>
                 <div class="icon-box">
-                    <i class="pi pi-map-marker text-4xl mb-3 text-primary"></i>
-                    <p class="font-semibold uppercase text-sm">Κατασκευάζεται στην Ελλάδα</p>
+                    <i class="pi pi-map-marker text-4xl mb-3"></i>
+                    <p class="font-semibold uppercase text-sm">Made in Greece</p>
                 </div>
                 <div class="icon-box">
-                    <i class="pi pi-truck text-4xl mb-3 text-primary"></i>
-                    <p class="font-semibold uppercase text-sm">Δωρεάν Μεταφορικά</p>
+                    <i class="pi pi-truck text-4xl mb-3"></i>
+                    <p class="font-semibold uppercase text-sm">Free Shipping</p>
                 </div>
             </div>
         </div>
@@ -390,15 +390,31 @@ onMounted(() => {
         </div>
     </section>
 
-    <!-- Clients and Projects Section -->
+   <!-- Clients and Projects Section -->
     <section class="clients-section py-16">
         <div class="max-w-7xl mx-auto px-4">
             <h2 class="text-3xl text-center mb-12 tracking-widest">Clients and Projects</h2>
             <div
                 class="flex flex-wrap justify-center items-center gap-12 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all">
-                <img src="/images/clients/hilton.png" alt="Hilton" class="h-12" />
-                <img src="/images/clients/the-royal-senses.png" alt="The Royal Senses" class="h-12" />
-                <img src="/images/clients/kakkos-bay.png" alt="Kakkos Bay" class="h-12" />
+                
+                <!-- Λογότυπο 1: Προσθήκη προστασίας δεξιού κλικ και drag -->
+                <img src="/images/clients/hilton.png" alt="Hilton" 
+                     class="h-12 select-none" 
+                     @contextmenu.prevent 
+                     draggable="false" />
+                
+                <!-- Λογότυπο 2: Προσθήκη προστασίας δεξιού κλικ και drag -->
+                <img src="/images/clients/the-royal-senses.png" alt="The Royal Senses" 
+                     class="h-12 select-none" 
+                     @contextmenu.prevent 
+                     draggable="false" />
+                
+                <!-- Λογότυπο 3: Προσθήκη προστασίας δεξιού κλικ και drag -->
+                <img src="/images/clients/kakkos-bay.png" alt="Kakkos Bay" 
+                     class="h-12 select-none" 
+                     @contextmenu.prevent 
+                     draggable="false" />
+            
             </div>
         </div>
     </section>
@@ -496,7 +512,7 @@ onMounted(() => {
    3. TRUST ICONS SECTION
    ========================================= */
 .trust-icons-section {
-    background-color: #f9fafb;
+    /* background-color: #f9fafb; */
     /* Light gray bg */
     padding: 4rem 2rem;
     border-top: 1px solid #e5e7eb;
@@ -530,7 +546,8 @@ onMounted(() => {
 .icon-box i {
     font-size: 2.5rem;
     margin-bottom: 1rem;
-    color: var(--primary-color, #3B82F6);
+    color: #EAE6D7;
+    /* color: var(--primary-color, #3B82F6); */
 }
 
 .icon-text {

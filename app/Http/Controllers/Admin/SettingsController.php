@@ -276,27 +276,28 @@ class SettingsController extends Controller
         try {
             switch ($key) {
                 case 'sync_recent':
-                    Artisan::call('pictufy:sync-all', ['--recent' => true, '--limit' => 200]);
-                    $message = 'Recent artworks synced successfully.';
+                    // Στέλνουμε το command στο παρασκήνιο με την Artisan::queue
+                    Artisan::queue('pictufy:sync-all', ['--recent' => true, '--limit' => 200]);
+                    $message = 'Ο συγχρονισμός ξεκίνησε στο παρασκήνιο. Παρακαλώ περιμένετε μερικά λεπτά για την ολοκλήρωση.';
                     break;
 
                 case 'update_ranks':
-                    Artisan::call('pictufy:update-ranks', ['--type' => 'recommended', '--limit' => 2000]);
-                    Artisan::call('pictufy:update-ranks', ['--type' => 'best_selling', '--limit' => 1000]);
-                    Artisan::call('pictufy:update-ranks', ['--type' => 'trending', '--limit' => 1000]);
-                    $message = 'Ranks updated (Recommended, Best Selling, Trending).';
+                    Artisan::queue('pictufy:update-ranks', ['--type' => 'recommended', '--limit' => 2000]);
+                    Artisan::queue('pictufy:update-ranks', ['--type' => 'best_selling', '--limit' => 1000]);
+                    Artisan::queue('pictufy:update-ranks', ['--type' => 'trending', '--limit' => 1000]);
+                    $message = 'Η ενημέρωση των κατατάξεων μπήκε στην ουρά εκτέλεσης.';
                     break;
 
                 case 'prune_expired':
-                    Artisan::call('pictufy:prune-expired');
-                    $message = 'Expired artworks pruned successfully.';
+                    Artisan::queue('pictufy:prune-expired');
+                    $message = 'Η εκκαθάριση ξεκίνησε στο παρασκήνιο.';
                     break;
 
                 default:
-                    return back()->with('error', 'Unknown command.');
+                    return back()->with('error', 'Άγνωστη εντολή.');
             }
         } catch (\Exception $e) {
-            return back()->with('error', 'Error executing command: ' . $e->getMessage());
+            return back()->with('error', 'Σφάλμα κατά την αποστολή στην ουρά: ' . $e->getMessage());
         }
 
         return back()->with('success', $message);

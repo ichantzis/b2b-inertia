@@ -101,33 +101,28 @@
                             <h4 class="text-white font-medium text-lg mb-6 tracking-wide">Customer Service</h4>
                             <ul class="space-y-3">
                                 <li>
-                                    <Link href="#"
-                                        class="hover:text-white transition-colors duration-200 no-underline block w-fit">
-                                    Shipping Policy
+                                    <Link :href="route('policy.shipping')" class="hover:text-white transition-colors duration-200 no-underline block w-fit">
+                                        Shipping Policy
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="#"
-                                        class="hover:text-white transition-colors duration-200 no-underline block w-fit">
-                                    Returns & Refunds
+                                    <Link :href="route('policy.returns')" class="hover:text-white transition-colors duration-200 no-underline block w-fit">
+                                        Returns & Refunds
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="#"
-                                        class="hover:text-white transition-colors duration-200 no-underline block w-fit">
-                                    Terms of Service
+                                    <Link :href="route('policy.terms')" class="hover:text-white transition-colors duration-200 no-underline block w-fit">
+                                        Terms of Service
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="#"
-                                        class="hover:text-white transition-colors duration-200 no-underline block w-fit">
-                                    Privacy Policy
+                                    <Link :href="route('policy.privacy')" class="hover:text-white transition-colors duration-200 no-underline block w-fit">
+                                        Privacy Policy
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="#"
-                                        class="hover:text-white transition-colors duration-200 no-underline block w-fit">
-                                    FAQ
+                                    <Link href="#" class="hover:text-white transition-colors duration-200 no-underline block w-fit">
+                                        FAQ
                                     </Link>
                                 </li>
                             </ul>

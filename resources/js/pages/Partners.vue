@@ -161,14 +161,18 @@ const submit = () => {
                     </h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div
-                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">
+                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200">
                             <img src="/images/clients/partners-freskos.png" alt="Freskos Partner"
-                                class="inset-0 w-full h-full object-cover" />
+                                class="inset-0 w-full h-full object-cover select-none" 
+                                @contextmenu.prevent 
+                                draggable="false" />
                         </div>
                         <div
-                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">
+                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200">
                             <img src="/images/clients/partners-lipshop.png" alt="Lipshop Partner"
-                                class="inset-0 w-full h-full object-cover" />
+                                class="inset-0 w-full h-full object-cover select-none" 
+                                @contextmenu.prevent 
+                                draggable="false" />
                         </div>
                     </div>
                 </div>
@@ -179,19 +183,25 @@ const submit = () => {
                     </h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div
-                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">
+                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200">
                             <img src="/images/clients/partners-magerakis.png" alt="Magerakis Partner"
-                                class="inset-0 w-full h-full object-cover" />
+                                class="inset-0 w-full h-full object-cover select-none" 
+                                @contextmenu.prevent 
+                                draggable="false" />
                         </div>
                         <div
-                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">
+                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200">
                             <img src="/images/clients/partners-kastino.png" alt="Kastino Partner"
-                                class="inset-0 w-full h-full object-cover" />
+                                class="inset-0 w-full h-full object-cover select-none" 
+                                @contextmenu.prevent 
+                                draggable="false" />
                         </div>
                         <div
-                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">
+                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200">
                             <img src="/images/clients/partners-kaloterakis.png" alt="Kaloterakis Partner"
-                                class="inset-0 w-full h-full object-cover" />
+                                class="inset-0 w-full h-full object-cover select-none" 
+                                @contextmenu.prevent 
+                                draggable="false" />
                         </div>
                     </div>
                 </div>
@@ -202,19 +212,25 @@ const submit = () => {
                         Rest Greece</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div
-                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">
+                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200">
                             <img src="/images/clients/partners-onirome.png" alt="Onirome Partner"
-                                class="inset-0 w-full h-full object-cover" />
+                                class="inset-0 w-full h-full object-cover select-none" 
+                                @contextmenu.prevent 
+                                draggable="false" />
                         </div>
                         <div
-                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">
+                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200">
                             <img src="/images/clients/partners-epiplagiaolous.png" alt="Epiplagiaolous Partner"
-                                class="inset-0 w-full h-full object-cover" />
+                                class="inset-0 w-full h-full object-cover select-none" 
+                                @contextmenu.prevent 
+                                draggable="false" />
                         </div>
                         <div
-                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200 cursor-pointer">
+                            class="bg-white shadow-sm flex items-center justify-center rounded-lg border border-gray-100 h-32 opacity-70 hover:opacity-100 hover:shadow-md transition duration-200">
                             <img src="/images/clients/partners-internioggi.png" alt="Internioggi Partner"
-                                class="inset-0 w-full h-full object-cover" />
+                                class="inset-0 w-full h-full object-cover select-none" 
+                                @contextmenu.prevent 
+                                draggable="false" />
                         </div>
                     </div>
                 </div>
