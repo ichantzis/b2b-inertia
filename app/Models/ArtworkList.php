@@ -15,14 +15,26 @@ class ArtworkList extends Model
         'name',
         'slug',
         'cover',
-        'custom_cover_path', // Νέο πεδίο
+        'custom_cover_path', 
+        'custom_banner_path', // Προστέθηκε το πεδίο του banner
         'description',
-        'custom_description', // Νέο πεδίο
+        'custom_description', 
         'last_change',
     ];
 
     // Κάνουμε append τα νέα attributes για να είναι διαθέσιμα στο JSON (Vue)
-    protected $appends = ['resolved_cover', 'resolved_description'];
+    protected $appends = ['resolved_cover', 'resolved_description', 'resolved_banner']; 
+
+    /**
+     * Επιστρέφει το custom banner (αν υπάρχει).
+     */
+    public function getResolvedBannerAttribute()
+    {
+        if ($this->custom_banner_path) {
+            return Storage::url($this->custom_banner_path);
+        }
+        return null;
+    }
 
     /**
      * Επιστρέφει το custom εξώφυλλο (αν υπάρχει) ή το προεπιλεγμένο.

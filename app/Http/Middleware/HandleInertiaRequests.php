@@ -71,12 +71,13 @@ class HandleInertiaRequests extends Middleware
                     }),
 
                     // --- UPDATED LISTS LOGIC ---
-                    'lists' => \App\Models\ArtworkList::orderByDesc('last_change')->get()->map(function ($list) {
+                    'lists' => \App\Models\ArtworkList::orderBy('sort_order')->get()->map(function ($list) {
                         return [
                             'id' => $list->pictufy_id,
                             'name' => $list->name,
                             'slug' => $list->slug,
                             'cover' => $list->cover, // Pass the cover image
+                            'sort_order' => $list->sort_order, // Include sort_order for sorting in the frontend
                         ];
                     }),
                 ];

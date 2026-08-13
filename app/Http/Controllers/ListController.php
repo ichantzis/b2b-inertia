@@ -39,6 +39,7 @@ class ListController extends Controller
             'collectionId' => $list->id,
             'collectionName' => $list->name,
             'collectionCover' => $list->resolved_cover, // Προσθήκη του resolved_cover
+            'collectionBanner' => $list->resolved_banner,
             'collectionDescription' => $list->resolved_description, // Προσθήκη του resolved_description
             'isListPage' => true, 
             'collectionSlug' => $slug, 

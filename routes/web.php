@@ -25,13 +25,14 @@ use Inertia\Inertia;
 Route::get('/', function (SettingsService $settingsService) {
     // Fetch generic lists for homepage (e.g., 'best-sellers') or just pass empty
     // If you need specific lists for the homepage slider, fetch them here using Models.
-    $curatedLists = \App\Models\ArtworkList::orderByDesc('last_change')->get();
+    $curatedLists = \App\Models\ArtworkList::orderBy('sort_order')->orderByDesc('last_change')->get();
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'curatedLists' => $curatedLists,
         'heroSettings' => [
             'image' => $settingsService->get('hero_image', '/images/hero-bg.jpg.png'),
+            'mobile_image' => $settingsService->get('hero_mobile_image', null),
             'title' => $settingsService->get('hero_title', 'Premium Art on Canvas Custom Made by hand with Love'),
             'subtitle' => $settingsService->get('hero_subtitle', 'Art Prints for Every Personality'),
             'button1_text' => $settingsService->get('hero_button1_text', 'Shop Prints'),
@@ -175,6 +176,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
         Route::post('/run-command', [App\Http\Controllers\Admin\SettingsController::class, 'runCommand'])->name('command');
 
         Route::get('/lists', [ArtworkListController::class, 'index'])->name('lists.index');
+        Route::post('/lists/reorder', [ArtworkListController::class, 'reorder'])->name('lists.reorder');
         Route::post('/lists/{artworkList}', [ArtworkListController::class, 'update'])->name('lists.update');
     });
 });

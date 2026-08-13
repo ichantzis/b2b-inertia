@@ -81,6 +81,25 @@
                                         class="w-full h-full object-contain" />
                                 </div>
                             </div>
+
+                            <!-- ΠΡΟΣΘΗΚΗ: Mobile Image -->
+                            <div class="field mt-4 border-t border-gray-100 pt-4">
+                                <label for="hero_mobile_image" class="block font-medium mb-1 text-sm text-gray-700">Update Mobile Background Image</label>
+                                <input type="file" id="hero_mobile_image" @input="heroForm.hero_mobile_image = $event.target.files[0]"
+                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border border-gray-300 rounded cursor-pointer"
+                                    accept="image/*" />
+                                <small class="text-gray-500 mt-1 block">Leave empty to use desktop image on mobile. Recommended size: 1080x1350px.</small>
+                            </div>
+
+                            <!-- Προβολή τρέχουσας Mobile εικόνας (Thumbnail) -->
+                            <div v-if="props.settings.hero_mobile_image"
+                                class="p-3 bg-gray-50 rounded border border-gray-200 flex flex-col gap-2">
+                                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mobile Image Preview</span>
+                                <div class="w-full h-40 overflow-hidden rounded border border-gray-300 shadow-inner bg-white flex items-center justify-center">
+                                    <img :src="props.settings.hero_mobile_image" alt="Current Mobile Banner"
+                                        class="w-full h-full object-contain" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </template>
@@ -309,6 +328,7 @@ const heroForm = useForm({
     hero_button2_text: props.settings.hero_button2_text || '',
     hero_button2_link: props.settings.hero_button2_link || '',
     hero_image: null, // Το πεδίο για το αρχείο
+    hero_mobile_image: null,
 });
 
 const submitHeroSettings = () => {
@@ -318,9 +338,13 @@ const submitHeroSettings = () => {
         onSuccess: () => {
             // Μηδενίζουμε το αρχείο μετά από επιτυχή αποθήκευση, ώστε να μη ξανασταλεί άσκοπα στο επόμενο save
             heroForm.hero_image = null;
+            heroForm.hero_mobile_image = null;
             // Κάνουμε reset και το input type="file" του DOM 
             const fileInput = document.getElementById('hero_image');
             if (fileInput) fileInput.value = '';
+
+            const mobileFileInput = document.getElementById('hero_mobile_image');
+            if (mobileFileInput) mobileFileInput.value = '';
 
             toast.add({ severity: 'success', summary: 'Saved', detail: 'Hero banner settings updated.', life: 3000 });
         },

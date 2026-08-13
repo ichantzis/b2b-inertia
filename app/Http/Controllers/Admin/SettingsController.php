@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class SettingsController extends Controller
@@ -96,6 +97,7 @@ class SettingsController extends Controller
                 'hero_button2_text' => $this->settings->get('hero_button2_text', ''),
                 'hero_button2_link' => $this->settings->get('hero_button2_link', ''),
                 'hero_image' => $this->settings->get('hero_image', null),
+                'hero_mobile_image' => $this->settings->get('hero_mobile_image', null),
 
                 // ΝΕΑ ΠΕΔΙΑ: Featured Layout (3 Columns)
                 'col1_title' => $this->settings->get('col1_title', ''),
@@ -161,6 +163,7 @@ class SettingsController extends Controller
             'hero_button2_text' => 'nullable|string|max:50',
             'hero_button2_link' => 'nullable|string|max:255',
             'hero_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'hero_mobile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
             // Rules for 3 columns
             'col1_title' => 'nullable|string|max:255',
             'col1_link'  => 'nullable|string|max:255',
@@ -223,25 +226,32 @@ class SettingsController extends Controller
             $path = $request->file('hero_image')->store('hero', 'public');
             // Αποθήκευση του path μέσω του SettingsService σου
             $this->settings->set('hero_image', '/storage/' . $path);
-
-            // Αφαίρεση από τον πίνακα $validated για να περάσουν τα υπόλοιπα κανονικά
-            unset($validated['hero_image']);
         }
+        // Αφαίρεση από τον πίνακα $validated για να περάσουν τα υπόλοιπα κανονικά
+        unset($validated['hero_image']);
+
+        if ($request->hasFile('hero_mobile_image')) {
+            $path = $request->file('hero_mobile_image')->store('hero', 'public');
+            $this->settings->set('hero_mobile_image', '/storage/' . $path);
+        }
+        unset($validated['hero_mobile_image']);
+
 
         $columns = ['col1_image', 'col2_image', 'col3_image'];
         foreach ($columns as $col_image) {
             if ($request->hasFile($col_image)) {
                 $path = $request->file($col_image)->store('featured_columns', 'public');
                 $this->settings->set($col_image, '/storage/' . $path);
-                unset($validated[$col_image]); // Αφαίρεση για να μην ξανα-αποθηκευτεί στο παρακάτω loop
             }
+            unset($validated[$col_image]); // Αφαίρεση για να μην ξανα-αποθηκευτεί στο παρακάτω loop
         }
 
         if ($request->hasFile('editor_image')) {
             $path = $request->file('editor_image')->store('editor_pick', 'public');
             $this->settings->set('editor_image', '/storage/' . $path);
-            unset($validated['editor_image']);
         }
+        unset($validated['editor_image']);
+
 
         // Save validated fields to the database/settings service
         foreach ($validated as $key => $value) {
@@ -255,6 +265,9 @@ class SettingsController extends Controller
         if ($request->has('require_login_for_prices') || $request->has('allow_public_registration')) {
             $message = 'Access settings updated.';
         }
+
+        // Καθαρισμός της Cache του μενού για άμεση ανανέωση στο frontend!
+        Cache::forget('global_menu_data');
 
         return back();
     }

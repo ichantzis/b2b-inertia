@@ -82,6 +82,7 @@ const recentlyViewedItems = ref(
 const heroSettings = computed(() => {
     return page.props.heroSettings || {
         image: '/images/hero-bg.jpg.png', // Προεπιλεγμένη εικόνα
+        mobile_image: null,
         title: 'Premium Art on Canvas Custom Made by hand with Love',
         subtitle: 'Art Prints for Every Personality',
         button1_text: 'Shop Prints',
@@ -155,8 +156,19 @@ onMounted(() => {
 
     <!-- Hero Section -->
     <section class="relative w-full bg-white flex items-center justify-center overflow-hidden">
-        <img :src="heroSettings.image" alt="Hero Banner"
-            class="w-full h-auto max-h-[calc(100vh-100px)] object-contain block" />
+        <!-- Mobile Image: Εμφανίζεται μόνο σε κινητά, ΕΑΝ έχει ανεβεί mobile εικόνα -->
+        <img v-if="heroSettings.mobile_image" 
+            :src="heroSettings.mobile_image" 
+            alt="Hero Banner Mobile"
+            class="w-full h-auto max-h-[calc(100vh-100px)] object-cover block md:hidden" />
+
+        <!-- Desktop Image: 
+             Αν ΔΕΝ υπάρχει mobile, εμφανίζεται παντού ('block'). 
+             Αν ΥΠΑΡΧΕΙ mobile, κρύβεται στα κινητά και εμφανίζεται από μέγεθος md και πάνω ('hidden md:block'). -->
+        <img :src="heroSettings.image" 
+            alt="Hero Banner Desktop"
+            class="w-full h-auto max-h-[calc(100vh-100px)] object-contain"
+            :class="heroSettings.mobile_image ? 'hidden md:block' : 'block'" />
 
         <div class="absolute inset-0"></div>
 

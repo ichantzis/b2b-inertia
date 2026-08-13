@@ -15,12 +15,14 @@
                         'mb-4 mx-auto',
                         props.isArtistPage ? 'artist-cover-wrapper' : 'collection-cover-image-wrapper'
                     ]">
-                        <img :src="props.collectionCover" :alt="`Cover image for ${props.collectionName}`"
-                            :class="props.isArtistPage ? 'artist-cover-image' : 'collection-cover-image'" />
+                        <img v-if="props.collectionBanner" :src="props.collectionBanner" :alt="props.collectionName"
+                            class="collection-cover-image" />
+                        <img v-else :src="props.collectionCover" :alt="`Cover image for ${props.collectionName}`"
+                            :class="props.isArtistPage ? 'artist-cover-image' : 'collection-cover-image'"  />
                     </div>
 
                     <h1 class="collection-title text-3xl md:text-4xl font-bold text-center mb-2">{{ props.collectionName
-                        }}</h1>
+                    }}</h1>
                     <p v-if="props.collectionDescription"
                         class="collection-description text-center text-gray-600 text-sm md:text-base max-w-3xl mx-auto">
                         {{ props.collectionDescription }}
@@ -75,7 +77,7 @@
                                             <div class="artwork-overlay">
                                                 <div class="overlay-content">
                                                     <span class="artwork-title">{{ artwork.title || 'Untitled'
-                                                        }}</span>
+                                                    }}</span>
                                                     <Divider layout="vertical" />
                                                     <span class="artwork-id">ID: {{ artwork.pictufy_id }}</span>
                                                 </div>
@@ -123,6 +125,7 @@ const props = defineProps({
     collectionSlug: { type: String, default: null },
     collectionName: { type: String, default: 'Artworks' },
     collectionCover: { type: String, default: null },
+    collectionBanner: { type: String, default: null },
     collectionDescription: { type: String, default: null },
     filters: { type: Array, default: () => [] },
     currentSearchTerm: String,
@@ -553,6 +556,7 @@ const artworks = computed(() => localArtworks.value);
     gap: 1rem;
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
+
 /* Κατάσταση "κολλημένη": Εμφάνιση περιγράμματος και σκιάς */
 .sticky-filter-bar.is-stuck {
     border-bottom: 1px solid #e5e7eb;
